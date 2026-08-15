@@ -101,6 +101,16 @@ button:active {
   color: var(--fondo);
 }
 
+/* client:load pre-renderizza l'isola senza contenuto (niente DOM in build per
+ * leggere #dati-iniziali): il pannello resta vuoto finché l'idratazione non
+ * disegna i controlli reali. Senza altezza riservata la pagina "salta" nel
+ * punto guardato più spesso a ogni apertura. Misurata con Chrome headless via
+ * CDP a 390px di larghezza, stato normale (PF > 0): 168.39px; 170px lascia un
+ * margine di un paio di pixel. A 0 PF compaiono anche i TS morte e l'altezza
+ * sale a ~212px — caso raro, non riservato qui: vedi il rapporto del task. */
+.pf-pannello {
+  min-height: 170px;
+}
 .pf .riga {
   display: flex;
   align-items: center;
