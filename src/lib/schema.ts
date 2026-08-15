@@ -97,7 +97,7 @@ export const incantesimoSchema = z.object({
   nome: z.string(),
   nomeEn: z.string(),
   livello: z.number().int().min(0).max(2),
-  lancio: z.enum(['azione', 'azione bonus', 'reazione']),
+  lancio: z.enum(['azione', 'azione bonus', 'reazione', '1 minuto', '10 minuti']),
   gittata: z.string(),
   componenti: z.string(),
   concentrazione: z.boolean(),
