@@ -71,6 +71,12 @@ describe('punti ferita', () => {
     s = applicaCura(s, pg, 1);
     expect(s.tsMorte).toEqual({ successi: 0, fallimenti: 0 });
   });
+
+  it('non supera tre tiri salvezza contro morte', () => {
+    s = applicaDanno(s, 50);
+    for (let i = 0; i < 4; i++) s = segnaTsMorte(s, 'fallimento');
+    expect(s.tsMorte.fallimenti).toBe(3);
+  });
 });
 
 describe('slot e risorse', () => {
@@ -124,9 +130,20 @@ describe('riposi', () => {
 
 describe('incantesimi preparati', () => {
   it('non supera il limite di sei', () => {
-    s = togglePreparato(s, pg, 'guida');
+    // Slug arbitrario, né in pg.dominio né in pg.trucchetti: a bloccarlo deve
+    // essere il limite di lunghezza, non la guardia su dominio/trucchetti.
+    s = togglePreparato(s, pg, 'incantesimo-di-prova');
     expect(s.preparati).toHaveLength(6);
-    expect(s.preparati).not.toContain('guida');
+    expect(s.preparati).not.toContain('incantesimo-di-prova');
+  });
+
+  it('aggiunge uno slug qualunque una volta liberato uno slot', () => {
+    // Dimostra che il test sopra colpisce davvero il ramo del limite: con la
+    // lista a 5 lo stesso slug arbitrario viene accettato.
+    s = togglePreparato(s, pg, 'comando');
+    s = togglePreparato(s, pg, 'incantesimo-di-prova');
+    expect(s.preparati).toContain('incantesimo-di-prova');
+    expect(s.preparati).toHaveLength(6);
   });
 
   it('toglie e rimette un preparato', () => {
@@ -152,6 +169,16 @@ describe('incantesimi preparati', () => {
     expect(s.preparati).toEqual(attesi);
     expect(s.preparati).toHaveLength(5);
   });
+
+  it('rimuove uno slug del dominio se già presente in uno stato salvato in precedenza', () => {
+    // Simula uno stato salvato prima del fix della guardia, dove uno slug di
+    // dominio era finito in `preparati`: la rimozione deve restare possibile
+    // per permettere all'utente di ripulirlo.
+    const statoVecchio = { ...s, preparati: [...s.preparati.slice(0, 5), 'frantumare'] };
+    const risultato = togglePreparato(statoVecchio, pg, 'frantumare');
+    expect(risultato.preparati).not.toContain('frantumare');
+    expect(risultato.preparati).toHaveLength(5);
+  });
 });
 
 describe('caricamento e versioning', () => {
@@ -175,7 +202,9 @@ describe('caricamento e versioning', () => {
   });
 
   it('tratta uno stato illeggibile o assente come stato iniziale', () => {
-    expect(carica('non-json', pg, VERSIONE).stato.pf).toBe(21);
+    const daJsonRotto = carica('non-json', pg, VERSIONE);
+    expect(daJsonRotto.stato.pf).toBe(21);
+    expect(daJsonRotto.azzerato).toBe(true);
     expect(carica(null, pg, VERSIONE).azzerato).toBe(false);
   });
 });
