@@ -238,12 +238,13 @@ button[disabled] {
 /* Stesso motivo di .pf-pannello / .risorse-isola: con client:only="preact"
  * non c'è alcun render lato server, quindi senza altezza riservata la
  * sezione "salta" alla prima idratazione. Misurate con Chrome headless via
- * CDP a 390px di larghezza (16 oggetti d'equipaggiamento, 3 valute):
- * .borsa-isola ~952.75px idratata → riservati 955px; .note-isola ~219.19px
- * idratata → riservati 221px (entrambe con un paio di pixel di margine,
- * come .pf-pannello). Vedi il rapporto del task per il metodo e i numeri. */
+ * CDP a 390px di larghezza (16 oggetti d'equipaggiamento, 3 valute, 1 nota
+ * per oggetto — il simbolo sacro): .borsa-isola ~993.72px idratata →
+ * riservati 996px; .note-isola ~219.19px idratata → riservati 221px
+ * (entrambe con un paio di pixel di margine, come .pf-pannello). Vedi il
+ * rapporto del task per il metodo e i numeri. */
 .borsa-isola {
-  min-height: 955px;
+  min-height: 996px;
 }
 .note-isola {
   min-height: 221px;
@@ -282,8 +283,14 @@ button[disabled] {
   border-bottom: 1px solid var(--bordo);
   font-size: 0.92rem;
 }
-.oggetti li > span:first-child {
+.oggetti li > .info {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.oggetti .nota {
+  font-size: 0.82rem;
 }
 .note {
   width: 100%;

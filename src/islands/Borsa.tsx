@@ -40,7 +40,10 @@ export default function Borsa() {
           const quantita = s.oggetti[e.id] ?? 0;
           return (
             <li key={e.id}>
-              <span class={quantita === 0 ? 'tenue' : undefined}>{e.nome}</span>
+              <div class="info">
+                <span class={quantita === 0 ? 'tenue' : undefined}>{e.nome}</span>
+                {e.note && <span class="tenue nota">{e.note}</span>}
+              </div>
               <button
                 type="button"
                 aria-label={`Uno in meno di ${e.nome}`}
