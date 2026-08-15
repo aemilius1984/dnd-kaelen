@@ -1,0 +1,52 @@
+---
+import type { Personaggio } from '@/lib/schema';
+
+interface Props {
+  pg: Personaggio;
+}
+const { pg } = Astro.props;
+---
+
+{
+  pg.capacita.map((c) => (
+    <section class="capacita">
+      <h3>{c.titolo}</h3>
+      {c.paragrafi.map((p) => (
+        <p>{p}</p>
+      ))}
+    </section>
+  ))
+}
+
+<h3>Reazioni: scegline una</h3>
+<table>
+  <thead><tr><th>Reazione</th><th>Innesco</th><th>Effetto</th></tr></thead>
+  <tbody>
+    {
+      pg.reazioni.map((r) => (
+        <tr>
+          <>
+            <td>{r.nome}</td>
+            <td class="tenue">{r.innesco}</td>
+            <td>{r.effetto}</td>
+          </>
+        </tr>
+      ))
+    }
+  </tbody>
+</table>
+
+<style>
+  .capacita {
+    border-top: 1px solid var(--bordo);
+    padding-top: 0.6rem;
+  }
+  h3 {
+    margin: 0.4rem 0 0.2rem;
+    font-size: 0.98rem;
+  }
+  p {
+    margin: 0.25rem 0;
+    font-size: 0.92rem;
+  }
+</style>

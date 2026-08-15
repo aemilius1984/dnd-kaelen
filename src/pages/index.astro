@@ -1,14 +1,117 @@
 ---
+import { getCollection, getEntry } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Sezione from '@/components/Sezione.astro';
+import Statistiche from '@/components/Statistiche.astro';
+import Attacchi from '@/components/Attacchi.astro';
+import TabellaIncantesimi from '@/components/TabellaIncantesimi.astro';
+import Capacita from '@/components/Capacita.astro';
+import type { Personaggio } from '@/lib/schema';
+import {
+  attaccoIncantesimi,
+  capacitaTrasporto,
+  cdIncantesimi,
+  classeArmatura,
+  iniziativa,
+  percezionePassiva,
+  segno,
+} from '@/lib/derive';
 
+const voce = await getEntry('character', 'kaelen');
+if (!voce) throw new Error('Scheda di Kaelen non trovata');
+
+// `reference()` trasforma gli slug in oggetti { id, collection }. Li riportiamo a
+// stringhe: così questo oggetto combacia con il tipo `Personaggio` usato da derive,
+// dai componenti e dallo stato di sessione, e ne esiste una sola forma in tutto il sito.
+const dati = voce.data;
+const pg: Personaggio = {
+  ...dati,
+  trucchetti: dati.trucchetti.map((r) => r.id),
+  preparatiIniziali: dati.preparatiIniziali.map((r) => r.id),
+  dominio: dati.dominio.map((r) => r.id),
+};
+
+const tutte = await getCollection('spells');
+const perSlug = new Map(tutte.map((m) => [m.id, m]));
+const conTesto = (slug: string) => {
+  const m = perSlug.get(slug);
+  if (!m) throw new Error(`Incantesimo mancante: ${slug}`);
+  return { ...m.data, slug, testo: (m.body ?? '').trim() };
+};
+
+const trucchetti = pg.trucchetti.map(conTesto);
+const preparati = pg.preparatiIniziali.map(conTesto);
+const dominio = pg.dominio.map(conTesto);
+
+// Costruite qui come stringhe/variabili singole: se lasciate come sequenze di
+// espressioni JSX separate, Prettier può spezzarle su più righe e Astro collassa
+// lo spazio (o addirittura la newline) tra loro, incollando le parole.
+const sottotitolo = `${pg.specie} ${pg.taglia} · ${pg.classe} ${pg.livello} · ${pg.sottoclasse} · ${pg.allineamento} · Divinità: ${pg.divinita}`;
+const equipaggiamentoNote =
+  `Lingue: ${pg.lingue.join(', ')}. Capacità di trasporto: ${capacitaTrasporto(pg)} lb. ${pg.armatura.note ?? ''}`.trim();
+
+const ca = classeArmatura(pg);
+const cd = cdIncantesimi(pg);
+const bonusIncantesimi = segno(attaccoIncantesimi(pg));
+const bonusIniziativa = segno(iniziativa(pg));
+const percezione = percezionePassiva(pg);
 ---
 
-<html lang="it">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Kaelen</title>
-  </head>
-  <body>
-    <h1>Kaelen</h1>
-  </body>
-</html>
+<BaseLayout titolo="Kaelen — Scheda" attiva="scheda">
+  <h1>{pg.nome}</h1>
+  <p class="tenue">{sottotitolo}</p>
+
+  <div class="pannello sintesi">
+    <div><span class="tenue">CA</span> <span class="valore">{ca}</span></div>
+    <div><span class="tenue">CD</span> <span class="valore">{cd}</span></div>
+    <div><span class="tenue">Inc.</span> <span class="valore">{bonusIncantesimi}</span></div>
+    <div><span class="tenue">Iniz.</span> <span class="valore">{bonusIniziativa}</span></div>
+    <div><span class="tenue">Perc.</span> <span class="valore">{percezione}</span></div>
+    <div><span class="tenue">Vel.</span> <span class="valore">{pg.velocita} ft</span></div>
+  </div>
+
+  <Sezione titolo="Attacchi" aperta><Attacchi pg={pg} /></Sezione>
+
+  <Sezione titolo="Incantesimi" aperta>
+    <TabellaIncantesimi titolo="Trucchetti" incantesimi={trucchetti} />
+    <TabellaIncantesimi titolo="Preparati" incantesimi={preparati} />
+    <TabellaIncantesimi titolo="Dominio (sempre preparati)" incantesimi={dominio} />
+  </Sezione>
+
+  <Sezione titolo="Caratteristiche e abilità"><Statistiche pg={pg} /></Sezione>
+
+  <Sezione titolo="Capacità"><Capacita pg={pg} /></Sezione>
+
+  <Sezione titolo="Equipaggiamento">
+    <ul>
+      {
+        pg.equipaggiamento.map((e) => (
+          <li>
+            {e.nome}
+            {e.quantita > 1 ? ` ×${e.quantita}` : ''}
+            {e.note ? ` — ${e.note}` : ''}
+          </li>
+        ))
+      }
+    </ul>
+    <p class="tenue">{equipaggiamentoNote}</p>
+  </Sezione>
+</BaseLayout>
+
+<style>
+  .sintesi {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem 0.25rem;
+    text-align: center;
+  }
+  .sintesi .valore {
+    font-size: 1.25rem;
+    display: block;
+  }
+  ul {
+    margin: 0;
+    padding-left: 1.1rem;
+    font-size: 0.92rem;
+  }
+</style>

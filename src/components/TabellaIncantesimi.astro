@@ -1,0 +1,48 @@
+---
+import type { Incantesimo } from '@/lib/schema';
+
+interface Props {
+  incantesimi: (Incantesimo & { slug: string; testo: string })[];
+  titolo: string;
+}
+const { incantesimi, titolo } = Astro.props;
+---
+
+<h3>{titolo}</h3>
+{
+  incantesimi.map((m) => (
+    <div class="magia">
+      <div class="riga">
+        <strong>{m.nome}</strong>
+        <span class="tenue">{m.livello === 0 ? 'trucchetto' : `liv. ${m.livello}`}</span>
+      </div>
+      <div class="tenue meta">
+        {m.lancio} · {m.gittata} · {m.componenti}
+        {m.concentrazione && ' · concentrazione'}
+        {m.tiro && ` · TS ${m.tiro}`}
+        {m.danno && ` · ${m.danno}`}
+      </div>
+      <p>{m.testo}</p>
+      {m.slotSuperiore && <p class="tenue">Slot superiore: {m.slotSuperiore}</p>}
+    </div>
+  ))
+}
+
+<style>
+  .magia {
+    border-top: 1px solid var(--bordo);
+    padding: 0.6rem 0;
+  }
+  .riga {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  .meta {
+    font-size: 0.85rem;
+  }
+  p {
+    margin: 0.35rem 0 0;
+    font-size: 0.92rem;
+  }
+</style>

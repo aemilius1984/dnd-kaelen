@@ -1,0 +1,55 @@
+---
+import type { Personaggio } from '@/lib/schema';
+import { bonusAbilita, bonusTiroSalvezza, modificatore, segno } from '@/lib/derive';
+
+interface Props {
+  pg: Personaggio;
+}
+const { pg } = Astro.props;
+const nomi: Record<string, string> = {
+  for: 'Forza',
+  des: 'Destrezza',
+  cos: 'Costituzione',
+  int: 'Intelligenza',
+  sag: 'Saggezza',
+  car: 'Carisma',
+};
+const chiavi = Object.keys(nomi) as (keyof typeof pg.caratteristiche)[];
+---
+
+<table>
+  <thead>
+    <tr
+      ><th>Caratteristica</th><th class="num">Punt.</th><th class="num">Mod.</th><th class="num"
+        >TS</th
+      ></tr
+    >
+  </thead>
+  <tbody>
+    {
+      chiavi.map((c) => (
+        <tr>
+          <td>{nomi[c]}</td>
+          <td class="num">{pg.caratteristiche[c]}</td>
+          <td class="num">{segno(modificatore(pg.caratteristiche[c]))}</td>
+          <td class="num valore">{segno(bonusTiroSalvezza(pg, c))}</td>
+        </tr>
+      ))
+    }
+  </tbody>
+</table>
+
+<h3>Abilità competenti</h3>
+<table>
+  <tbody>
+    {
+      pg.abilita.map((a) => (
+        <tr>
+          <td>{a.nome}</td>
+          <td class="num valore">{segno(bonusAbilita(pg, a.nome))}</td>
+          <td class="tenue">{a.origine}</td>
+        </tr>
+      ))
+    }
+  </tbody>
+</table>

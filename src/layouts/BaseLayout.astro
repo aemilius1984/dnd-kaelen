@@ -1,0 +1,27 @@
+---
+import TabBar from '@/components/TabBar.astro';
+import '@/styles/tokens.css';
+
+interface Props {
+  titolo: string;
+  attiva: 'scheda' | 'tattiche' | 'background';
+}
+const { titolo, attiva } = Astro.props;
+---
+
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#0b0d10" />
+    <title>{titolo}</title>
+  </head>
+  <body>
+    <main>
+      <slot />
+    </main>
+    <TabBar attiva={attiva} />
+  </body>
+</html>

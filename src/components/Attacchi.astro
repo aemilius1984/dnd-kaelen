@@ -1,0 +1,35 @@
+---
+import type { Personaggio } from '@/lib/schema';
+import { dannoTesto, perColpire, segno } from '@/lib/derive';
+
+interface Props {
+  pg: Personaggio;
+}
+const { pg } = Astro.props;
+---
+
+<table>
+  <thead>
+    <tr><th>Attacco</th><th class="num">Colpire</th><th class="num">Danno</th></tr>
+  </thead>
+  <tbody>
+    {
+      pg.attacchi.map((a) => (
+        <>
+          <tr>
+            <td>{a.nome}</td>
+            <td class="num valore">{segno(perColpire(pg, a.id))}</td>
+            <td class="num valore">{dannoTesto(pg, a.id)}</td>
+          </tr>
+          {a.note && (
+            <tr>
+              <td colspan="3" class="tenue">
+                {a.note}
+              </td>
+            </tr>
+          )}
+        </>
+      ))
+    }
+  </tbody>
+</table>
