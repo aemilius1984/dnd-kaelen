@@ -23,4 +23,13 @@ describe('scheda di Kaelen', () => {
     expect(pg.dominio).toHaveLength(4);
     expect(pg.limitePreparati).toBe(6);
   });
+
+  // Regressione: una virgola in un flow-mapping YAML può troncare un campo
+  // senza che lo schema se ne accorga (Task 2 l'ha scoperto solo con un dump
+  // manuale). Questo controlla che la nota del simbolo sacro sia intera.
+  it('non tronca la nota del simbolo sacro nel flow-mapping YAML', () => {
+    expect(pg.equipaggiamento.find((e) => e.id === 'simbolo-sacro')?.note).toBe(
+      'Focus da incantatore, indossato sul petto.',
+    );
+  });
 });
