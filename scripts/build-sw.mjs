@@ -18,16 +18,33 @@ async function elenca(cartella) {
 }
 
 const file = await elenca(DIST);
-const urls = file
-  .map((f) => '/' + relative(DIST, f).split(/[\\/]/).join('/'))
-  .map((u) => (u.endsWith('/index.html') ? u.slice(0, -'index.html'.length) : u))
-  .filter((u) => !u.endsWith('/sw.js'));
 
-const impronta = createHash('sha256').update(urls.sort().join('|')).digest('hex').slice(0, 12);
+// Mappa url del precache -> percorso reale su disco, così l'impronta può
+// essere calcolata sul contenuto dei file e non solo sui loro nomi: i
+// bundle in _astro/ hanno il nome con l'hash e cambiano da soli, ma
+// index.html no, quindi un edit ai contenuti (es. src/content/character/
+// kaelen.md) deve comunque invalidare la cache.
+const percorsi = new Map();
+for (const f of file) {
+  let url = '/' + relative(DIST, f).split(/[\\/]/).join('/');
+  if (url.endsWith('/index.html')) url = url.slice(0, -'index.html'.length);
+  if (url.endsWith('/sw.js')) continue;
+  percorsi.set(url, f);
+}
+
+const urls = [...percorsi.keys()].sort();
+
+const impronta_hash = createHash('sha256');
+for (const url of urls) {
+  const contenuto = await readFile(percorsi.get(url));
+  impronta_hash.update(url).update(contenuto);
+}
+const impronta = impronta_hash.digest('hex').slice(0, 12);
+
 const template = await readFile('src/sw-template.js', 'utf8');
 const sw = template
   .replace('__VERSIONE__', `kaelen-${impronta}`)
-  .replace('__PRECACHE__', JSON.stringify([...new Set(urls)].sort(), null, 2));
+  .replace('__PRECACHE__', JSON.stringify(urls, null, 2));
 
 await writeFile(join(DIST, 'sw.js'), sw);
-console.log(`service worker scritto: ${urls.length} file in precache`);
+console.log(`service worker scritto: ${urls.length} file in precache, cache=kaelen-${impronta}`);
