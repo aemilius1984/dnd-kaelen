@@ -7,6 +7,8 @@ import Attacchi from '@/components/Attacchi.astro';
 import TabellaIncantesimi from '@/components/TabellaIncantesimi.astro';
 import Capacita from '@/components/Capacita.astro';
 import PfTracker from '@/islands/PfTracker';
+import Risorse from '@/islands/Risorse';
+import PreparatiPicker from '@/islands/PreparatiPicker';
 import type { Personaggio } from '@/lib/schema';
 import {
   attaccoIncantesimi,
@@ -98,6 +100,18 @@ const percezione = percezionePassiva(pg);
     <TabellaIncantesimi titolo="Trucchetti" incantesimi={trucchetti} />
     <TabellaIncantesimi titolo="Preparati" incantesimi={preparati} />
     <TabellaIncantesimi titolo="Dominio (sempre preparati)" incantesimi={dominio} />
+  </Sezione>
+
+  <Sezione titolo="Risorse e riposi" aperta>
+    <div class="risorse-isola">
+      <Risorse client:load />
+    </div>
+  </Sezione>
+
+  <Sezione titolo="Cambia i preparati">
+    <div class="preparati-isola">
+      <PreparatiPicker client:idle />
+    </div>
   </Sezione>
 
   <Sezione titolo="Caratteristiche e abilità"><Statistiche pg={pg} /></Sezione>

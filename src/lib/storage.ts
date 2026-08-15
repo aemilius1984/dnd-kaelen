@@ -50,5 +50,9 @@ export function muta(fn: (s: StatoSessione) => StatoSessione): void {
 export function azzeraTutto(): void {
   const { pg, sheetVersion } = datiIniziali();
   stato.value = statoIniziale(pg, sheetVersion);
-  localStorage.setItem(CHIAVE, JSON.stringify(stato.value));
+  try {
+    localStorage.setItem(CHIAVE, JSON.stringify(stato.value));
+  } catch {
+    // quota piena o storage negato: lo stato in memoria resta comunque azzerato
+  }
 }

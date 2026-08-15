@@ -153,3 +153,83 @@ button:active {
   padding: 0.5rem 0.6rem;
   font-size: 0.9rem;
 }
+
+/* Stesso motivo di .pf-pannello: client:load/client:idle pre-renderizzano
+ * l'isola vuota in build, quindi senza altezza riservata la sezione "salta"
+ * alla prima idratazione. Misurate con Chrome headless via CDP a 390px di
+ * larghezza, stato normale (4 slot 1°, 2 slot 2°, 3 risorse, 6 preparati):
+ * .risorse-isola 388.125px idratata → riservati 391px; .preparati-isola
+ * 343.5625px idratata → riservati 346px (entrambe con un paio di pixel di
+ * margine, come .pf-pannello). Vedi il rapporto del task per il metodo. */
+.risorse-isola {
+  min-height: 391px;
+}
+.preparati-isola {
+  min-height: 346px;
+}
+
+.risorsa {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--bordo);
+  font-size: 0.92rem;
+}
+.risorsa > span:first-child {
+  flex: 1;
+}
+.caselle {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+.casella {
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--bordo);
+  border-radius: 3px;
+  display: inline-block;
+}
+.casella.piena {
+  background: var(--lampo);
+  border-color: var(--lampo);
+}
+.riposi {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.7rem;
+  flex-wrap: wrap;
+}
+.riposi .pericoloso {
+  border-color: var(--spento);
+  color: var(--allerta);
+  margin-left: auto;
+}
+button[disabled] {
+  opacity: 0.4;
+}
+
+.pool {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.pool label {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 44px;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--bordo);
+}
+.pool label > span:nth-child(2) {
+  flex: 1;
+}
+.pool label.scelto > span:nth-child(2) {
+  color: var(--lampo);
+}
+.pool input {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--bronzo);
+}
