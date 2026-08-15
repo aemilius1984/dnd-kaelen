@@ -16,6 +16,9 @@ const { titolo, attiva } = Astro.props;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="theme-color" content="#0b0d10" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <title>{titolo}</title>
   </head>
   <body>
@@ -23,5 +26,13 @@ const { titolo, attiva } = Astro.props;
       <slot />
     </main>
     <TabBar attiva={attiva} />
+    <script is:inline>
+      if (
+        'serviceWorker' in navigator &&
+        (location.protocol === 'https:' || location.hostname === 'localhost')
+      ) {
+        window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+      }
+    </script>
   </body>
 </html>
