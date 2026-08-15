@@ -118,6 +118,11 @@ export function togglePreparato(s: StatoSessione, pg: Personaggio, slug: string)
   if (s.preparati.includes(slug)) {
     return aggiorna(s, { preparati: s.preparati.filter((x) => x !== slug) });
   }
+  // Gli incantesimi di dominio sono sempre preparati e i trucchetti non si
+  // "preparano": non devono mai entrare in questa lista, né occupare uno
+  // slot del limite, indipendentemente da come è arrivato qui lo slug (uno
+  // stato salvato in precedenza incluso).
+  if (pg.dominio.includes(slug) || pg.trucchetti.includes(slug)) return s;
   if (s.preparati.length >= pg.limitePreparati) return s;
   return aggiorna(s, { preparati: [...s.preparati, slug] });
 }

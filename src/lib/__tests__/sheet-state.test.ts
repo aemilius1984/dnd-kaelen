@@ -132,9 +132,25 @@ describe('incantesimi preparati', () => {
   it('toglie e rimette un preparato', () => {
     s = togglePreparato(s, pg, 'comando');
     expect(s.preparati).not.toContain('comando');
-    s = togglePreparato(s, pg, 'frantumare');
-    expect(s.preparati).toContain('frantumare');
+    s = togglePreparato(s, pg, 'comando');
+    expect(s.preparati).toContain('comando');
     expect(s.preparati).toHaveLength(6);
+  });
+
+  it('non aggiunge uno slug del dominio anche con la lista non piena', () => {
+    s = togglePreparato(s, pg, 'comando');
+    const attesi = s.preparati;
+    s = togglePreparato(s, pg, 'frantumare');
+    expect(s.preparati).toEqual(attesi);
+    expect(s.preparati).toHaveLength(5);
+  });
+
+  it('non aggiunge un trucchetto anche con la lista non piena', () => {
+    s = togglePreparato(s, pg, 'comando');
+    const attesi = s.preparati;
+    s = togglePreparato(s, pg, 'guida');
+    expect(s.preparati).toEqual(attesi);
+    expect(s.preparati).toHaveLength(5);
   });
 });
 
