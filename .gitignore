@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.astro/
+.DS_Store
+.env
+.env.*
+# icone e service worker generati a build-time
+public/icon-192.png
+public/icon-512.png
+public/apple-touch-icon.png
