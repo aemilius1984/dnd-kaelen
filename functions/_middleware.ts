@@ -8,8 +8,8 @@ interface Env {
 export const onRequest: PagesFunction<Env> = async (context) => {
   const { SITE_USER, SITE_PASS } = context.env;
 
-  // fail-closed: senza segreti il sito non si apre
-  if (!SITE_USER || !SITE_PASS) {
+  // fail-closed: senza segreti (o segreti fatti di soli spazi) il sito non si apre
+  if (!SITE_USER?.trim() || !SITE_PASS?.trim()) {
     return rispostaNonAutorizzato('Autenticazione non configurata su questo deploy.');
   }
 
