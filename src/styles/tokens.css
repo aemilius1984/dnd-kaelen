@@ -234,3 +234,64 @@ button[disabled] {
   height: 22px;
   accent-color: var(--bronzo);
 }
+
+/* Stesso motivo di .pf-pannello / .risorse-isola: con client:only="preact"
+ * non c'è alcun render lato server, quindi senza altezza riservata la
+ * sezione "salta" alla prima idratazione. Misurate con Chrome headless via
+ * CDP a 390px di larghezza (16 oggetti d'equipaggiamento, 3 valute):
+ * .borsa-isola ~952.75px idratata → riservati 955px; .note-isola ~219.19px
+ * idratata → riservati 221px (entrambe con un paio di pixel di margine,
+ * come .pf-pannello). Vedi il rapporto del task per il metodo e i numeri. */
+.borsa-isola {
+  min-height: 955px;
+}
+.note-isola {
+  min-height: 221px;
+}
+
+.monete {
+  display: flex;
+  gap: 0.8rem;
+  margin-bottom: 0.6rem;
+}
+.monete label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.monete input {
+  width: 5rem;
+  min-height: 44px;
+  background: var(--superficie-alta);
+  color: var(--testo);
+  border: 1px solid var(--bordo);
+  border-radius: var(--raggio);
+  text-align: right;
+  font: inherit;
+}
+.oggetti {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.oggetti li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--bordo);
+  font-size: 0.92rem;
+}
+.oggetti li > span:first-child {
+  flex: 1;
+}
+.note {
+  width: 100%;
+  background: var(--superficie-alta);
+  color: var(--testo);
+  border: 1px solid var(--bordo);
+  border-radius: var(--raggio);
+  padding: 0.6rem;
+  font: inherit;
+  resize: vertical;
+}

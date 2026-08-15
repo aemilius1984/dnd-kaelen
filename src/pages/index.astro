@@ -9,6 +9,8 @@ import Capacita from '@/components/Capacita.astro';
 import PfTracker from '@/islands/PfTracker';
 import Risorse from '@/islands/Risorse';
 import PreparatiPicker from '@/islands/PreparatiPicker';
+import Borsa from '@/islands/Borsa';
+import Note from '@/islands/Note';
 import type { Personaggio } from '@/lib/schema';
 import {
   attaccoIncantesimi,
@@ -118,19 +120,17 @@ const percezione = percezionePassiva(pg);
 
   <Sezione titolo="Capacità"><Capacita pg={pg} /></Sezione>
 
-  <Sezione titolo="Equipaggiamento">
-    <ul>
-      {
-        pg.equipaggiamento.map((e) => (
-          <li>
-            {e.nome}
-            {e.quantita > 1 ? ` ×${e.quantita}` : ''}
-            {e.note ? ` — ${e.note}` : ''}
-          </li>
-        ))
-      }
-    </ul>
+  <Sezione titolo="Borsa">
+    <div class="borsa-isola">
+      <Borsa client:only="preact" />
+    </div>
     <p class="tenue">{equipaggiamentoNote}</p>
+  </Sezione>
+
+  <Sezione titolo="Note di sessione">
+    <div class="note-isola">
+      <Note client:only="preact" />
+    </div>
   </Sezione>
 </BaseLayout>
 
