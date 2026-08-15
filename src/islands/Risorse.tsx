@@ -46,12 +46,8 @@ function Caselle({
 }
 
 export default function Risorse() {
-  // `client:load` pre-renderizza l'isola in build (Node, senza DOM): il blocco
-  // #dati-iniziali esiste solo lato client, quindi in fase di build non c'è
-  // nulla da leggere. Si salta il render finché il browser non prende il
-  // controllo (vedi PfTracker.tsx per lo stesso pattern).
-  if (typeof document === 'undefined') return null;
-
+  // `client:only="preact"`: nessun pre-render lato server, quindi nessuna
+  // guardia sul DOM da scrivere qui — vedi il rapporto del Task 8.
   assicuraInizializzato();
   const { pg } = datiIniziali();
   const s = stato.value;

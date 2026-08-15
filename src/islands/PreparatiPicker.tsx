@@ -2,10 +2,8 @@ import { togglePreparato } from '@/lib/sheet-state';
 import { assicuraInizializzato, datiIniziali, muta, stato } from '@/lib/storage';
 
 export default function PreparatiPicker() {
-  // `client:idle` pre-renderizza comunque in build (Node, senza DOM): stesso
-  // guardiano SSR di PfTracker.tsx e Risorse.tsx.
-  if (typeof document === 'undefined') return null;
-
+  // `client:only="preact"`: nessun pre-render lato server, quindi nessuna
+  // guardia sul DOM da scrivere qui — vedi il rapporto del Task 8.
   assicuraInizializzato();
   const { pg, pool } = datiIniziali();
   const s = stato.value;

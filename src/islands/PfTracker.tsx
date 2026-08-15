@@ -8,12 +8,9 @@ import {
 import { assicuraInizializzato, avvisoAzzeramento, datiIniziali, muta, stato } from '@/lib/storage';
 
 export default function PfTracker() {
-  // `client:load` pre-renderizza l'isola in build (Node, senza DOM) e poi la
-  // idrata nel browser. Il blocco #dati-iniziali esiste solo lato client, quindi
-  // in fase di build non c'è nulla da leggere: si salta il render finché il
-  // browser non prende il controllo.
-  if (typeof document === 'undefined') return null;
-
+  // `client:only="preact"`: nessun pre-render lato server, quindi nessuna
+  // guardia sul DOM da scrivere qui — vedi il rapporto del Task 8 per il
+  // perché del cambio rispetto a `client:load` + guardia.
   assicuraInizializzato();
   const { pg } = datiIniziali();
   const s = stato.value;

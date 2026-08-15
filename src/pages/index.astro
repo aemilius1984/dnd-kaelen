@@ -82,7 +82,7 @@ const percezione = percezionePassiva(pg);
   />
 
   <div class="pannello pf-pannello">
-    <PfTracker client:load />
+    <PfTracker client:only="preact" />
   </div>
 
   <div class="pannello sintesi">
@@ -104,13 +104,13 @@ const percezione = percezionePassiva(pg);
 
   <Sezione titolo="Risorse e riposi" aperta>
     <div class="risorse-isola">
-      <Risorse client:load />
+      <Risorse client:only="preact" />
     </div>
   </Sezione>
 
   <Sezione titolo="Cambia i preparati">
     <div class="preparati-isola">
-      <PreparatiPicker client:idle />
+      <PreparatiPicker client:only="preact" />
     </div>
   </Sezione>
 

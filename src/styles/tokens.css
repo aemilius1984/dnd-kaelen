@@ -101,9 +101,10 @@ button:active {
   color: var(--fondo);
 }
 
-/* client:load pre-renderizza l'isola senza contenuto (niente DOM in build per
- * leggere #dati-iniziali): il pannello resta vuoto finché l'idratazione non
- * disegna i controlli reali. Senza altezza riservata la pagina "salta" nel
+/* client:only="preact" non fa alcun render lato server: il pannello resta
+ * vuoto finché l'idratazione non disegna i controlli reali (stesso vuoto
+ * di prima con client:load, causa diversa — niente più guardia SSR da
+ * scavalcare, vedi il Task 8). Senza altezza riservata la pagina "salta" nel
  * punto guardato più spesso a ogni apertura. Misurata con Chrome headless via
  * CDP a 390px di larghezza, stato normale (PF > 0): 168.39px; 170px lascia un
  * margine di un paio di pixel. A 0 PF compaiono anche i TS morte e l'altezza
@@ -154,13 +155,13 @@ button:active {
   font-size: 0.9rem;
 }
 
-/* Stesso motivo di .pf-pannello: client:load/client:idle pre-renderizzano
- * l'isola vuota in build, quindi senza altezza riservata la sezione "salta"
+/* Stesso motivo di .pf-pannello: con client:only="preact" non c'è alcun
+ * render lato server, quindi senza altezza riservata la sezione "salta"
  * alla prima idratazione. Misurate con Chrome headless via CDP a 390px di
  * larghezza, stato normale (4 slot 1°, 2 slot 2°, 3 risorse, 6 preparati):
- * .risorse-isola 388.125px idratata → riservati 391px; .preparati-isola
- * 343.5625px idratata → riservati 346px (entrambe con un paio di pixel di
- * margine, come .pf-pannello). Vedi il rapporto del task per il metodo. */
+ * .risorse-isola ~388px idratata → riservati 391px; .preparati-isola ~344px
+ * idratata → riservati 346px (entrambe con un paio di pixel di margine,
+ * come .pf-pannello). Vedi il rapporto del task per il metodo e i numeri. */
 .risorse-isola {
   min-height: 391px;
 }
