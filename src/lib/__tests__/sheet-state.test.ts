@@ -6,6 +6,9 @@ import {
   applicaDanno,
   carica,
   impostaPfTemporanei,
+  puoPreparare,
+  puoSpendereSlot,
+  puoUsareRisorsa,
   riposoBreve,
   riposoLungo,
   segnaTsMorte,
@@ -94,6 +97,24 @@ describe('slot e risorse', () => {
     for (let i = 0; i < 5; i++) s = spendiDadoVita(s, pg);
     expect(s.dadiVitaSpesi).toBe(3);
   });
+
+  it('puoSpendereSlot è vero lontano dal confine e falso al confine, in accordo con spendiSlot', () => {
+    expect(puoSpendereSlot(s, pg, 1)).toBe(true);
+    for (let i = 0; i < 4; i++) s = spendiSlot(s, pg, 1);
+    expect(s.slotSpesi[1]).toBe(4);
+    expect(puoSpendereSlot(s, pg, 1)).toBe(false);
+    // Il predicato falso deve coincidere con un mutatore che non cambia
+    // nulla: stesso riferimento in uscita, non solo lo stesso valore.
+    expect(spendiSlot(s, pg, 1)).toBe(s);
+  });
+
+  it('puoUsareRisorsa è vero lontano dal confine e falso al confine, in accordo con usaRisorsa', () => {
+    expect(puoUsareRisorsa(s, pg, 'incanalare')).toBe(true);
+    for (let i = 0; i < 2; i++) s = usaRisorsa(s, pg, 'incanalare');
+    expect(s.risorseUsate['incanalare']).toBe(2);
+    expect(puoUsareRisorsa(s, pg, 'incanalare')).toBe(false);
+    expect(usaRisorsa(s, pg, 'incanalare')).toBe(s);
+  });
 });
 
 describe('riposi', () => {
@@ -178,6 +199,19 @@ describe('incantesimi preparati', () => {
     const risultato = togglePreparato(statoVecchio, pg, 'frantumare');
     expect(risultato.preparati).not.toContain('frantumare');
     expect(risultato.preparati).toHaveLength(5);
+  });
+
+  it('puoPreparare è vero lontano dal confine e falso al confine, in accordo con togglePreparato', () => {
+    s = togglePreparato(s, pg, 'comando');
+    expect(s.preparati).toHaveLength(5);
+    expect(puoPreparare(s, pg)).toBe(true);
+    s = togglePreparato(s, pg, 'comando');
+    expect(s.preparati).toHaveLength(6);
+    expect(puoPreparare(s, pg)).toBe(false);
+    // Il predicato falso deve coincidere con un mutatore che non aggiunge
+    // nulla: stesso riferimento in uscita per uno slug nuovo, non solo lo
+    // stesso valore.
+    expect(togglePreparato(s, pg, 'incantesimo-di-prova')).toBe(s);
   });
 });
 

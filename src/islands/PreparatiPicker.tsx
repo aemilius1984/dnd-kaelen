@@ -1,4 +1,4 @@
-import { togglePreparato } from '@/lib/sheet-state';
+import { puoPreparare, togglePreparato } from '@/lib/sheet-state';
 import { assicuraInizializzato, datiIniziali, muta, stato } from '@/lib/storage';
 
 export default function PreparatiPicker() {
@@ -7,7 +7,7 @@ export default function PreparatiPicker() {
   assicuraInizializzato();
   const { pg, pool } = datiIniziali();
   const s = stato.value;
-  const pieno = s.preparati.length >= pg.limitePreparati;
+  const pieno = !puoPreparare(s, pg);
 
   return (
     <div>

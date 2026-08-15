@@ -1,4 +1,6 @@
 import {
+  puoSpendereSlot,
+  puoUsareRisorsa,
   recuperaRisorsa,
   recuperaSlot,
   riposoBreve,
@@ -11,12 +13,14 @@ import { assicuraInizializzato, azzeraTutto, datiIniziali, muta, stato } from '@
 function Caselle({
   usate,
   max,
+  puoUsare,
   onUsa,
   onRecupera,
   etichetta,
 }: {
   usate: number;
   max: number;
+  puoUsare: boolean;
   onUsa: () => void;
   onRecupera: () => void;
   etichetta: string;
@@ -30,7 +34,7 @@ function Caselle({
           <i key={i} class={piena ? 'casella piena' : 'casella'} />
         ))}
       </span>
-      <button type="button" onClick={onUsa} disabled={usate >= max} aria-label={`Usa ${etichetta}`}>
+      <button type="button" onClick={onUsa} disabled={!puoUsare} aria-label={`Usa ${etichetta}`}>
         Usa
       </button>
       <button
@@ -60,6 +64,7 @@ export default function Risorse() {
           etichetta={`Slot di ${slot.livello}° livello`}
           usate={s.slotSpesi[slot.livello] ?? 0}
           max={slot.max}
+          puoUsare={puoSpendereSlot(s, pg, slot.livello)}
           onUsa={() => muta((x) => spendiSlot(x, pg, slot.livello))}
           onRecupera={() => muta((x) => recuperaSlot(x, slot.livello))}
         />
@@ -71,6 +76,7 @@ export default function Risorse() {
           etichetta={r.nome}
           usate={s.risorseUsate[r.id] ?? 0}
           max={r.max}
+          puoUsare={puoUsareRisorsa(s, pg, r.id)}
           onUsa={() => muta((x) => usaRisorsa(x, pg, r.id))}
           onRecupera={() => muta((x) => recuperaRisorsa(x, r.id))}
         />

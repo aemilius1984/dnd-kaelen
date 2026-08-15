@@ -88,10 +88,15 @@ export function spendiDadoVita(s: StatoSessione, pg: Personaggio): StatoSessione
   return aggiorna(s, { dadiVitaSpesi: Math.min(pg.numeroDadiVita, s.dadiVitaSpesi + 1) });
 }
 
-export function spendiSlot(s: StatoSessione, pg: Personaggio, livello: number): StatoSessione {
+export function puoSpendereSlot(s: StatoSessione, pg: Personaggio, livello: number): boolean {
   const max = pg.slot.find((x) => x.livello === livello)?.max ?? 0;
+  return (s.slotSpesi[livello] ?? 0) < max;
+}
+
+export function spendiSlot(s: StatoSessione, pg: Personaggio, livello: number): StatoSessione {
+  if (!puoSpendereSlot(s, pg, livello)) return s;
   return aggiorna(s, {
-    slotSpesi: { ...s.slotSpesi, [livello]: Math.min(max, (s.slotSpesi[livello] ?? 0) + 1) },
+    slotSpesi: { ...s.slotSpesi, [livello]: (s.slotSpesi[livello] ?? 0) + 1 },
   });
 }
 
@@ -101,10 +106,15 @@ export function recuperaSlot(s: StatoSessione, livello: number): StatoSessione {
   });
 }
 
-export function usaRisorsa(s: StatoSessione, pg: Personaggio, id: string): StatoSessione {
+export function puoUsareRisorsa(s: StatoSessione, pg: Personaggio, id: string): boolean {
   const max = pg.risorse.find((r) => r.id === id)?.max ?? 0;
+  return (s.risorseUsate[id] ?? 0) < max;
+}
+
+export function usaRisorsa(s: StatoSessione, pg: Personaggio, id: string): StatoSessione {
+  if (!puoUsareRisorsa(s, pg, id)) return s;
   return aggiorna(s, {
-    risorseUsate: { ...s.risorseUsate, [id]: Math.min(max, (s.risorseUsate[id] ?? 0) + 1) },
+    risorseUsate: { ...s.risorseUsate, [id]: (s.risorseUsate[id] ?? 0) + 1 },
   });
 }
 
@@ -112,6 +122,10 @@ export function recuperaRisorsa(s: StatoSessione, id: string): StatoSessione {
   return aggiorna(s, {
     risorseUsate: { ...s.risorseUsate, [id]: Math.max(0, (s.risorseUsate[id] ?? 0) - 1) },
   });
+}
+
+export function puoPreparare(s: StatoSessione, pg: Personaggio): boolean {
+  return s.preparati.length < pg.limitePreparati;
 }
 
 export function togglePreparato(s: StatoSessione, pg: Personaggio, slug: string): StatoSessione {
@@ -123,7 +137,7 @@ export function togglePreparato(s: StatoSessione, pg: Personaggio, slug: string)
   // slot del limite, indipendentemente da come è arrivato qui lo slug (uno
   // stato salvato in precedenza incluso).
   if (pg.dominio.includes(slug) || pg.trucchetti.includes(slug)) return s;
-  if (s.preparati.length >= pg.limitePreparati) return s;
+  if (!puoPreparare(s, pg)) return s;
   return aggiorna(s, { preparati: [...s.preparati, slug] });
 }
 
