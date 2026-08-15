@@ -6,6 +6,7 @@ import Statistiche from '@/components/Statistiche.astro';
 import Attacchi from '@/components/Attacchi.astro';
 import TabellaIncantesimi from '@/components/TabellaIncantesimi.astro';
 import Capacita from '@/components/Capacita.astro';
+import PfTracker from '@/islands/PfTracker';
 import type { Personaggio } from '@/lib/schema';
 import {
   attaccoIncantesimi,
@@ -16,6 +17,7 @@ import {
   percezionePassiva,
   segno,
 } from '@/lib/derive';
+import { hashDati } from '@/lib/sheet-version';
 
 const voce = await getEntry('character', 'kaelen');
 if (!voce) throw new Error('Scheda di Kaelen non trovata');
@@ -43,6 +45,15 @@ const trucchetti = pg.trucchetti.map(conTesto);
 const preparati = pg.preparatiIniziali.map(conTesto);
 const dominio = pg.dominio.map(conTesto);
 
+const pool = tutte
+  .map((m) => ({ slug: m.id, nome: m.data.nome, livello: m.data.livello, dominio: m.data.dominio }))
+  .filter((m) => m.livello > 0 && !m.dominio)
+  .sort((a, b) => a.livello - b.livello || a.nome.localeCompare(b.nome, 'it'));
+
+// `pg` è già normalizzato a slug stringa nel Task 6: è la stessa forma che le isole
+// ricevono nel blocco JSON, quindi l'hash è stabile fra build identiche.
+const sheetVersion = hashDati(JSON.stringify({ pg, pool }));
+
 // Costruite qui come stringhe/variabili singole: se lasciate come sequenze di
 // espressioni JSX separate, Prettier può spezzarle su più righe e Astro collassa
 // lo spazio (o addirittura la newline) tra loro, incollando le parole.
@@ -60,6 +71,17 @@ const percezione = percezionePassiva(pg);
 <BaseLayout titolo="Kaelen — Scheda" attiva="scheda">
   <h1>{pg.nome}</h1>
   <p class="tenue">{sottotitolo}</p>
+
+  <script
+    type="application/json"
+    id="dati-iniziali"
+    set:html={JSON.stringify({ pg, sheetVersion, pool })}
+    is:inline
+  />
+
+  <div class="pannello">
+    <PfTracker client:load />
+  </div>
 
   <div class="pannello sintesi">
     <div><span class="tenue">CA</span> <span class="valore">{ca}</span></div>

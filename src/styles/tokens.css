@@ -100,3 +100,46 @@ button:active {
   background: var(--bronzo);
   color: var(--fondo);
 }
+
+.pf .riga {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.pf .numero {
+  font-family: var(--font-numeri);
+  font-size: 2rem;
+  color: var(--lampo);
+  min-width: 5ch;
+  text-align: center;
+}
+.pf .numero.pericolo {
+  color: var(--allerta);
+}
+.pf .temp {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: center;
+  color: var(--testo-tenue);
+  font-size: 0.9rem;
+  margin-top: 0.4rem;
+}
+.pf input[type='number'] {
+  width: 4rem;
+  min-height: 44px;
+  background: var(--superficie-alta);
+  color: var(--testo);
+  border: 1px solid var(--bordo);
+  border-radius: var(--raggio);
+  text-align: center;
+  font: inherit;
+}
+.avviso {
+  background: var(--superficie-alta);
+  border-left: 3px solid var(--bronzo);
+  padding: 0.5rem 0.6rem;
+  font-size: 0.9rem;
+}
