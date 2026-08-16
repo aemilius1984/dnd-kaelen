@@ -111,7 +111,11 @@ const percezione = percezionePassiva(pg);
 
   <Sezione titolo="Incantesimi" aperta>
     <GrigliaIncantesimi titolo="Trucchetti" incantesimi={trucchetti} />
-    <GrigliaIncantesimi titolo="Preparati" incantesimi={preparatiPool} controllate />
+    <GrigliaIncantesimi
+      titolo="Preparati"
+      incantesimi={preparatiPool}
+      visibiliDiDefault={pg.preparatiIniziali}
+    />
     <GrigliaIncantesimi titolo="Dominio" incantesimi={dominio} />
   </Sezione>
   <ControlliLancio client:only="preact" />

@@ -43,6 +43,8 @@ export default function ControlliLancio() {
 
   function lancia(livello: number) {
     muta((x) => spendiSlot(x, pg, livello));
+    // Un secondo lancio entro la finestra sostituisce quello annullabile: si
+    // può annullare solo l'ultima azione, non un intero storico di lanci.
     setAnnullabile(livello);
   }
 

@@ -5,19 +5,28 @@ import { simbolo } from '@/lib/sigilli';
 interface Props {
   incantesimi: (Incantesimo & { slug: string; testo: string })[];
   titolo: string;
-  /** Se vero, ogni blocco porta `data-slug` e parte nascosto se non è fra i
-   *  preparati iniziali: l'isola ControlliLancio mostra quelli davvero
-   *  preparati, così tutte le regole restano in HTML statico. */
-  controllate?: boolean;
+  /** Se presente, ogni blocco porta `data-slug` e parte nascosto (attributo
+   *  `hidden` scritto qui, a tempo di build) a meno che lo slug non sia in
+   *  questo elenco: così i 32 incantesimi del pool sono tutti presenti in
+   *  HTML statico, ma solo i preparati sono visibili al primo caricamento,
+   *  senza attendere JavaScript. L'isola ControlliLancio corregge poi la
+   *  visibilità se lo stato salvato in sessione si è discostato da questo
+   *  elenco iniziale (scambio di preparati dopo un Riposo Lungo). Quando
+   *  omesso il blocco è sempre visibile. */
+  visibiliDiDefault?: string[];
 }
-const { incantesimi, titolo, controllate = false } = Astro.props;
+const { incantesimi, titolo, visibiliDiDefault } = Astro.props;
 ---
 
 <h3 class="titolo-griglia">{titolo}</h3>
 <div class="griglia">
   {
     incantesimi.map((m) => (
-      <details class="sigillo" data-slug={controllate ? m.slug : undefined}>
+      <details
+        class="sigillo"
+        data-slug={visibiliDiDefault ? m.slug : undefined}
+        hidden={visibiliDiDefault ? !visibiliDiDefault.includes(m.slug) : undefined}
+      >
         <summary>
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <use href={`#${simbolo(m.slug, m.tag)}`} />
