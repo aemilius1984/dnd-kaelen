@@ -201,8 +201,9 @@ button:active {
  * proprio in cima alla scheda. Il Task 8 ha riscritto PfTracker in sola
  * lettura (niente più pulsanti né campo PF temporanei, in compenso una barra
  * di riempimento): misurata di nuovo con Chrome headless via CDP a 390px di
- * larghezza, stato normale (PF > 0, nessun avviso): 146px; 148px lascia un
- * margine di un paio di pixel. A 0 PF compare anche la riga dei TS morte e
+ * larghezza, stato normale (PF > 0, e già allora senza l'avviso di
+ * azzeramento, che adesso è un'isola a parte resa dal layout): 146px; 148px
+ * lascia un margine di un paio di pixel. A 0 PF compare la riga dei TS morte e
  * l'altezza sale a 186px — caso raro, non riservato qui, stesso criterio di
  * prima: vedi il rapporto del task. */
 .pf-pannello {

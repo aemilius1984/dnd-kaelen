@@ -1,5 +1,6 @@
 ---
 import Menu from '@/components/Menu.astro';
+import AvvisoAzzeramento from '@/islands/AvvisoAzzeramento';
 import '@/styles/tokens.css';
 
 interface Props {
@@ -55,6 +56,16 @@ const { titolo, attiva } = Astro.props;
   <body>
     {attiva !== null && <Menu attiva={attiva} />}
     <main>
+      {
+        /* `assicuraInizializzato()` alza l'avviso su tutte le pagine che
+        incorporano DatiIniziali, non solo sulla Scheda: l'avviso deve poter
+        comparire su tutte, altrimenti un azzeramento incassato su /note/ è
+        silenzioso e va perso alla prima `muta()`. Le due rotte escluse sono
+        esattamente quelle senza il blocco `#dati-iniziali`: la splash, che non
+        mostra il menu e ha `attiva` null, e la Storia, che non ha isole
+        proprie. */
+        attiva !== null && attiva !== 'storia' && <AvvisoAzzeramento client:only="preact" />
+      }
       <slot />
     </main>
     <script is:inline>

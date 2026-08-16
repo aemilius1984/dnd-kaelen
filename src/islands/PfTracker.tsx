@@ -1,4 +1,4 @@
-import { assicuraInizializzato, avvisoAzzeramento, datiIniziali, stato } from '@/lib/storage';
+import { assicuraInizializzato, datiIniziali, stato } from '@/lib/storage';
 
 /** Sola lettura, come Risorse.tsx: al tavolo il PF dev'essere visibile
  *  sempre, ma modificarlo è compito del pannello azioni (PannelloAzioni).
@@ -17,15 +17,6 @@ export default function PfTracker() {
 
   return (
     <div class="pf">
-      {avvisoAzzeramento.value && (
-        <p class="avviso" role="status">
-          Scheda aggiornata: risorse e punti ferita sono stati ripristinati.{' '}
-          <button type="button" onClick={() => (avvisoAzzeramento.value = false)}>
-            Ho capito
-          </button>
-        </p>
-      )}
-
       <div class="riga">
         <span class={inPericolo ? 'numero pericolo' : 'numero'}>
           {s.pf}
