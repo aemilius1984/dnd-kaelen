@@ -14,8 +14,30 @@ const { titolo, attiva } = Astro.props;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script is:inline>
+      // Deve girare prima del primo rendering, quindi non può importare
+      // src/lib/tema.ts: la regola è duplicata a mano. Vedi il commento in
+      // risolviTema().
+      (function () {
+        let salvato = null;
+        try {
+          salvato = localStorage.getItem('kaelen:tema');
+        } catch {
+          // storage negato o non disponibile: resta il valore nullo già impostato
+        }
+        const chiaro = window.matchMedia('(prefers-color-scheme: light)').matches;
+        const tema =
+          salvato === 'tempesta' || salvato === 'pergamena'
+            ? salvato
+            : chiaro
+              ? 'pergamena'
+              : 'tempesta';
+        document.documentElement.dataset.tema = tema;
+      })();
+    </script>
     <meta name="robots" content="noindex, nofollow" />
-    <meta name="theme-color" content="#0b0d10" />
+    <meta name="theme-color" content="#0a0c10" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#efe7d6" media="(prefers-color-scheme: light)" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />

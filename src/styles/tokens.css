@@ -1,18 +1,54 @@
-:root {
-  --fondo: #0b0d10;
-  --superficie: #14181d;
-  --superficie-alta: #1c2229;
-  --bordo: #2b333c;
+/* Tempesta è anche il ripiego: senza JavaScript, o prima che lo script
+ * inline scriva data-tema, la pagina è già scura e leggibile. */
+:root,
+:root[data-tema='tempesta'] {
+  --fondo: #0a0c10;
+  --superficie: #161c24;
+  --superficie-alta: #1e2732;
+  --bordo: #2c3745;
   --testo: #e8e3d9;
-  --testo-tenue: #a9a396;
-  --bronzo: #c9873f;
-  --lampo: #6fd3e0;
-  --spento: #7a3b3b;
+  --testo-tenue: #9aa4b2;
+  --lampo: #9fd8f0;
+  --ambra: #e2a24a;
+  --oro: #f0c27a;
   --allerta: #d9694f;
+  --spento: #7a3b3b;
+  --carta: #1a1610;
+  --inchiostro: #d8cdb4;
+}
+
+:root[data-tema='pergamena'] {
+  --fondo: #efe7d6;
+  --superficie: #f7f1e3;
+  --superficie-alta: #e4dac4;
+  --bordo: #cbbea2;
+  --testo: #241e16;
+  --testo-tenue: #6b6152;
+  --lampo: #1f5e77;
+  --ambra: #9a5b12;
+  --oro: #7a5410;
+  --allerta: #9c2f1b;
+  --spento: #b08a86;
+  --carta: #f3ead6;
+  --inchiostro: #241e16;
+}
+
+:root {
   --raggio: 10px;
   --spazio: 0.75rem;
+  --misura: 34rem;
   --font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-numeri: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, monospace;
+  --font-display: var(--font);
+  --font-testo: var(--font);
+  color-scheme: dark;
+  /* Alias temporaneo: Sezione.astro e TabBar.astro leggono ancora
+   * --bronzo. Rimosso quando quei due componenti spariscono (Task 8). */
+  --bronzo: var(--ambra);
+}
+
+:root[data-tema='pergamena'] {
+  color-scheme: light;
 }
 
 * {
@@ -42,7 +78,7 @@ h1 {
 }
 h2 {
   font-size: 1.05rem;
-  color: var(--bronzo);
+  color: var(--ambra);
   margin: 0;
 }
 a {
@@ -97,7 +133,7 @@ button {
   cursor: pointer;
 }
 button:active {
-  background: var(--bronzo);
+  background: var(--ambra);
   color: var(--fondo);
 }
 
@@ -150,7 +186,7 @@ button:active {
 }
 .avviso {
   background: var(--superficie-alta);
-  border-left: 3px solid var(--bronzo);
+  border-left: 3px solid var(--ambra);
   padding: 0.5rem 0.6rem;
   font-size: 0.9rem;
 }
@@ -232,7 +268,7 @@ button[disabled] {
 .pool input {
   width: 22px;
   height: 22px;
-  accent-color: var(--bronzo);
+  accent-color: var(--ambra);
 }
 
 /* Stesso motivo di .pf-pannello / .risorse-isola: con client:only="preact"
