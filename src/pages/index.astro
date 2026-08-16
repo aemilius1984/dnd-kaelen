@@ -9,6 +9,7 @@ import Capacita from '@/components/Capacita.astro';
 import PfTracker from '@/islands/PfTracker';
 import Risorse from '@/islands/Risorse';
 import PreparatiPicker from '@/islands/PreparatiPicker';
+import PreparatiVisibili from '@/islands/PreparatiVisibili';
 import Borsa from '@/islands/Borsa';
 import Note from '@/islands/Note';
 import type { Personaggio } from '@/lib/schema';
@@ -46,13 +47,19 @@ const conTesto = (slug: string) => {
 };
 
 const trucchetti = pg.trucchetti.map(conTesto);
-const preparati = pg.preparatiIniziali.map(conTesto);
 const dominio = pg.dominio.map(conTesto);
 
 const pool = tutte
   .map((m) => ({ slug: m.id, nome: m.data.nome, livello: m.data.livello, dominio: m.data.dominio }))
   .filter((m) => m.livello > 0 && !m.dominio)
   .sort((a, b) => a.livello - b.livello || a.nome.localeCompare(b.nome, 'it'));
+
+// Il testo completo di TUTTI gli incantesimi del pool, non solo dei sei
+// preparati all'avvio: dopo uno scambio a fine Riposo Lungo il giocatore deve
+// vedere tempo di lancio, gittata, TS e danno anche del nuovo incantesimo, non
+// solo il nome. Sono tutti presenti in HTML in build; PreparatiVisibili
+// mostra/nasconde in base allo stato — vedi Fix 2 del rapporto.
+const preparatiPool = pool.map((m) => conTesto(m.slug));
 
 // `pg` è già normalizzato a slug stringa nel Task 6: è la stessa forma che le isole
 // ricevono nel blocco JSON, quindi l'hash è stabile fra build identiche. Hash solo
@@ -102,9 +109,14 @@ const percezione = percezionePassiva(pg);
 
   <Sezione titolo="Incantesimi" aperta>
     <TabellaIncantesimi titolo="Trucchetti" incantesimi={trucchetti} />
-    <TabellaIncantesimi titolo="Preparati" incantesimi={preparati} />
+    <TabellaIncantesimi
+      titolo="Preparati"
+      incantesimi={preparatiPool}
+      visibiliDiDefault={pg.preparatiIniziali}
+    />
     <TabellaIncantesimi titolo="Dominio (sempre preparati)" incantesimi={dominio} />
   </Sezione>
+  <PreparatiVisibili client:only="preact" />
 
   <Sezione titolo="Risorse e riposi" aperta>
     <div class="risorse-isola">
