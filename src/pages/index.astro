@@ -21,7 +21,7 @@ import {
   percezionePassiva,
   segno,
 } from '@/lib/derive';
-import { hashDati } from '@/lib/sheet-version';
+import { campiVersione, hashDati } from '@/lib/sheet-version';
 
 const voce = await getEntry('character', 'kaelen');
 if (!voce) throw new Error('Scheda di Kaelen non trovata');
@@ -55,8 +55,10 @@ const pool = tutte
   .sort((a, b) => a.livello - b.livello || a.nome.localeCompare(b.nome, 'it'));
 
 // `pg` è già normalizzato a slug stringa nel Task 6: è la stessa forma che le isole
-// ricevono nel blocco JSON, quindi l'hash è stabile fra build identiche.
-const sheetVersion = hashDati(JSON.stringify({ pg, pool }));
+// ricevono nel blocco JSON, quindi l'hash è stabile fra build identiche. Hash solo
+// sui campi da cui `StatoSessione` dipende (vedi campiVersione): correggere un
+// refuso nelle capacità o nelle reazioni non deve azzerare la sessione salvata.
+const sheetVersion = hashDati(JSON.stringify(campiVersione(pg, pool)));
 
 // Costruite qui come stringhe/variabili singole: se lasciate come sequenze di
 // espressioni JSX separate, Prettier può spezzarle su più righe e Astro collassa
