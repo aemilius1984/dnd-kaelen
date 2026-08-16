@@ -33,7 +33,14 @@ export default function PfTracker() {
         </span>
       </div>
 
-      <div class="barra-pf" role="img" aria-label={`${s.pf} punti ferita su ${pg.pfMax}`}>
+      <div
+        class="barra-pf"
+        role="progressbar"
+        aria-valuenow={s.pf}
+        aria-valuemin={0}
+        aria-valuemax={pg.pfMax}
+        aria-label="Punti ferita"
+      >
         <div
           class={inPericolo ? 'riempimento pericolo' : 'riempimento'}
           style={{ width: `${percentuale}%` }}

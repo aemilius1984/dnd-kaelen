@@ -200,25 +200,6 @@ button:active {
 .pf .numero.pericolo {
   color: var(--allerta);
 }
-.pf .temp {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  justify-content: center;
-  color: var(--testo-tenue);
-  font-size: 0.9rem;
-  margin-top: 0.4rem;
-}
-.pf input[type='number'] {
-  width: 4rem;
-  min-height: 44px;
-  background: var(--superficie-alta);
-  color: var(--testo);
-  border: 1px solid var(--bordo);
-  border-radius: var(--raggio);
-  text-align: center;
-  font: inherit;
-}
 .avviso {
   background: var(--superficie-alta);
   border-left: 3px solid var(--ambra);
@@ -605,10 +586,12 @@ dialog.azioni input[type='number'] {
   background: var(--superficie);
 }
 
-/* Barra di riempimento dei PF: il numero resta la fonte di verità (è
- * accessibile via testo), la barra è un rinforzo visivo aggiunto in sola
- * lettura dal Task 8 — `role="img"` con etichetta sul contenitore, la
- * barra interna è puramente decorativa. */
+/* Barra di riempimento dei PF: il numero resta la fonte di verità testuale,
+ * la barra è un rinforzo visivo aggiunto in sola lettura dal Task 8 —
+ * `role="progressbar"` con `aria-valuenow`/min/max sul contenitore, così
+ * la tecnologia assistiva annuncia il nuovo valore quando il pannello
+ * applica un danno, invece di dover rileggere un'etichetta intera. La
+ * barra interna resta puramente decorativa. */
 .barra-pf {
   width: 100%;
   height: 8px;
