@@ -23,7 +23,11 @@ PWA e utilizzabile offline, stato di sessione in localStorage.
 
 ## Comandi
 
-- `npm run dev` — sviluppo
+- `npm run dev` — sviluppo. I woff2 in `public/fonts/` e le icone PNG del
+  manifest le genera `prebuild`, che gira per `build` e non per `dev`: su un
+  clone fresco `npm run dev` mostra il serif di ripiego e fa 404 sui font e
+  sulle icone finché non si lancia almeno una volta `npm run build` (o
+  direttamente `npm run prebuild`).
 - `npm run preview` — build servita in locale, per verificare offline/PWA
 - `npm test` — Vitest
 - `npm run gate` — check + test + build

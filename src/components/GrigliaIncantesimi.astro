@@ -2,6 +2,10 @@
 import type { Incantesimo } from '@/lib/schema';
 import { simbolo } from '@/lib/sigilli';
 
+// Dipendenza: la pagina ospite deve montare `Sprite.astro`, una volta sola e
+// prima di questa griglia. I sigilli sono `<use href="#sig-…">` e senza il
+// foglio di simboli restano riquadri vuoti, senza alcun errore che lo dica.
+
 interface Props {
   incantesimi: (Incantesimo & { slug: string; testo: string })[];
   titolo: string;
