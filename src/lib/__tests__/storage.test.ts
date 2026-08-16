@@ -47,3 +47,17 @@ describe('store del browser', () => {
     expect(secondo.avvisoAzzeramento.value).toBe(true);
   });
 });
+
+import { azzeraSessione, CHIAVE } from '@/lib/storage';
+
+describe('azzeramento della sessione', () => {
+  it('rimuove la chiave di stato senza toccare le preferenze', () => {
+    localStorage.setItem(CHIAVE, '{"pf":3}');
+    localStorage.setItem('kaelen:tema', 'pergamena');
+    const ricarica = vi.fn();
+    azzeraSessione(ricarica);
+    expect(localStorage.getItem(CHIAVE)).toBeNull();
+    expect(localStorage.getItem('kaelen:tema')).toBe('pergamena');
+    expect(ricarica).toHaveBeenCalledOnce();
+  });
+});

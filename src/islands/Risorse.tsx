@@ -8,7 +8,7 @@ import {
   spendiSlot,
   usaRisorsa,
 } from '@/lib/sheet-state';
-import { assicuraInizializzato, azzeraTutto, datiIniziali, muta, stato } from '@/lib/storage';
+import { assicuraInizializzato, datiIniziali, muta, stato } from '@/lib/storage';
 
 function Caselle({
   usate,
@@ -88,15 +88,6 @@ export default function Risorse() {
         </button>
         <button type="button" onClick={() => muta((x) => riposoLungo(x, pg))}>
           Riposo Lungo
-        </button>
-        <button
-          type="button"
-          class="pericoloso"
-          onClick={() => {
-            if (confirm('Azzerare tutta la sessione, note e monete comprese?')) azzeraTutto();
-          }}
-        >
-          Azzera
         </button>
       </div>
     </div>

@@ -64,8 +64,9 @@
   --font-display: 'Marcellus', Georgia, 'Times New Roman', serif;
   --font-testo: 'EB Garamond', Georgia, 'Times New Roman', serif;
   color-scheme: dark;
-  /* Alias temporaneo: Sezione.astro e TabBar.astro leggono ancora
-   * --bronzo. Rimosso quando quei due componenti spariscono (Task 8). */
+  /* Alias temporaneo: Sezione.astro legge ancora --bronzo (TabBar.astro,
+   * che lo leggeva anche lui, è sparito in questo task). Rimosso quando
+   * Sezione.astro cambia (Task 8). */
   --bronzo: var(--ambra);
 }
 
@@ -79,7 +80,7 @@
 
 body {
   margin: 0;
-  padding: 0 var(--spazio) 5rem;
+  padding: 0 var(--spazio) 1.5rem;
   background: var(--fondo);
   color: var(--testo);
   font-family: var(--font);
@@ -259,6 +260,10 @@ button:active {
   gap: 0.5rem;
   margin-top: 0.7rem;
   flex-wrap: wrap;
+}
+.pericoloso {
+  border-color: var(--spento);
+  color: var(--allerta);
 }
 .riposi .pericoloso {
   border-color: var(--spento);

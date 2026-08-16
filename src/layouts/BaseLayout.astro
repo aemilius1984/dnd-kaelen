@@ -1,10 +1,10 @@
 ---
-import TabBar from '@/components/TabBar.astro';
+import Menu from '@/components/Menu.astro';
 import '@/styles/tokens.css';
 
 interface Props {
   titolo: string;
-  attiva: 'scheda' | 'tattiche' | 'background';
+  attiva: 'scheda' | 'personaggio' | 'storia' | 'preparati' | 'note' | null;
 }
 const { titolo, attiva } = Astro.props;
 ---
@@ -44,10 +44,10 @@ const { titolo, attiva } = Astro.props;
     <title>{titolo}</title>
   </head>
   <body>
+    <Menu attiva={attiva} />
     <main>
       <slot />
     </main>
-    <TabBar attiva={attiva} />
     <script is:inline>
       if (
         'serviceWorker' in navigator &&

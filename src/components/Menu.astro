@@ -1,0 +1,116 @@
+---
+import AzioniMenu from '@/islands/AzioniMenu';
+
+interface Props {
+  attiva: 'scheda' | 'personaggio' | 'storia' | 'preparati' | 'note' | null;
+}
+const { attiva } = Astro.props;
+const voci = [
+  { id: 'scheda', href: '/scheda/', testo: 'Scheda' },
+  { id: 'personaggio', href: '/personaggio/', testo: 'Personaggio' },
+  { id: 'storia', href: '/storia/', testo: 'Storia' },
+  { id: 'preparati', href: '/preparati/', testo: 'Preparati' },
+  { id: 'note', href: '/note/', testo: 'Note' },
+] as const;
+---
+
+<details class="menu">
+  <summary aria-label="Apri il menu">
+    <span class="barre" aria-hidden="true"></span>
+  </summary>
+  <nav>
+    <ul>
+      {
+        voci.map((v) => (
+          <li>
+            <a href={v.href} aria-current={attiva === v.id ? 'page' : undefined}>
+              {v.testo}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+    <AzioniMenu client:idle />
+  </nav>
+</details>
+
+<style>
+  /* Overlay costruito con details/summary: si apre, si chiude e si raggiunge
+   * da tastiera senza una riga di JavaScript. */
+  .menu {
+    position: fixed;
+    inset: 0 auto auto 0;
+    z-index: 20;
+  }
+  summary {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    margin: 0.35rem;
+    cursor: pointer;
+    border-radius: var(--raggio);
+    background: color-mix(in srgb, var(--superficie) 78%, transparent);
+    border: 1px solid var(--bordo);
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+  .barre,
+  .barre::before,
+  .barre::after {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: var(--testo);
+    content: '';
+  }
+  .barre::before {
+    transform: translateY(-6px);
+  }
+  .barre::after {
+    transform: translateY(4px);
+  }
+  .menu[open] .barre {
+    background: transparent;
+  }
+  .menu[open] .barre::before {
+    transform: rotate(45deg);
+  }
+  .menu[open] .barre::after {
+    transform: rotate(-45deg) translateY(-1px);
+  }
+  nav {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: var(--fondo);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1.4rem;
+    padding: 4rem var(--spazio) 2rem;
+  }
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  nav a {
+    display: block;
+    padding: 0.7rem 0;
+    font-family: var(--font-display);
+    font-size: 1.7rem;
+    color: var(--testo);
+    text-decoration: none;
+    border-bottom: 1px solid var(--bordo);
+  }
+  nav a[aria-current='page'] {
+    color: var(--ambra);
+  }
+</style>
