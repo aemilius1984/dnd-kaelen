@@ -10,7 +10,6 @@
     "prebuild": "node scripts/build-icons.mjs",
     "build": "astro build && node scripts/build-sw.mjs",
     "preview": "astro preview",
-    "astro": "astro",
     "test": "vitest run",
     "check": "astro check && tsc -p functions --noEmit && eslint . && prettier --check .",
     "gate": "npm run check && npm run test && npm run build"
