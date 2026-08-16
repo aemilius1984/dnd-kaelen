@@ -1,0 +1,180 @@
+/* La Storia è l'unica pagina a lettura lunga: prende un foglio di stile
+ * proprio invece di gonfiare i token condivisi. Carta e inchiostro sono
+ * token tematizzati, quindi la pagina segue Tempesta o Pergamena senza
+ * conoscerli. */
+.storia {
+  max-width: var(--misura);
+  margin: 0 auto;
+  padding: 3.5rem 0 4rem;
+  font-family: var(--font-testo);
+  font-size: 1.12rem;
+  line-height: 1.62;
+  color: var(--inchiostro);
+  background:
+    radial-gradient(circle at 18% 12%, rgb(120 100 60 / 0.07), transparent 55%),
+    radial-gradient(circle at 82% 68%, rgb(120 100 60 / 0.06), transparent 55%), var(--carta);
+}
+.storia > * {
+  padding-inline: var(--spazio);
+}
+
+.testata {
+  text-align: center;
+  border-bottom: 3px double var(--bordo);
+  padding-bottom: 0.8rem;
+  margin-bottom: 0.6rem;
+}
+.testata h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2.4rem, 12vw, 4rem);
+  letter-spacing: 0.06em;
+  margin: 0;
+  color: var(--inchiostro);
+}
+.testata .occhiello {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--testo-tenue);
+  margin: 0 0 0.3rem;
+}
+.testata .riga-data {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--testo-tenue);
+  border-top: 1px solid var(--bordo);
+  margin-top: 0.6rem;
+  padding-top: 0.35rem;
+}
+
+.sommario {
+  margin: 1.5rem 0 2.5rem;
+}
+.sommario h2 {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--testo-tenue);
+  margin: 0 0 0.6rem;
+}
+.sommario ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: capitolo;
+}
+.sommario li {
+  counter-increment: capitolo;
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.3rem 0;
+}
+.sommario li::before {
+  content: counter(capitolo, upper-roman);
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  color: var(--ambra);
+  min-width: 2.2rem;
+}
+.sommario .filo {
+  flex: 1;
+  border-bottom: 1px dotted var(--bordo);
+  transform: translateY(-0.25rem);
+}
+.sommario a {
+  color: var(--inchiostro);
+  text-decoration: none;
+}
+
+.capitolo {
+  margin-bottom: 2.6rem;
+  scroll-margin-top: 1rem;
+}
+.capitolo h2 {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  color: var(--inchiostro);
+  margin: 0 0 0.2rem;
+}
+.capitolo h2::after {
+  content: '';
+  display: block;
+  width: 3.5rem;
+  border-bottom: 2px solid var(--ambra);
+  margin-top: 0.4rem;
+}
+.capitolo p:first-of-type::first-letter {
+  float: left;
+  font-family: var(--font-display);
+  font-size: 3.6rem;
+  line-height: 0.82;
+  padding: 0.1rem 0.45rem 0 0;
+  color: var(--ambra);
+}
+.capitolo p {
+  margin: 0 0 0.9rem;
+  hyphens: auto;
+}
+.capitolo em {
+  font-style: italic;
+}
+.capitolo blockquote {
+  margin: 1.2rem 0;
+  padding-left: 1rem;
+  border-left: 2px solid var(--ambra);
+  font-style: italic;
+  color: var(--testo-tenue);
+}
+
+/* Incisione: stesso file della Home, trattato in CSS. Nessun secondo asset,
+ * e il ritratto resta pulito ovunque altro. */
+.incisione {
+  position: relative;
+  margin: 1.6rem 0;
+  padding: 0;
+  border: 1px solid var(--bordo);
+}
+.incisione img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: grayscale(1) contrast(1.35) sepia(0.45) brightness(1.04);
+}
+.incisione::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgb(30 22 12 / 0.35) 0 1px,
+    transparent 1px 3px
+  );
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+.incisione figcaption {
+  font-family: var(--font-display);
+  font-size: 0.74rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--testo-tenue);
+  padding: 0.5rem var(--spazio);
+  border-top: 1px solid var(--bordo);
+  text-align: center;
+}
+
+@media (min-width: 700px) {
+  .storia {
+    font-size: 1.18rem;
+  }
+  .storia > * {
+    padding-inline: 2rem;
+  }
+}
