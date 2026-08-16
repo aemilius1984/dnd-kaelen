@@ -23,7 +23,16 @@ export default function PannelloAzioni() {
   const s = stato.value;
   const finestra = useRef<HTMLDialogElement>(null);
   const [quanto, setQuanto] = useState(0);
-  const [tirato, setTirato] = useState(0);
+  // Testo e non numero: il campo ha `min="1"` e deve poter restare vuoto
+  // mentre lo si ridigita, senza passare per lo 0 che quel minimo rifiuta.
+  // Vale 1 all'apertura, il più piccolo totale che si possa tirare.
+  const [tirato, setTirato] = useState('1');
+  // La bozza del campo dei PF temporanei, che è l'unico controllato su un
+  // valore salvato: `null` significa "mostra quello che dice lo stato",
+  // stringa vuota "l'utente lo sta cancellando, non toccare niente". Senza
+  // questo, `onInput` riscriveva lo stato a ogni battuta e cancellare il
+  // contenuto faceva ricomparire uno 0 sotto le dita.
+  const [bozzaTemporanei, setBozzaTemporanei] = useState<string | null>(null);
 
   const dadiRimasti = pg.numeroDadiVita - s.dadiVitaSpesi;
 
@@ -74,8 +83,19 @@ export default function PannelloAzioni() {
           <input
             type="number"
             min="0"
-            value={s.pfTemporanei}
-            onInput={(e) => muta((x) => impostaPfTemporanei(x, Number(e.currentTarget.value)))}
+            value={bozzaTemporanei ?? String(s.pfTemporanei)}
+            onInput={(e) => {
+              const grezzo = e.currentTarget.value;
+              // Un campo vuoto non è "zero PF temporanei", è una cifra a
+              // metà: lo stato non si tocca finché non arriva un numero.
+              if (grezzo === '') {
+                setBozzaTemporanei('');
+                return;
+              }
+              setBozzaTemporanei(null);
+              muta((x) => impostaPfTemporanei(x, Number(grezzo)));
+            }}
+            onBlur={() => setBozzaTemporanei(null)}
           />
         </label>
 
@@ -151,12 +171,12 @@ export default function PannelloAzioni() {
             min="1"
             aria-label="Totale tirato al tavolo"
             value={tirato}
-            onInput={(e) => setTirato(Number(e.currentTarget.value))}
+            onInput={(e) => setTirato(e.currentTarget.value)}
           />
           <button
             type="button"
             disabled={dadiRimasti === 0}
-            onClick={() => muta((x) => spendiDadoVitaConCura(x, pg, tirato))}
+            onClick={() => muta((x) => spendiDadoVitaConCura(x, pg, Number(tirato)))}
           >
             Spendi
           </button>
