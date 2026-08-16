@@ -21,9 +21,4 @@ const background = defineCollection({
   schema: capitoloSchema,
 });
 
-const tactics = defineCollection({
-  loader: glob({ base: './src/content/tactics', pattern: '**/*.md' }),
-  schema: capitoloSchema,
-});
-
-export const collections = { character, spells, background, tactics };
+export const collections = { character, spells, background };

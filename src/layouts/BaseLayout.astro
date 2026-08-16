@@ -44,7 +44,7 @@ const { titolo, attiva } = Astro.props;
     <title>{titolo}</title>
   </head>
   <body>
-    <Menu attiva={attiva} />
+    {attiva !== null && <Menu attiva={attiva} />}
     <main>
       <slot />
     </main>

@@ -89,6 +89,13 @@ body {
   -webkit-text-size-adjust: 100%;
 }
 
+/* La splash è a tutto schermo: il padding orizzontale del body la
+ * rimpicciolirebbe di 1,5rem su ogni lato. */
+body:has(.splash) {
+  padding: 0;
+  overflow: hidden;
+}
+
 h1,
 h2,
 h3 {

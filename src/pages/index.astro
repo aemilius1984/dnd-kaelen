@@ -1,167 +1,277 @@
 ---
-import { getCollection, getEntry } from 'astro:content';
+import { getImage } from 'astro:assets';
+import { getEntry } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import Sezione from '@/components/Sezione.astro';
-import Statistiche from '@/components/Statistiche.astro';
-import Attacchi from '@/components/Attacchi.astro';
-import TabellaIncantesimi from '@/components/TabellaIncantesimi.astro';
-import Capacita from '@/components/Capacita.astro';
-import PfTracker from '@/islands/PfTracker';
-import Risorse from '@/islands/Risorse';
-import PreparatiPicker from '@/islands/PreparatiPicker';
-import PreparatiVisibili from '@/islands/PreparatiVisibili';
-import Borsa from '@/islands/Borsa';
-import Note from '@/islands/Note';
-import type { Personaggio } from '@/lib/schema';
-import {
-  attaccoIncantesimi,
-  capacitaTrasporto,
-  cdIncantesimi,
-  classeArmatura,
-  iniziativa,
-  percezionePassiva,
-  segno,
-} from '@/lib/derive';
-import { campiVersione, hashDati } from '@/lib/sheet-version';
+import mobile from '@/assets/kaelen-splash-mobile.webp';
+import desktop from '@/assets/kaelen-splash-desktop.webp';
 
 const voce = await getEntry('character', 'kaelen');
 if (!voce) throw new Error('Scheda di Kaelen non trovata');
+const pg = voce.data;
 
-// `reference()` trasforma gli slug in oggetti { id, collection }. Li riportiamo a
-// stringhe: così questo oggetto combacia con il tipo `Personaggio` usato da derive,
-// dai componenti e dallo stato di sessione, e ne esiste una sola forma in tutto il sito.
-const dati = voce.data;
-const pg: Personaggio = {
-  ...dati,
-  trucchetti: dati.trucchetti.map((r) => r.id),
-  preparatiIniziali: dati.preparatiIniziali.map((r) => r.id),
-  dominio: dati.dominio.map((r) => r.id),
-};
-
-const tutte = await getCollection('spells');
-const perSlug = new Map(tutte.map((m) => [m.id, m]));
-const conTesto = (slug: string) => {
-  const m = perSlug.get(slug);
-  if (!m) throw new Error(`Incantesimo mancante: ${slug}`);
-  return { ...m.data, slug, testo: (m.body ?? '').trim() };
-};
-
-const trucchetti = pg.trucchetti.map(conTesto);
-const dominio = pg.dominio.map(conTesto);
-
-const pool = tutte
-  .map((m) => ({ slug: m.id, nome: m.data.nome, livello: m.data.livello, dominio: m.data.dominio }))
-  .filter((m) => m.livello > 0 && !m.dominio)
-  .sort((a, b) => a.livello - b.livello || a.nome.localeCompare(b.nome, 'it'));
-
-// Il testo completo di TUTTI gli incantesimi del pool, non solo dei sei
-// preparati all'avvio: dopo uno scambio a fine Riposo Lungo il giocatore deve
-// vedere tempo di lancio, gittata, TS e danno anche del nuovo incantesimo, non
-// solo il nome. Sono tutti presenti in HTML in build; PreparatiVisibili
-// mostra/nasconde in base allo stato — vedi Fix 2 del rapporto.
-const preparatiPool = pool.map((m) => conTesto(m.slug));
-
-// `pg` è già normalizzato a slug stringa nel Task 6: è la stessa forma che le isole
-// ricevono nel blocco JSON, quindi l'hash è stabile fra build identiche. Hash solo
-// sui campi da cui `StatoSessione` dipende (vedi campiVersione): correggere un
-// refuso nelle capacità o nelle reazioni non deve azzerare la sessione salvata.
-const sheetVersion = hashDati(JSON.stringify(campiVersione(pg, pool)));
-
-// Costruite qui come stringhe/variabili singole: se lasciate come sequenze di
-// espressioni JSX separate, Prettier può spezzarle su più righe e Astro collassa
-// lo spazio (o addirittura la newline) tra loro, incollando le parole.
-const sottotitolo = `${pg.specie} ${pg.taglia} · ${pg.classe} ${pg.livello} · ${pg.sottoclasse} · ${pg.allineamento} · Divinità: ${pg.divinita}`;
-const equipaggiamentoNote =
-  `Lingue: ${pg.lingue.join(', ')}. Capacità di trasporto: ${capacitaTrasporto(pg)} lb. ${pg.armatura.note ?? ''}`.trim();
-
-const ca = classeArmatura(pg);
-const cd = cdIncantesimi(pg);
-const bonusIncantesimi = segno(attaccoIncantesimi(pg));
-const bonusIniziativa = segno(iniziativa(pg));
-const percezione = percezionePassiva(pg);
+// Art direction vera: due immagini diverse, non due ritagli della stessa.
+// <Picture> non copre questo caso, quindi il <picture> è scritto a mano.
+const mob = await getImage({ src: mobile, format: 'webp' });
+const desk = await getImage({ src: desktop, format: 'webp' });
 ---
 
-<BaseLayout titolo="Kaelen — Scheda" attiva="scheda">
-  <h1>{pg.nome}</h1>
-  <p class="tenue">{sottotitolo}</p>
+<BaseLayout titolo="Kaelen" attiva={null}>
+  <div class="splash" id="splash">
+    <picture>
+      <source media="(min-width: 901px)" srcset={desk.src} />
+      <img
+        src={mob.src}
+        width={1170}
+        height={2532}
+        alt="Kaelen sulla prua di una nave durante una tempesta notturna"
+        fetchpriority="high"
+      />
+    </picture>
 
-  <script
-    type="application/json"
-    id="dati-iniziali"
-    set:html={JSON.stringify({ pg, sheetVersion, pool })}
-    is:inline
-  />
+    <div class="lampo" aria-hidden="true"></div>
+    <div class="pioggia" aria-hidden="true"></div>
 
-  <div class="pannello pf-pannello">
-    <PfTracker client:only="preact" />
+    <div class="porte">
+      <p class="nome">{pg.nome}</p>
+      <p class="qualifica">{pg.specie} · {pg.classe} {pg.livello} · {pg.sottoclasse}</p>
+      <nav>
+        <a href="/scheda/">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#sig-maglio"></use></svg>
+          Scheda
+        </a>
+        <a href="/storia/">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#sig-amuleto"></use></svg>
+          Storia
+        </a>
+      </nav>
+    </div>
   </div>
 
-  <div class="pannello sintesi">
-    <div><span class="tenue">CA</span> <span class="valore">{ca}</span></div>
-    <div><span class="tenue">CD</span> <span class="valore">{cd}</span></div>
-    <div><span class="tenue">Inc.</span> <span class="valore">{bonusIncantesimi}</span></div>
-    <div><span class="tenue">Iniz.</span> <span class="valore">{bonusIniziativa}</span></div>
-    <div><span class="tenue">Perc.</span> <span class="valore">{percezione}</span></div>
-    <div><span class="tenue">Vel.</span> <span class="valore">{pg.velocita} ft</span></div>
-  </div>
+  <svg class="sprite" aria-hidden="true" focusable="false">
+    <symbol id="sig-maglio" viewBox="0 0 24 24">
+      <path
+        d="M12 21V11M8.5 11h7M7 4.5h10v4H7zM9.5 4.5v4M14.5 4.5v4"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.4"
+        stroke-linecap="round"></path>
+    </symbol>
+    <symbol id="sig-amuleto" viewBox="0 0 24 24">
+      <path
+        d="M12 3v3M12 21a7 7 0 100-14 7 7 0 000 14zM9.5 10.5l5 5M14.5 10.5l-5 5"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.4"
+        stroke-linecap="round"></path>
+    </symbol>
+  </svg>
 
-  <Sezione titolo="Attacchi" aperta><Attacchi pg={pg} /></Sezione>
-
-  <Sezione titolo="Incantesimi" aperta>
-    <TabellaIncantesimi titolo="Trucchetti" incantesimi={trucchetti} />
-    <TabellaIncantesimi
-      titolo="Preparati"
-      incantesimi={preparatiPool}
-      visibiliDiDefault={pg.preparatiIniziali}
-    />
-    <TabellaIncantesimi titolo="Dominio (sempre preparati)" incantesimi={dominio} />
-  </Sezione>
-  <PreparatiVisibili client:only="preact" />
-
-  <Sezione titolo="Risorse e riposi" aperta>
-    <div class="risorse-isola">
-      <Risorse client:only="preact" />
-    </div>
-  </Sezione>
-
-  <Sezione titolo="Cambia i preparati">
-    <div class="preparati-isola">
-      <PreparatiPicker client:only="preact" />
-    </div>
-  </Sezione>
-
-  <Sezione titolo="Caratteristiche e abilità"><Statistiche pg={pg} /></Sezione>
-
-  <Sezione titolo="Capacità"><Capacita pg={pg} /></Sezione>
-
-  <Sezione titolo="Borsa">
-    <div class="borsa-isola">
-      <Borsa client:only="preact" />
-    </div>
-    <p class="tenue">{equipaggiamentoNote}</p>
-  </Sezione>
-
-  <Sezione titolo="Note di sessione">
-    <div class="note-isola">
-      <Note client:only="preact" />
-    </div>
-  </Sezione>
+  <script is:inline>
+    // Tre comportamenti che il CSS non copre: mostrare l'animazione una sola
+    // volta al giorno, saltarla al primo tocco, ricordare che è stata vista.
+    (function () {
+      const splash = document.getElementById('splash');
+      const oggi = new Date().toISOString().slice(0, 10);
+      let vista;
+      try {
+        vista = localStorage.getItem('kaelen:splash');
+      } catch {
+        vista = null;
+      }
+      if (vista === oggi) splash.classList.add('finita');
+      else {
+        try {
+          localStorage.setItem('kaelen:splash', oggi);
+        } catch {
+          /* storage negato: si rivedrà, non è un danno */
+        }
+      }
+      splash.addEventListener('pointerdown', function () {
+        splash.classList.add('finita');
+      });
+    })();
+  </script>
 </BaseLayout>
 
 <style>
-  .sintesi {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.5rem 0.25rem;
+  .splash {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    background: var(--fondo);
+  }
+  .splash img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 40%;
+    animation: deriva 12s ease-out forwards;
+  }
+  @keyframes deriva {
+    from {
+      transform: scale(1.06);
+    }
+    to {
+      transform: scale(1);
+    }
+  }
+
+  .lampo {
+    position: absolute;
+    inset: 0;
+    background: #cfe3f2;
+    opacity: 0;
+    mix-blend-mode: screen;
+    animation: lampo 9s ease-out 1.6s 2;
+  }
+  @keyframes lampo {
+    0%,
+    100% {
+      opacity: 0;
+    }
+    2% {
+      opacity: 0.5;
+    }
+    5% {
+      opacity: 0.05;
+    }
+    7% {
+      opacity: 0.35;
+    }
+    12% {
+      opacity: 0;
+    }
+  }
+
+  .pioggia {
+    position: absolute;
+    inset: -20% -10%;
+    background-image: repeating-linear-gradient(
+      104deg,
+      transparent 0 6px,
+      rgb(210 228 244 / 0.16) 6px 7px
+    );
+    animation: pioggia 0.9s linear infinite;
+    opacity: 0.5;
+  }
+  @keyframes pioggia {
+    to {
+      transform: translate3d(-24px, 96px, 0);
+    }
+  }
+
+  .porte {
+    position: absolute;
+    inset: auto 0 0 0;
+    padding: 0 var(--spazio) calc(2rem + env(safe-area-inset-bottom));
     text-align: center;
+    opacity: 0;
+    animation: entra 1s ease-out 1.2s forwards;
   }
-  .sintesi .valore {
-    font-size: 1.25rem;
-    display: block;
+  @keyframes entra {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
   }
-  ul {
+  .nome {
+    font-family: var(--font-display);
+    font-size: 2.6rem;
+    letter-spacing: 0.06em;
     margin: 0;
-    padding-left: 1.1rem;
-    font-size: 0.92rem;
+    color: #f2ece0;
+  }
+  .qualifica {
+    margin: 0.1rem 0 1.4rem;
+    font-size: 0.82rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #b9c3cf;
+  }
+  .porte nav {
+    display: flex;
+    gap: 0.8rem;
+    justify-content: center;
+  }
+  .porte a {
+    flex: 1 1 0;
+    max-width: 11rem;
+    min-height: 56px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 0.7rem 0.5rem;
+    border: 1px solid rgb(226 162 74 / 0.55);
+    border-radius: var(--raggio);
+    background: rgb(10 12 16 / 0.55);
+    color: #f2ece0;
+    text-decoration: none;
+    font-family: var(--font-display);
+    letter-spacing: 0.05em;
+  }
+  .porte svg {
+    width: 26px;
+    height: 26px;
+    color: var(--oro);
+  }
+
+  /* Salto: qualunque tocco, o la seconda apertura della giornata, portano
+   * tutto allo stato finale senza attese. */
+  .splash.finita img,
+  .splash.finita .lampo,
+  .splash.finita .porte {
+    animation: none;
+  }
+  .splash.finita .porte {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .splash img,
+    .splash .lampo,
+    .splash .pioggia,
+    .splash .porte {
+      animation: none;
+    }
+    .splash .porte {
+      opacity: 1;
+    }
+    .splash .pioggia {
+      opacity: 0.25;
+    }
+  }
+
+  /* Desktop: la figura sta al centro-destra e il terzo sinistro è cielo
+   * vuoto. Nome e porte vanno lì, non in basso. */
+  @media (min-width: 901px) {
+    .porte {
+      inset: 0 auto 0 0;
+      width: min(34vw, 26rem);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      text-align: left;
+      padding: 0 0 0 4rem;
+    }
+    .porte nav {
+      justify-content: flex-start;
+    }
+    .nome {
+      font-size: 3.6rem;
+    }
+  }
+
+  .sprite {
+    position: absolute;
+    width: 0;
+    height: 0;
   }
 </style>

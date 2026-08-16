@@ -3,17 +3,17 @@ import { getCollection, render } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import Sezione from '@/components/Sezione.astro';
 
-const capitoli = (await getCollection('tactics')).sort((a, b) => a.data.ordine - b.data.ordine);
+const capitoli = (await getCollection('background')).sort((a, b) => a.data.ordine - b.data.ordine);
 const resi = await Promise.all(
   capitoli.map(async (c) => ({ titolo: c.data.titolo, Content: (await render(c)).Content })),
 );
 ---
 
-<BaseLayout titolo="Kaelen — Tattiche" attiva={null}>
-  <h1>Tattiche</h1>
+<BaseLayout titolo="Kaelen — Storia" attiva="storia">
+  <h1>Storia</h1>
   {
     resi.map(({ titolo, Content }) => (
-      <Sezione titolo={titolo} aperta>
+      <Sezione titolo={titolo}>
         <Content />
       </Sezione>
     ))
