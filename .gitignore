@@ -13,3 +13,6 @@ public/icon.svg
 
 # scratch di processo (ledger, brief, report, diff di review)
 .superpowers/
+
+# font self-hosted generati a build-time
+public/fonts/

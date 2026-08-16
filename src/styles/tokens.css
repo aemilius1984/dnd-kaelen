@@ -1,3 +1,25 @@
+@font-face {
+  font-family: 'Marcellus';
+  src: url('/fonts/marcellus-latin-400-normal.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'EB Garamond';
+  src: url('/fonts/eb-garamond-latin-400-normal.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'EB Garamond';
+  src: url('/fonts/eb-garamond-latin-400-italic.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
 /* Tempesta è anche il ripiego: senza JavaScript, o prima che lo script
  * inline scriva data-tema, la pagina è già scura e leggibile. */
 :root,
@@ -39,8 +61,8 @@
   --misura: 34rem;
   --font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-numeri: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, monospace;
-  --font-display: var(--font);
-  --font-testo: var(--font);
+  --font-display: 'Marcellus', Georgia, 'Times New Roman', serif;
+  --font-testo: 'EB Garamond', Georgia, 'Times New Roman', serif;
   color-scheme: dark;
   /* Alias temporaneo: Sezione.astro e TabBar.astro leggono ancora
    * --bronzo. Rimosso quando quei due componenti spariscono (Task 8). */
@@ -69,7 +91,8 @@ body {
 h1,
 h2,
 h3 {
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-weight: 400;
   letter-spacing: 0.01em;
 }
 h1 {
