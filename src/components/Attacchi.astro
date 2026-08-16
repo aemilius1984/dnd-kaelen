@@ -19,7 +19,10 @@ const { pg } = Astro.props;
           <tr>
             <td>{a.nome}</td>
             <td class="num valore">{segno(perColpire(pg, a.id))}</td>
-            <td class="num valore">{dannoTesto(pg, a.id)}</td>
+            <td class="num valore">
+              {dannoTesto(pg, a.id)}
+              <span class="tipo-danno">{a.tipoDanno}</span>
+            </td>
           </tr>
           {a.note && (
             <tr>
@@ -33,3 +36,20 @@ const { pg } = Astro.props;
     }
   </tbody>
 </table>
+
+<style>
+  /* Il tipo di danno va sotto il valore numerico, non in una quarta colonna:
+   * a 390px di larghezza una colonna in più avrebbe stretto "Attacco" al
+   * punto da spezzare i nomi più lunghi (es. "Maglio da guerra, due mani")
+   * su più righe in modo scomodo. Impilato qui la riga resta di un'altezza
+   * prevedibile e il tipo di danno — spesso rilevante per le resistenze —
+   * resta comunque leggibile accanto al numero. */
+  .tipo-danno {
+    display: block;
+    font-family: var(--font);
+    font-weight: 400;
+    font-size: 0.78rem;
+    color: var(--testo-tenue);
+    white-space: nowrap;
+  }
+</style>
