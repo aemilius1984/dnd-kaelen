@@ -1,9 +1,18 @@
-import { readdir, readFile, writeFile } from 'node:fs/promises';
+import { readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { createHash } from 'node:crypto';
 
 const DIST = 'dist';
-const ESTENSIONI = ['.html', '.css', '.js', '.webmanifest', '.png', '.svg'];
+const ESTENSIONI = ['.html', '.css', '.js', '.webmanifest', '.png', '.svg', '.webp', '.woff2'];
+
+// Le immagini grandi non pesano sull'installazione: chi gioca dal telefono
+// non deve scaricare lo splash da desktop per andare offline. Sopra la
+// soglia si mettono in cache alla prima visualizzazione, per via della
+// strategia stale-while-revalidate già attiva nel fetch handler.
+// 200 KiB: sotto lo splash mobile (~161 KiB) e il ritratto di /personaggio/
+// (~164 KiB), sopra lo splash desktop (~213 KiB) — verificato sui file
+// prodotti da `astro build`, non sui sorgenti non ottimizzati.
+const SOGLIA_PRECACHE = 200 * 1024;
 
 async function elenca(cartella) {
   const voci = await readdir(cartella, { withFileTypes: true });
@@ -29,6 +38,8 @@ for (const f of file) {
   let url = '/' + relative(DIST, f).split(/[\\/]/).join('/');
   if (url.endsWith('/index.html')) url = url.slice(0, -'index.html'.length);
   if (url.endsWith('/sw.js')) continue;
+  const { size } = await stat(f);
+  if (size > SOGLIA_PRECACHE) continue;
   percorsi.set(url, f);
 }
 
