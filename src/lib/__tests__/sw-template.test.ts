@@ -115,6 +115,17 @@ describe('service worker offline', () => {
     expect(await risposta?.text()).toContain('export const a');
   });
 
+  it('non lascia una navigazione senza risposta nemmeno con la home fuori cache', async () => {
+    // Non succede finché `/` è nel precache, ma è l'ultima rete di sicurezza:
+    // `respondWith(undefined)` diventerebbe un errore di rete muto.
+    const senzaHome = { '/scheda/': cache['/scheda/'] };
+    const sw = serviceWorkerOffline(senzaHome);
+    const risposta = await sw(richiesta('/rotta-nuova/', 'navigate'));
+
+    expect(risposta?.status).toBe(503);
+    expect(risposta?.headers.get('Content-Type')).toContain('text/plain');
+  });
+
   it('non intercetta le richieste verso altre origini', async () => {
     const sw = serviceWorkerOffline(cache);
     const risposta = await sw({
