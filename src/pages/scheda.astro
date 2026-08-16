@@ -4,12 +4,13 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 import Sezione from '@/components/Sezione.astro';
 import Statistiche from '@/components/Statistiche.astro';
 import Attacchi from '@/components/Attacchi.astro';
-import TabellaIncantesimi from '@/components/TabellaIncantesimi.astro';
+import GrigliaIncantesimi from '@/components/GrigliaIncantesimi.astro';
 import Capacita from '@/components/Capacita.astro';
+import Sprite from '@/components/Sprite.astro';
 import PfTracker from '@/islands/PfTracker';
 import Risorse from '@/islands/Risorse';
 import PreparatiPicker from '@/islands/PreparatiPicker';
-import PreparatiVisibili from '@/islands/PreparatiVisibili';
+import ControlliLancio from '@/islands/ControlliLancio';
 import Borsa from '@/islands/Borsa';
 import Note from '@/islands/Note';
 import type { Personaggio } from '@/lib/schema';
@@ -57,8 +58,8 @@ const pool = tutte
 // Il testo completo di TUTTI gli incantesimi del pool, non solo dei sei
 // preparati all'avvio: dopo uno scambio a fine Riposo Lungo il giocatore deve
 // vedere tempo di lancio, gittata, TS e danno anche del nuovo incantesimo, non
-// solo il nome. Sono tutti presenti in HTML in build; PreparatiVisibili
-// mostra/nasconde in base allo stato — vedi Fix 2 del rapporto.
+// solo il nome. Sono tutti presenti in HTML in build; ControlliLancio
+// mostra/nasconde in base allo stato.
 const preparatiPool = pool.map((m) => conTesto(m.slug));
 
 // `pg` è già normalizzato a slug stringa nel Task 6: è la stessa forma che le isole
@@ -82,6 +83,7 @@ const percezione = percezionePassiva(pg);
 ---
 
 <BaseLayout titolo="Kaelen — Scheda" attiva="scheda">
+  <Sprite />
   <h1>{pg.nome}</h1>
   <p class="tenue">{sottotitolo}</p>
 
@@ -108,15 +110,11 @@ const percezione = percezionePassiva(pg);
   <Sezione titolo="Attacchi" aperta><Attacchi pg={pg} /></Sezione>
 
   <Sezione titolo="Incantesimi" aperta>
-    <TabellaIncantesimi titolo="Trucchetti" incantesimi={trucchetti} />
-    <TabellaIncantesimi
-      titolo="Preparati"
-      incantesimi={preparatiPool}
-      visibiliDiDefault={pg.preparatiIniziali}
-    />
-    <TabellaIncantesimi titolo="Dominio (sempre preparati)" incantesimi={dominio} />
+    <GrigliaIncantesimi titolo="Trucchetti" incantesimi={trucchetti} />
+    <GrigliaIncantesimi titolo="Preparati" incantesimi={preparatiPool} controllate />
+    <GrigliaIncantesimi titolo="Dominio" incantesimi={dominio} />
   </Sezione>
-  <PreparatiVisibili client:only="preact" />
+  <ControlliLancio client:only="preact" />
 
   <Sezione titolo="Risorse e riposi" aperta>
     <div class="risorse-isola">

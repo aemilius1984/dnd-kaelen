@@ -373,3 +373,99 @@ button[disabled] {
   font: inherit;
   resize: vertical;
 }
+.titolo-griglia {
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--testo-tenue);
+  margin: 1rem 0 0.5rem;
+}
+.griglia {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(5.2rem, 1fr));
+  gap: 0.5rem;
+}
+.sigillo {
+  min-width: 0;
+}
+.sigillo > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  min-height: 76px;
+  padding: 0.5rem 0.25rem;
+  border: 1px solid var(--bordo);
+  border-radius: var(--raggio);
+  background: var(--superficie);
+  position: relative;
+}
+.sigillo > summary::-webkit-details-marker {
+  display: none;
+}
+.sigillo svg {
+  width: 30px;
+  height: 30px;
+  color: var(--ambra);
+}
+.sigillo .nome {
+  font-size: 0.68rem;
+  line-height: 1.15;
+  text-align: center;
+  color: var(--testo);
+  overflow-wrap: anywhere;
+}
+.sigillo .livello {
+  position: absolute;
+  top: 3px;
+  right: 5px;
+  font-family: var(--font-numeri);
+  font-size: 0.6rem;
+  color: var(--testo-tenue);
+}
+.sigillo[open] > summary {
+  border-color: var(--ambra);
+}
+/* La carta aperta esce dalla cella e occupa tutta la riga: a 390px una
+ * scheda dentro una colonna da 5rem sarebbe illeggibile. */
+.sigillo[open] {
+  grid-column: 1 / -1;
+}
+.carta {
+  border: 1px solid var(--ambra);
+  border-top: none;
+  border-radius: 0 0 var(--raggio) var(--raggio);
+  padding: 0.6rem;
+  background: var(--superficie);
+}
+.carta p {
+  margin: 0.3rem 0;
+  font-size: 0.92rem;
+}
+.carta .meta {
+  font-size: 0.82rem;
+}
+.lancio {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-top: 0.6rem;
+}
+.annulla {
+  position: fixed;
+  inset: auto 0 calc(5.5rem + env(safe-area-inset-bottom)) 0;
+  z-index: 15;
+  margin: 0 auto;
+  width: fit-content;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.5rem 0.4rem 0.9rem;
+  border: 1px solid var(--ambra);
+  border-radius: var(--raggio);
+  background: var(--superficie-alta);
+  font-size: 0.9rem;
+}

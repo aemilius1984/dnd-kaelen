@@ -1,0 +1,42 @@
+---
+import type { Incantesimo } from '@/lib/schema';
+import { simbolo } from '@/lib/sigilli';
+
+interface Props {
+  incantesimi: (Incantesimo & { slug: string; testo: string })[];
+  titolo: string;
+  /** Se vero, ogni blocco porta `data-slug` e parte nascosto se non è fra i
+   *  preparati iniziali: l'isola ControlliLancio mostra quelli davvero
+   *  preparati, così tutte le regole restano in HTML statico. */
+  controllate?: boolean;
+}
+const { incantesimi, titolo, controllate = false } = Astro.props;
+---
+
+<h3 class="titolo-griglia">{titolo}</h3>
+<div class="griglia">
+  {
+    incantesimi.map((m) => (
+      <details class="sigillo" data-slug={controllate ? m.slug : undefined}>
+        <summary>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <use href={`#${simbolo(m.slug, m.tag)}`} />
+          </svg>
+          <span class="nome">{m.nome}</span>
+          <span class="livello">{m.livello === 0 ? 'T' : m.livello}</span>
+        </summary>
+        <div class="carta">
+          <p class="meta tenue">
+            {m.lancio} · {m.gittata} · {m.componenti}
+            {m.concentrazione && ' · concentrazione'}
+            {m.tiro && ` · TS ${m.tiro}`}
+            {m.danno && ` · ${m.danno}`}
+          </p>
+          <p>{m.testo}</p>
+          {m.slotSuperiore && <p class="tenue">Slot superiore: {m.slotSuperiore}</p>}
+          <div class="lancio" data-lancio={m.slug} data-livello={m.livello} />
+        </div>
+      </details>
+    ))
+  }
+</div>
