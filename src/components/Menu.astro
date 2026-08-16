@@ -15,8 +15,10 @@ const voci = [
 ---
 
 <details class="menu">
-  <summary aria-label="Apri il menu">
+  <summary>
     <span class="barre" aria-hidden="true"></span>
+    <span class="etichetta apri">Apri il menu</span>
+    <span class="etichetta chiudi">Chiudi il menu</span>
   </summary>
   <nav>
     <ul>
@@ -56,6 +58,24 @@ const voci = [
     border: 1px solid var(--bordo);
   }
   summary::-webkit-details-marker {
+    display: none;
+  }
+  /* Il nome accessibile del pulsante deve dire cosa fa *adesso*: un
+   * `aria-label` fisso resterebbe «Apri il menu» anche a menu aperto. Le due
+   * etichette sono testo vero, nascoste alla vista e non al lettore di
+   * schermo; `display: none` toglie dal calcolo del nome quella che non vale
+   * in questo stato, quindi ne resta sempre esattamente una. Fuori dal CSS,
+   * senza una riga di JavaScript. */
+  .etichetta {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .menu:not([open]) .chiudi,
+  .menu[open] .apri {
     display: none;
   }
   .barre,

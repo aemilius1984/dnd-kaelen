@@ -77,7 +77,8 @@
   display: flex;
   align-items: baseline;
   gap: 0.4rem;
-  padding: 0.3rem 0;
+  /* Lo scarto verticale è passato dentro il link, che deve essere lui il
+   * bersaglio da 44px: vedi `.sommario a`. */
 }
 .sommario li::before {
   content: counter(capitolo, upper-roman);
@@ -91,9 +92,14 @@
   border-bottom: 1px dotted var(--bordo);
   transform: translateY(-0.25rem);
 }
+/* 44px di bersaglio come ovunque nel ramo (vedi `button` in tokens.css). Il
+ * testo del sommario è alto 1.12rem × 1.62 = 29px: mancano 15px, mezzo rem
+ * sopra e mezzo sotto (16px) li copre con un pixel di margine. */
 .sommario a {
+  display: block;
   color: var(--inchiostro);
   text-decoration: none;
+  padding: 0.5rem 0;
 }
 
 .capitolo {
