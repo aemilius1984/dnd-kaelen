@@ -85,6 +85,16 @@ body {
   -webkit-text-size-adjust: 100%;
 }
 
+/* Il pulsante ⚡ delle azioni (PannelloAzioni) è `position: fixed` in basso a
+ * destra: 60px di diametro più 1rem di scarto dal fondo, quindi occupa gli
+ * ultimi ~76px dello schermo. Con 1.5rem di padding l'ultimo blocco della
+ * Scheda — la `.altrove` con i suoi 2rem di margine inferiore — gli finisce
+ * sotto a fine scroll. Lo scarto si restituisce solo alle pagine che il
+ * pulsante ce l'hanno: sulle altre sarebbe spazio morto in fondo. */
+body:has(.apri-azioni) {
+  padding-bottom: 6rem;
+}
+
 /* La splash è a tutto schermo: il padding orizzontale del body la
  * rimpicciolirebbe di 1,5rem su ogni lato. */
 body:has(.splash) {
@@ -232,17 +242,6 @@ button:active {
   min-height: 346px;
 }
 
-.risorsa {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.35rem 0;
-  border-bottom: 1px solid var(--bordo);
-  font-size: 0.92rem;
-}
-.risorsa > span:first-child {
-  flex: 1;
-}
 .caselle {
   display: inline-flex;
   gap: 0.25rem;
@@ -264,6 +263,18 @@ button:active {
 }
 button[disabled] {
   opacity: 0.4;
+}
+
+/* I due comandi in fondo al menu li disegna l'isola AzioniMenu: lo stile
+ * scoped di Menu.astro non raggiunge il DOM che monta Preact, quindi la
+ * regola vive qui insieme agli altri gruppi di controlli. In colonna e a
+ * tutta larghezza come le voci di navigazione sopra di loro, invece del
+ * flusso di default che li lasciava appiccicati uno sotto l'altro senza
+ * respiro. */
+.azioni-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .pool {
@@ -536,6 +547,11 @@ dialog.azioni input[type='number'] {
   object-position: 50% 12%;
   border: 1px solid var(--bordo);
 }
+/* È l'`<h1>` della Scheda (scheda.astro): la rotta è la `start_url` del
+ * manifest, quindi non può saltare dal titolo del documento a `<h2>Attacchi`.
+ * La dimensione e i margini restano quelli che aveva da `<p>` — 1.35rem
+ * invece di 1.4rem, nessun margine — così la testata non si muove di un
+ * pixel: la regola vince sul blocco `h1, h2, h3` per specificità. */
 .identita .nome {
   font-family: var(--font-display);
   font-size: 1.35rem;
@@ -566,6 +582,25 @@ dialog.azioni input[type='number'] {
   margin: 0.2rem 0 0;
   font-size: 0.85rem;
 }
+/* Stesso motivo di .pf-pannello: con client:only="preact" non c'è alcun
+ * render lato server, quindi senza altezza riservata la sezione "salta" alla
+ * prima idratazione — qui in mezzo alla rotta principale.
+ *
+ * ATTENZIONE: questo numero è CALCOLATO dal box model, non misurato con
+ * Chrome headless come gli altri quattro: la sessione che l'ha scritto non
+ * aveva un browser. È il primo valore da confermare nella verifica a 390×844.
+ * Il calcolo: a 390px di larghezza il contenuto di `.pannello` è
+ * 390 − 2×0.75rem (padding del body) − 2×(0.75rem + 1px) = 340px. La striscia
+ * porta cinque voci (2 livelli di slot + 3 risorse), ognuna alta una riga di
+ * testo a 0.85rem con line-height 1.5 → 20.4px, separate da 0.4rem di
+ * row-gap → 6.4px. Le due voci degli slot stanno insieme sulla prima riga
+ * (~198px con il column-gap da 1rem); le tre risorse hanno nomi lunghi
+ * ("Tuono della Tempesta") e non ne entrano due per riga nei 340px, quindi
+ * prendono una riga ciascuna. Quattro righe:
+ * 4×20.4 + 3×6.4 = 100.8px → riservati 101px. */
+.risorse-isola {
+  min-height: 101px;
+}
 .striscia-risorse {
   display: flex;
   flex-wrap: wrap;
@@ -575,9 +610,10 @@ dialog.azioni input[type='number'] {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  border: none;
-  padding: 0;
   font-size: 0.85rem;
+}
+.striscia-risorse .risorsa > span:first-child {
+  flex: 1;
 }
 .altrove {
   display: flex;

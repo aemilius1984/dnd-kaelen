@@ -52,7 +52,7 @@ const bonusIniziativa = segno(iniziativa(pg));
   <header class="identita">
     <img src={ritratto.src} width="40" height="40" alt="" class="avatar" />
     <div>
-      <p class="nome">{pg.nome}</p>
+      <h1 class="nome">{pg.nome}</h1>
       <p class="tenue qualifica">{pg.classe} {pg.livello} · {pg.sottoclasse}</p>
     </div>
   </header>
@@ -89,7 +89,9 @@ const bonusIniziativa = segno(iniziativa(pg));
 
   <section class="pannello">
     <h2>Slot e risorse</h2>
-    <Risorse client:only="preact" />
+    <div class="risorse-isola">
+      <Risorse client:only="preact" />
+    </div>
   </section>
 
   <section class="pannello">
