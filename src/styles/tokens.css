@@ -65,8 +65,10 @@
   --font-testo: 'EB Garamond', Georgia, 'Times New Roman', serif;
   color-scheme: dark;
   /* Alias temporaneo: Sezione.astro legge ancora --bronzo (TabBar.astro,
-   * che lo leggeva anche lui, è sparito in questo task). Rimosso quando
-   * Sezione.astro cambia (Task 8). */
+   * che lo leggeva anche lui, è sparito in questo task). Il Task 8 ha
+   * tolto Sezione.astro da scheda.astro, ma storia.astro la usa ancora
+   * (fuori dal perimetro del Task 8): l'alias resta finché anche
+   * storia.astro non viene ridisegnata e Sezione.astro può sparire. */
   --bronzo: var(--ambra);
 }
 
@@ -169,15 +171,17 @@ button:active {
 }
 
 /* client:only="preact" non fa alcun render lato server: il pannello resta
- * vuoto finché l'idratazione non disegna i controlli reali (stesso vuoto
- * di prima con client:load, causa diversa — niente più guardia SSR da
- * scavalcare, vedi il Task 8). Senza altezza riservata la pagina "salta" nel
- * punto guardato più spesso a ogni apertura. Misurata con Chrome headless via
- * CDP a 390px di larghezza, stato normale (PF > 0): 168.39px; 170px lascia un
- * margine di un paio di pixel. A 0 PF compaiono anche i TS morte e l'altezza
- * sale a ~212px — caso raro, non riservato qui: vedi il rapporto del task. */
+ * vuoto finché l'idratazione non disegna i controlli reali. Senza altezza
+ * riservata la pagina "salta" nel punto guardato più spesso a ogni apertura,
+ * proprio in cima alla scheda. Il Task 8 ha riscritto PfTracker in sola
+ * lettura (niente più pulsanti né campo PF temporanei, in compenso una barra
+ * di riempimento): misurata di nuovo con Chrome headless via CDP a 390px di
+ * larghezza, stato normale (PF > 0, nessun avviso): 146px; 148px lascia un
+ * margine di un paio di pixel. A 0 PF compare anche la riga dei TS morte e
+ * l'altezza sale a 186px — caso raro, non riservato qui, stesso criterio di
+ * prima: vedi il rapporto del task. */
 .pf-pannello {
-  min-height: 170px;
+  min-height: 148px;
 }
 .pf .riga {
   display: flex;
@@ -224,14 +228,10 @@ button:active {
 
 /* Stesso motivo di .pf-pannello: con client:only="preact" non c'è alcun
  * render lato server, quindi senza altezza riservata la sezione "salta"
- * alla prima idratazione. Misurate con Chrome headless via CDP a 390px di
- * larghezza, stato normale (4 slot 1°, 2 slot 2°, 3 risorse, 6 preparati):
- * .risorse-isola ~388px idratata → riservati 391px; .preparati-isola ~344px
- * idratata → riservati 346px (entrambe con un paio di pixel di margine,
- * come .pf-pannello). Vedi il rapporto del task per il metodo e i numeri. */
-.risorse-isola {
-  min-height: 391px;
-}
+ * alla prima idratazione. Misurata con Chrome headless via CDP a 390px di
+ * larghezza, stato normale (6 preparati): .preparati-isola ~344px idratata
+ * → riservati 346px (con un paio di pixel di margine, come .pf-pannello).
+ * Vedi il rapporto del task per il metodo e i numeri. */
 .preparati-isola {
   min-height: 346px;
 }
@@ -262,20 +262,9 @@ button:active {
   background: var(--lampo);
   border-color: var(--lampo);
 }
-.riposi {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.7rem;
-  flex-wrap: wrap;
-}
 .pericoloso {
   border-color: var(--spento);
   color: var(--allerta);
-}
-.riposi .pericoloso {
-  border-color: var(--spento);
-  color: var(--allerta);
-  margin-left: auto;
 }
 button[disabled] {
   opacity: 0.4;
@@ -535,4 +524,105 @@ dialog.azioni input[type='number'] {
   border-radius: var(--raggio);
   text-align: center;
   font: inherit;
+}
+
+/* padding-left: il pulsante ☰ del menu è fisso in alto a sinistra (48px +
+ * margine, vedi Menu.astro) e sovrappone i primi ~54px di qualunque
+ * contenuto che parte da lì — cosa che un titolo di testo tollera (una
+ * lettera coperta) ma un ritratto rotondo no, perché lo copre per intero.
+ * Sposto solo questa riga, non il resto della pagina: le sezioni sotto
+ * partono già più in basso del pulsante e non ne hanno bisogno. */
+.identita {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding-top: 0.6rem;
+  padding-left: 3.5rem;
+}
+.identita .avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: 50% 12%;
+  border: 1px solid var(--bordo);
+}
+.identita .nome {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  margin: 0;
+}
+.identita .qualifica {
+  margin: 0;
+  font-size: 0.8rem;
+}
+.difese {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.25rem;
+  text-align: center;
+  margin: var(--spazio) 0;
+  padding: 0.5rem 0;
+  border-block: 1px solid var(--bordo);
+}
+.difese .tenue {
+  display: block;
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+}
+.difese .valore {
+  font-size: 1.5rem;
+}
+.attacco-inc {
+  margin: 0.2rem 0 0;
+  font-size: 0.85rem;
+}
+.striscia-risorse {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+}
+.striscia-risorse .risorsa {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: none;
+  padding: 0;
+  font-size: 0.85rem;
+}
+.altrove {
+  display: flex;
+  gap: 0.6rem;
+  margin: 1.2rem 0 2rem;
+}
+.altrove a {
+  flex: 1;
+  text-align: center;
+  padding: 0.8rem;
+  border: 1px solid var(--bordo);
+  border-radius: var(--raggio);
+  text-decoration: none;
+  background: var(--superficie);
+}
+
+/* Barra di riempimento dei PF: il numero resta la fonte di verità (è
+ * accessibile via testo), la barra è un rinforzo visivo aggiunto in sola
+ * lettura dal Task 8 — `role="img"` con etichetta sul contenitore, la
+ * barra interna è puramente decorativa. */
+.barra-pf {
+  width: 100%;
+  height: 8px;
+  margin-top: 0.5rem;
+  border-radius: 999px;
+  background: var(--superficie-alta);
+  border: 1px solid var(--bordo);
+  overflow: hidden;
+}
+.barra-pf .riempimento {
+  height: 100%;
+  background: var(--lampo);
+  border-radius: inherit;
+}
+.barra-pf .riempimento.pericolo {
+  background: var(--allerta);
 }

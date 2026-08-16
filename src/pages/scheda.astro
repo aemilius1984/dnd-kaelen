@@ -1,29 +1,21 @@
 ---
 import { getCollection, getEntry } from 'astro:content';
+import { getImage } from 'astro:assets';
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import Sezione from '@/components/Sezione.astro';
-import Statistiche from '@/components/Statistiche.astro';
 import Attacchi from '@/components/Attacchi.astro';
 import GrigliaIncantesimi from '@/components/GrigliaIncantesimi.astro';
-import Capacita from '@/components/Capacita.astro';
 import Sprite from '@/components/Sprite.astro';
+import DatiIniziali from '@/components/DatiIniziali.astro';
 import PfTracker from '@/islands/PfTracker';
 import Risorse from '@/islands/Risorse';
-import PreparatiPicker from '@/islands/PreparatiPicker';
 import ControlliLancio from '@/islands/ControlliLancio';
-import Borsa from '@/islands/Borsa';
-import Note from '@/islands/Note';
+import PannelloAzioni from '@/islands/PannelloAzioni';
 import type { Personaggio } from '@/lib/schema';
-import {
-  attaccoIncantesimi,
-  capacitaTrasporto,
-  cdIncantesimi,
-  classeArmatura,
-  iniziativa,
-  percezionePassiva,
-  segno,
-} from '@/lib/derive';
+import { attaccoIncantesimi, cdIncantesimi, classeArmatura, iniziativa, segno } from '@/lib/derive';
 import { campiVersione, hashDati } from '@/lib/sheet-version';
+import ritrattoSrc from '@/assets/kaelen-home.webp';
+
+const ritratto = await getImage({ src: ritrattoSrc, format: 'webp', width: 80 });
 
 const voce = await getEntry('character', 'kaelen');
 if (!voce) throw new Error('Scheda di Kaelen non trovata');
@@ -68,48 +60,42 @@ const preparatiPool = pool.map((m) => conTesto(m.slug));
 // refuso nelle capacità o nelle reazioni non deve azzerare la sessione salvata.
 const sheetVersion = hashDati(JSON.stringify(campiVersione(pg, pool)));
 
-// Costruite qui come stringhe/variabili singole: se lasciate come sequenze di
-// espressioni JSX separate, Prettier può spezzarle su più righe e Astro collassa
-// lo spazio (o addirittura la newline) tra loro, incollando le parole.
-const sottotitolo = `${pg.specie} ${pg.taglia} · ${pg.classe} ${pg.livello} · ${pg.sottoclasse} · ${pg.allineamento} · Divinità: ${pg.divinita}`;
-const equipaggiamentoNote =
-  `Lingue: ${pg.lingue.join(', ')}. Capacità di trasporto: ${capacitaTrasporto(pg)} lb. ${pg.armatura.note ?? ''}`.trim();
-
 const ca = classeArmatura(pg);
 const cd = cdIncantesimi(pg);
 const bonusIncantesimi = segno(attaccoIncantesimi(pg));
 const bonusIniziativa = segno(iniziativa(pg));
-const percezione = percezionePassiva(pg);
 ---
 
 <BaseLayout titolo="Kaelen — Scheda" attiva="scheda">
   <Sprite />
-  <h1>{pg.nome}</h1>
-  <p class="tenue">{sottotitolo}</p>
+  <DatiIniziali pg={pg} sheetVersion={sheetVersion} pool={pool} />
 
-  <script
-    type="application/json"
-    id="dati-iniziali"
-    set:html={JSON.stringify({ pg, sheetVersion, pool })}
-    is:inline
-  />
+  <header class="identita">
+    <img src={ritratto.src} width="40" height="40" alt="" class="avatar" />
+    <div>
+      <p class="nome">{pg.nome}</p>
+      <p class="tenue qualifica">{pg.classe} {pg.livello} · {pg.sottoclasse}</p>
+    </div>
+  </header>
 
   <div class="pannello pf-pannello">
     <PfTracker client:only="preact" />
   </div>
 
-  <div class="pannello sintesi">
-    <div><span class="tenue">CA</span> <span class="valore">{ca}</span></div>
-    <div><span class="tenue">CD</span> <span class="valore">{cd}</span></div>
-    <div><span class="tenue">Inc.</span> <span class="valore">{bonusIncantesimi}</span></div>
-    <div><span class="tenue">Iniz.</span> <span class="valore">{bonusIniziativa}</span></div>
-    <div><span class="tenue">Perc.</span> <span class="valore">{percezione}</span></div>
-    <div><span class="tenue">Vel.</span> <span class="valore">{pg.velocita} ft</span></div>
+  <div class="difese">
+    <div><span class="tenue">CA</span><span class="valore">{ca}</span></div>
+    <div><span class="tenue">CD</span><span class="valore">{cd}</span></div>
+    <div><span class="tenue">INIZ</span><span class="valore">{bonusIniziativa}</span></div>
   </div>
 
-  <Sezione titolo="Attacchi" aperta><Attacchi pg={pg} /></Sezione>
+  <section class="pannello">
+    <h2>Attacchi</h2>
+    <Attacchi pg={pg} />
+  </section>
 
-  <Sezione titolo="Incantesimi" aperta>
+  <section class="pannello">
+    <h2>Incantesimi</h2>
+    <p class="tenue attacco-inc">Attacco {bonusIncantesimi} · CD {cd}</p>
     <GrigliaIncantesimi titolo="Trucchetti" incantesimi={trucchetti} />
     <GrigliaIncantesimi
       titolo="Preparati"
@@ -117,53 +103,39 @@ const percezione = percezionePassiva(pg);
       visibiliDiDefault={pg.preparatiIniziali}
     />
     <GrigliaIncantesimi titolo="Dominio" incantesimi={dominio} />
-  </Sezione>
+    <p class="tenue">
+      <a href="/preparati/">Cambia i preparati</a>
+    </p>
+  </section>
+
+  <section class="pannello">
+    <h2>Slot e risorse</h2>
+    <Risorse client:only="preact" />
+  </section>
+
+  <section class="pannello">
+    <h2>Reazioni: scegline una</h2>
+    <table>
+      <thead><tr><th>Reazione</th><th>Innesco</th><th>Effetto</th></tr></thead>
+      <tbody>
+        {
+          pg.reazioni.map((r) => (
+            <tr>
+              <td>{r.nome}</td>
+              <td class="tenue">{r.innesco}</td>
+              <td>{r.effetto}</td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </section>
+
+  <nav class="altrove">
+    <a href="/personaggio/">Personaggio</a>
+    <a href="/note/">Note di sessione</a>
+  </nav>
+
   <ControlliLancio client:only="preact" />
-
-  <Sezione titolo="Risorse e riposi" aperta>
-    <div class="risorse-isola">
-      <Risorse client:only="preact" />
-    </div>
-  </Sezione>
-
-  <Sezione titolo="Cambia i preparati">
-    <div class="preparati-isola">
-      <PreparatiPicker client:only="preact" />
-    </div>
-  </Sezione>
-
-  <Sezione titolo="Caratteristiche e abilità"><Statistiche pg={pg} /></Sezione>
-
-  <Sezione titolo="Capacità"><Capacita pg={pg} /></Sezione>
-
-  <Sezione titolo="Borsa">
-    <div class="borsa-isola">
-      <Borsa client:only="preact" />
-    </div>
-    <p class="tenue">{equipaggiamentoNote}</p>
-  </Sezione>
-
-  <Sezione titolo="Note di sessione">
-    <div class="note-isola">
-      <Note client:only="preact" />
-    </div>
-  </Sezione>
+  <PannelloAzioni client:only="preact" />
 </BaseLayout>
-
-<style>
-  .sintesi {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.5rem 0.25rem;
-    text-align: center;
-  }
-  .sintesi .valore {
-    font-size: 1.25rem;
-    display: block;
-  }
-  ul {
-    margin: 0;
-    padding-left: 1.1rem;
-    font-size: 0.92rem;
-  }
-</style>

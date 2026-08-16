@@ -1,0 +1,18 @@
+---
+import type { Personaggio } from '@/lib/schema';
+import type { VoceIncantesimo } from '@/lib/storage';
+
+interface Props {
+  pg: Personaggio;
+  sheetVersion: string;
+  pool: VoceIncantesimo[];
+}
+const { pg, sheetVersion, pool } = Astro.props;
+---
+
+<script
+  type="application/json"
+  id="dati-iniziali"
+  set:html={JSON.stringify({ pg, sheetVersion, pool })}
+  is:inline
+/>

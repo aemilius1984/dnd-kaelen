@@ -1,95 +1,44 @@
-import {
-  puoSpendereSlot,
-  puoUsareRisorsa,
-  recuperaRisorsa,
-  recuperaSlot,
-  riposoBreve,
-  riposoLungo,
-  spendiSlot,
-  usaRisorsa,
-} from '@/lib/sheet-state';
-import { assicuraInizializzato, datiIniziali, muta, stato } from '@/lib/storage';
+import { datiIniziali, assicuraInizializzato, stato } from '@/lib/storage';
 
-function Caselle({
-  usate,
-  max,
-  puoUsare,
-  onUsa,
-  onRecupera,
-  etichetta,
-}: {
-  usate: number;
-  max: number;
-  puoUsare: boolean;
-  onUsa: () => void;
-  onRecupera: () => void;
-  etichetta: string;
-}) {
-  const caselle = Array.from({ length: max }, (_, i) => i < max - usate);
-  return (
-    <div class="risorsa">
-      <span>{etichetta}</span>
-      <span class="caselle" aria-label={`${max - usate} di ${max} disponibili`}>
-        {caselle.map((piena, i) => (
-          <i key={i} class={piena ? 'casella piena' : 'casella'} />
-        ))}
-      </span>
-      <button type="button" onClick={onUsa} disabled={!puoUsare} aria-label={`Usa ${etichetta}`}>
-        Usa
-      </button>
-      <button
-        type="button"
-        onClick={onRecupera}
-        disabled={usate <= 0}
-        aria-label={`Recupera ${etichetta}`}
-      >
-        ↺
-      </button>
-    </div>
-  );
-}
-
+/** Sola lettura: al tavolo devi *vedere* quanto ti resta senza aprire nulla,
+ *  ma spendere e recuperare si fa nel pannello azioni. Due punti di modifica
+ *  per lo stesso numero erano il motivo per cui la Scheda si era gonfiata. */
 export default function Risorse() {
-  // `client:only="preact"`: nessun pre-render lato server, quindi nessuna
-  // guardia sul DOM da scrivere qui — vedi il rapporto del Task 8.
   assicuraInizializzato();
   const { pg } = datiIniziali();
   const s = stato.value;
 
+  const caselle = (usate: number, max: number) =>
+    Array.from({ length: max }, (_, i) => i < max - usate);
+
   return (
-    <div>
+    <div class="striscia-risorse">
       {pg.slot.map((slot) => (
-        <Caselle
-          key={`slot-${slot.livello}`}
-          etichetta={`Slot di ${slot.livello}° livello`}
-          usate={s.slotSpesi[slot.livello] ?? 0}
-          max={slot.max}
-          puoUsare={puoSpendereSlot(s, pg, slot.livello)}
-          onUsa={() => muta((x) => spendiSlot(x, pg, slot.livello))}
-          onRecupera={() => muta((x) => recuperaSlot(x, slot.livello))}
-        />
+        <div class="risorsa" key={`slot-${slot.livello}`}>
+          <span>{slot.livello}° liv.</span>
+          <span
+            class="caselle"
+            aria-label={`${slot.max - (s.slotSpesi[slot.livello] ?? 0)} di ${slot.max} slot di ${slot.livello}° livello`}
+          >
+            {caselle(s.slotSpesi[slot.livello] ?? 0, slot.max).map((piena, i) => (
+              <i key={i} class={piena ? 'casella piena' : 'casella'} />
+            ))}
+          </span>
+        </div>
       ))}
-
       {pg.risorse.map((r) => (
-        <Caselle
-          key={r.id}
-          etichetta={r.nome}
-          usate={s.risorseUsate[r.id] ?? 0}
-          max={r.max}
-          puoUsare={puoUsareRisorsa(s, pg, r.id)}
-          onUsa={() => muta((x) => usaRisorsa(x, pg, r.id))}
-          onRecupera={() => muta((x) => recuperaRisorsa(x, r.id))}
-        />
+        <div class="risorsa" key={r.id}>
+          <span>{r.nome}</span>
+          <span
+            class="caselle"
+            aria-label={`${r.max - (s.risorseUsate[r.id] ?? 0)} di ${r.max} usi`}
+          >
+            {caselle(s.risorseUsate[r.id] ?? 0, r.max).map((piena, i) => (
+              <i key={i} class={piena ? 'casella piena' : 'casella'} />
+            ))}
+          </span>
+        </div>
       ))}
-
-      <div class="riposi">
-        <button type="button" onClick={() => muta((x) => riposoBreve(x, pg))}>
-          Riposo Breve
-        </button>
-        <button type="button" onClick={() => muta((x) => riposoLungo(x, pg))}>
-          Riposo Lungo
-        </button>
-      </div>
     </div>
   );
 }

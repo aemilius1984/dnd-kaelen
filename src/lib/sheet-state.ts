@@ -89,10 +89,6 @@ export function segnaTsMorte(s: StatoSessione, esito: 'successo' | 'fallimento')
   return aggiorna(s, { tsMorte });
 }
 
-export function spendiDadoVita(s: StatoSessione, pg: Personaggio): StatoSessione {
-  return aggiorna(s, { dadiVitaSpesi: Math.min(pg.numeroDadiVita, s.dadiVitaSpesi + 1) });
-}
-
 /** Il manuale (PHB 2024, p. 372) fa spendere i dadi vita *durante* il riposo
  *  breve: qui le due cose sono un gesto solo. Il totale arriva dal tavolo —
  *  il sito non tira dadi — e vale almeno 1 PF, come dice la regola. */

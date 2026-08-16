@@ -12,7 +12,6 @@ import {
   riposoBreve,
   riposoLungo,
   segnaTsMorte,
-  spendiDadoVita,
   spendiDadoVitaConCura,
   spendiSlot,
   statoIniziale,
@@ -108,11 +107,6 @@ describe('slot e risorse', () => {
     expect(s.risorseUsate['incanalare']).toBe(2);
   });
 
-  it('non spende più dadi vita di quelli disponibili', () => {
-    for (let i = 0; i < 5; i++) s = spendiDadoVita(s, pg);
-    expect(s.dadiVitaSpesi).toBe(3);
-  });
-
   it('puoSpendereSlot è vero lontano dal confine e falso al confine, in accordo con spendiSlot', () => {
     expect(puoSpendereSlot(s, pg, 1)).toBe(true);
     for (let i = 0; i < 4; i++) s = spendiSlot(s, pg, 1);
@@ -151,9 +145,9 @@ describe('riposi', () => {
     s = impostaPfTemporanei(s, 4);
     s = spendiSlot(s, pg, 2);
     s = usaRisorsa(s, pg, 'ira-tempesta');
-    s = spendiDadoVita(s, pg);
-    s = spendiDadoVita(s, pg);
-    s = spendiDadoVita(s, pg);
+    s = spendiDadoVitaConCura(s, pg, 1);
+    s = spendiDadoVitaConCura(s, pg, 1);
+    s = spendiDadoVitaConCura(s, pg, 1);
     s = riposoLungo(s, pg);
     expect(s.pf).toBe(21);
     expect(s.pfTemporanei).toBe(0);
