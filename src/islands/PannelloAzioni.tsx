@@ -38,9 +38,9 @@ export default function PannelloAzioni() {
         ⚡
       </button>
 
-      <dialog class="azioni" ref={finestra}>
+      <dialog class="azioni" ref={finestra} aria-labelledby="titolo-azioni">
         <div class="testa">
-          <strong>Azioni</strong>
+          <strong id="titolo-azioni">Azioni</strong>
           <button type="button" onClick={() => finestra.current?.close()}>
             Chiudi
           </button>
@@ -100,6 +100,7 @@ export default function PannelloAzioni() {
             </span>
             <button
               type="button"
+              aria-label={`Usa uno slot di ${slot.livello}° livello`}
               disabled={!puoSpendereSlot(s, pg, slot.livello)}
               onClick={() => muta((x) => spendiSlot(x, pg, slot.livello))}
             >
@@ -107,6 +108,7 @@ export default function PannelloAzioni() {
             </button>
             <button
               type="button"
+              aria-label={`Recupera uno slot di ${slot.livello}° livello`}
               disabled={(s.slotSpesi[slot.livello] ?? 0) === 0}
               onClick={() => muta((x) => recuperaSlot(x, slot.livello))}
             >
@@ -122,6 +124,7 @@ export default function PannelloAzioni() {
             </span>
             <button
               type="button"
+              aria-label={`Usa ${r.nome}`}
               disabled={!puoUsareRisorsa(s, pg, r.id)}
               onClick={() => muta((x) => usaRisorsa(x, pg, r.id))}
             >
@@ -129,6 +132,7 @@ export default function PannelloAzioni() {
             </button>
             <button
               type="button"
+              aria-label={`Recupera ${r.nome}`}
               disabled={(s.risorseUsate[r.id] ?? 0) === 0}
               onClick={() => muta((x) => recuperaRisorsa(x, r.id))}
             >

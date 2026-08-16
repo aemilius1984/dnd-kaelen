@@ -68,6 +68,20 @@ describe('punti ferita', () => {
     expect(s.pf).toBe(21);
   });
 
+  it('ignora un danno negativo: non genera PF temporanei dal nulla', () => {
+    // Il campo "Quantità" del pannello azioni non impedisce un numero
+    // negativo: applicaDanno deve scartarlo, non trasformarlo in cura.
+    s = applicaDanno(s, -5);
+    expect(s.pfTemporanei).toBe(0);
+    expect(s.pf).toBe(21);
+  });
+
+  it('ignora una cura negativa: non riduce i PF', () => {
+    s = applicaDanno(s, 5);
+    s = applicaCura(s, pg, -3);
+    expect(s.pf).toBe(16);
+  });
+
   it('azzera i tiri salvezza contro morte quando risale sopra zero', () => {
     s = applicaDanno(s, 50);
     s = segnaTsMorte(s, 'fallimento');
@@ -277,8 +291,8 @@ describe('dadi vita spesi durante il riposo breve', () => {
     const pg = caricaPersonaggioDaFile();
     let s = applicaDanno(statoIniziale(pg, 'v'), 10);
     for (let i = 0; i < pg.numeroDadiVita; i++) s = spendiDadoVitaConCura(s, pg, 4);
-    const bloccato = spendiDadoVitaConCura(s, pg, 4);
-    expect(bloccato.dadiVitaSpesi).toBe(pg.numeroDadiVita);
-    expect(bloccato.pf).toBe(s.pf);
+    // Convenzione del file per i mutatori bloccati: stesso riferimento in
+    // uscita, non solo lo stesso valore — vedi la riga 108-109 sopra.
+    expect(spendiDadoVitaConCura(s, pg, 4)).toBe(s);
   });
 });

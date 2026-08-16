@@ -64,15 +64,20 @@ export function impostaPfTemporanei(s: StatoSessione, n: number): StatoSessione 
 }
 
 export function applicaDanno(s: StatoSessione, n: number): StatoSessione {
-  const assorbito = Math.min(s.pfTemporanei, n);
+  // `n` viene anche da un campo libero nel pannello azioni: un valore
+  // negativo non è "cura mascherata da danno", è un input da scartare.
+  const danno = Math.max(0, n);
+  const assorbito = Math.min(s.pfTemporanei, danno);
   return aggiorna(s, {
     pfTemporanei: s.pfTemporanei - assorbito,
-    pf: Math.max(0, s.pf - (n - assorbito)),
+    pf: Math.max(0, s.pf - (danno - assorbito)),
   });
 }
 
 export function applicaCura(s: StatoSessione, pg: Personaggio, n: number): StatoSessione {
-  const pf = Math.min(pg.pfMax, s.pf + n);
+  // Stessa guardia di applicaDanno: un input negativo non deve poter
+  // sottrarre PF da qui.
+  const pf = Math.min(pg.pfMax, s.pf + Math.max(0, n));
   const tsMorte = pf > 0 ? { successi: 0, fallimenti: 0 } : s.tsMorte;
   return aggiorna(s, { pf, tsMorte });
 }
