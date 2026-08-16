@@ -13,6 +13,7 @@ import {
   riposoLungo,
   segnaTsMorte,
   spendiDadoVita,
+  spendiDadoVitaConCura,
   spendiSlot,
   statoIniziale,
   togglePreparato,
@@ -247,5 +248,37 @@ describe('hash dei dati', () => {
   it('è stabile e cambia quando cambiano i dati', () => {
     expect(hashDati('kaelen')).toBe(hashDati('kaelen'));
     expect(hashDati('kaelen')).not.toBe(hashDati('kaelen '));
+  });
+});
+
+describe('dadi vita spesi durante il riposo breve', () => {
+  it('spende un dado e cura del totale tirato al tavolo', () => {
+    const pg = caricaPersonaggioDaFile();
+    const s = applicaDanno(statoIniziale(pg, 'v'), 10);
+    const dopo = spendiDadoVitaConCura(s, pg, 6);
+    expect(dopo.dadiVitaSpesi).toBe(1);
+    expect(dopo.pf).toBe(s.pf + 6);
+  });
+
+  it('cura almeno 1 PF anche con un totale minore', () => {
+    const pg = caricaPersonaggioDaFile();
+    const s = applicaDanno(statoIniziale(pg, 'v'), 10);
+    expect(spendiDadoVitaConCura(s, pg, 0).pf).toBe(s.pf + 1);
+    expect(spendiDadoVitaConCura(s, pg, -3).pf).toBe(s.pf + 1);
+  });
+
+  it('non supera i punti ferita massimi', () => {
+    const pg = caricaPersonaggioDaFile();
+    const s = applicaDanno(statoIniziale(pg, 'v'), 2);
+    expect(spendiDadoVitaConCura(s, pg, 9).pf).toBe(pg.pfMax);
+  });
+
+  it('non fa nulla se non restano dadi vita', () => {
+    const pg = caricaPersonaggioDaFile();
+    let s = applicaDanno(statoIniziale(pg, 'v'), 10);
+    for (let i = 0; i < pg.numeroDadiVita; i++) s = spendiDadoVitaConCura(s, pg, 4);
+    const bloccato = spendiDadoVitaConCura(s, pg, 4);
+    expect(bloccato.dadiVitaSpesi).toBe(pg.numeroDadiVita);
+    expect(bloccato.pf).toBe(s.pf);
   });
 });

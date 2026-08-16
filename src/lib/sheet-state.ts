@@ -88,6 +88,21 @@ export function spendiDadoVita(s: StatoSessione, pg: Personaggio): StatoSessione
   return aggiorna(s, { dadiVitaSpesi: Math.min(pg.numeroDadiVita, s.dadiVitaSpesi + 1) });
 }
 
+/** Il manuale (PHB 2024, p. 372) fa spendere i dadi vita *durante* il riposo
+ *  breve: qui le due cose sono un gesto solo. Il totale arriva dal tavolo —
+ *  il sito non tira dadi — e vale almeno 1 PF, come dice la regola. */
+export function spendiDadoVitaConCura(
+  s: StatoSessione,
+  pg: Personaggio,
+  pf: number,
+): StatoSessione {
+  if (s.dadiVitaSpesi >= pg.numeroDadiVita) return s;
+  return aggiorna(s, {
+    dadiVitaSpesi: s.dadiVitaSpesi + 1,
+    pf: Math.min(pg.pfMax, s.pf + Math.max(1, pf)),
+  });
+}
+
 export function puoSpendereSlot(s: StatoSessione, pg: Personaggio, livello: number): boolean {
   const max = pg.slot.find((x) => x.livello === livello)?.max ?? 0;
   return (s.slotSpesi[livello] ?? 0) < max;
