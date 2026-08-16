@@ -104,8 +104,12 @@ body:has(.storia) {
  * pagina lo scopra da sola — il Task 8 aveva rattoppato solo `.identita`
  * (vedi sotto), un rimedio locale a un problema globale. La splash non
  * mostra il menu (`attiva` è null su quella pagina, vedi BaseLayout), quindi
- * `body:has(.menu)` non la tocca e resta fixed, edge-to-edge. */
-body:has(.menu) main {
+ * `body:has(.menu)` non la tocca e resta fixed, edge-to-edge. La Storia è
+ * esclusa: il suo foglio disegna la carta da bordo a bordo, quindi è lei
+ * stessa a riservare lo spazio in `.storia { padding-top }` — se lo
+ * riservasse anche `main`, la carta smetterebbe di toccare il bordo
+ * superiore e lascerebbe una striscia di `--fondo` sopra la testata. */
+body:has(.menu):not(:has(.storia)) main {
   padding-top: 3.75rem;
 }
 
