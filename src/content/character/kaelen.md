@@ -131,7 +131,7 @@ reazioni:
 interpretazione:
   tratto: Attaccabrighe gioviale e rumoroso, ripara reti e vestiti quando deve riflettere.
   ideale: La forza serve a proteggere la libertà altrui.
-  legame: Recuperare Skystrike e riportarlo ai Vaerak-Thuun. I compagni sono la sua nuova ciurma.
+  legame: Recuperare Thuunvar e riportarlo ai Vaerak-Thuun. I compagni sono la sua nuova ciurma.
   difetto: Scambia troppo spesso il coraggio per l'impossibilità di arretrare.
   paura: Teme ancora di sentire Talos nel tuono.
 ---
