@@ -1,25 +1,10 @@
 ---
-import { getCollection, getEntry } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import DatiIniziali from '@/components/DatiIniziali.astro';
 import Note from '@/islands/Note';
-import type { Personaggio } from '@/lib/schema';
-import { campiVersione, hashDati } from '@/lib/sheet-version';
+import { caricaScheda } from '@/lib/carica-scheda';
 
-const voce = await getEntry('character', 'kaelen');
-if (!voce) throw new Error('Scheda di Kaelen non trovata');
-const dati = voce.data;
-const pg: Personaggio = {
-  ...dati,
-  trucchetti: dati.trucchetti.map((r) => r.id),
-  preparatiIniziali: dati.preparatiIniziali.map((r) => r.id),
-  dominio: dati.dominio.map((r) => r.id),
-};
-const pool = (await getCollection('spells'))
-  .map((m) => ({ slug: m.id, nome: m.data.nome, livello: m.data.livello, dominio: m.data.dominio }))
-  .filter((m) => m.livello > 0 && !m.dominio)
-  .sort((a, b) => a.livello - b.livello || a.nome.localeCompare(b.nome, 'it'));
-const sheetVersion = hashDati(JSON.stringify(campiVersione(pg, pool)));
+const { pg, pool, sheetVersion } = await caricaScheda();
 ---
 
 <BaseLayout titolo="Kaelen — Note" attiva="note">

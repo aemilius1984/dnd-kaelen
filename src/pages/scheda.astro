@@ -1,5 +1,5 @@
 ---
-import { getCollection, getEntry } from 'astro:content';
+import { getCollection } from 'astro:content';
 import { getImage } from 'astro:assets';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import Attacchi from '@/components/Attacchi.astro';
@@ -10,27 +10,17 @@ import PfTracker from '@/islands/PfTracker';
 import Risorse from '@/islands/Risorse';
 import ControlliLancio from '@/islands/ControlliLancio';
 import PannelloAzioni from '@/islands/PannelloAzioni';
-import type { Personaggio } from '@/lib/schema';
 import { attaccoIncantesimi, cdIncantesimi, classeArmatura, iniziativa, segno } from '@/lib/derive';
-import { campiVersione, hashDati } from '@/lib/sheet-version';
+import { caricaScheda } from '@/lib/carica-scheda';
 import ritrattoSrc from '@/assets/kaelen-home.webp';
 
 const ritratto = await getImage({ src: ritrattoSrc, format: 'webp', width: 80 });
 
-const voce = await getEntry('character', 'kaelen');
-if (!voce) throw new Error('Scheda di Kaelen non trovata');
+const { pg, pool, sheetVersion } = await caricaScheda();
 
-// `reference()` trasforma gli slug in oggetti { id, collection }. Li riportiamo a
-// stringhe: così questo oggetto combacia con il tipo `Personaggio` usato da derive,
-// dai componenti e dallo stato di sessione, e ne esiste una sola forma in tutto il sito.
-const dati = voce.data;
-const pg: Personaggio = {
-  ...dati,
-  trucchetti: dati.trucchetti.map((r) => r.id),
-  preparatiIniziali: dati.preparatiIniziali.map((r) => r.id),
-  dominio: dati.dominio.map((r) => r.id),
-};
-
+// Il testo completo degli incantesimi non viaggia nel pool condiviso: solo
+// questa pagina lo mostra (trucchetti, dominio e l'intero pool dei preparati),
+// quindi resta qui invece di entrare in `caricaScheda`.
 const tutte = await getCollection('spells');
 const perSlug = new Map(tutte.map((m) => [m.id, m]));
 const conTesto = (slug: string) => {
@@ -42,23 +32,12 @@ const conTesto = (slug: string) => {
 const trucchetti = pg.trucchetti.map(conTesto);
 const dominio = pg.dominio.map(conTesto);
 
-const pool = tutte
-  .map((m) => ({ slug: m.id, nome: m.data.nome, livello: m.data.livello, dominio: m.data.dominio }))
-  .filter((m) => m.livello > 0 && !m.dominio)
-  .sort((a, b) => a.livello - b.livello || a.nome.localeCompare(b.nome, 'it'));
-
 // Il testo completo di TUTTI gli incantesimi del pool, non solo dei sei
 // preparati all'avvio: dopo uno scambio a fine Riposo Lungo il giocatore deve
 // vedere tempo di lancio, gittata, TS e danno anche del nuovo incantesimo, non
 // solo il nome. Sono tutti presenti in HTML in build; ControlliLancio
 // mostra/nasconde in base allo stato.
 const preparatiPool = pool.map((m) => conTesto(m.slug));
-
-// `pg` è già normalizzato a slug stringa nel Task 6: è la stessa forma che le isole
-// ricevono nel blocco JSON, quindi l'hash è stabile fra build identiche. Hash solo
-// sui campi da cui `StatoSessione` dipende (vedi campiVersione): correggere un
-// refuso nelle capacità o nelle reazioni non deve azzerare la sessione salvata.
-const sheetVersion = hashDati(JSON.stringify(campiVersione(pg, pool)));
 
 const ca = classeArmatura(pg);
 const cd = cdIncantesimi(pg);
