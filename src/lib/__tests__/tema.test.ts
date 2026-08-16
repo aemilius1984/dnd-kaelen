@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { risolviTema, temaValido } from '@/lib/tema';
+import { COLORE_TEMA, risolviTema, temaValido } from '@/lib/tema';
 
 describe('risoluzione del tema', () => {
   it('riconosce solo i due temi ammessi', () => {
@@ -23,5 +23,14 @@ describe('risoluzione del tema', () => {
   it('tratta un valore corrotto come assente', () => {
     expect(risolviTema('{}', true)).toBe('pergamena');
     expect(risolviTema('', false)).toBe('tempesta');
+  });
+});
+
+describe('colore della cromatura del browser', () => {
+  it('dà a ogni tema il proprio fondo', () => {
+    // Gli stessi due valori sono ripetuti a mano nello script inline di
+    // BaseLayout: se cambiano qui va cambiato anche là.
+    expect(COLORE_TEMA.tempesta).toBe('#0a0c10');
+    expect(COLORE_TEMA.pergamena).toBe('#efe7d6');
   });
 });

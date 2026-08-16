@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'preact/hooks';
-import { CHIAVE_TEMA, risolviTema, type Tema } from '@/lib/tema';
+import { CHIAVE_TEMA, COLORE_TEMA, risolviTema, type Tema } from '@/lib/tema';
 import { azzeraSessione } from '@/lib/storage';
 
 /** Due soli controlli, entrambi impossibili in CSS: leggere e scrivere una
@@ -22,6 +22,12 @@ export default function AzioniMenu() {
     const prossimo: Tema = tema === 'tempesta' ? 'pergamena' : 'tempesta';
     setTema(prossimo);
     document.documentElement.dataset.tema = prossimo;
+    // La cromatura del browser segue il tema scelto, non il sistema
+    // operativo: il meta lo imposta lo script inline di BaseLayout al primo
+    // paint, qui si aggiorna quando l'utente commuta.
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute('content', COLORE_TEMA[prossimo]);
     try {
       localStorage.setItem(CHIAVE_TEMA, prossimo);
     } catch {

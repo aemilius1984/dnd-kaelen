@@ -14,10 +14,19 @@ const { titolo, attiva } = Astro.props;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Un solo theme-color, senza `media`: il tema vero non viene dal sistema
+      operativo ma da `data-tema`, quindi due meta divisi per
+      `prefers-color-scheme` contraddirebbero chi ha scelto il tema dal menu.
+      Il valore qui è quello di Tempesta, che è anche il ripiego del CSS quando
+      `data-tema` manca; lo script qui sotto lo corregge al primo paint e
+      AzioniMenu quando l'utente commuta. Deve stare *prima* dello script, che
+      lo cerca nel DOM già analizzato. -->
+    <meta name="theme-color" content="#0a0c10" />
     <script is:inline>
       // Deve girare prima del primo rendering, quindi non può importare
-      // src/lib/tema.ts: la regola è duplicata a mano. Vedi il commento in
-      // risolviTema().
+      // src/lib/tema.ts: la regola e i due colori sono duplicati a mano. Vedi
+      // i commenti in risolviTema() e COLORE_TEMA. Resta sincrono, senza
+      // dipendenze, e non tocca il DOM oltre documentElement e il meta.
       (function () {
         let salvato = null;
         try {
@@ -33,11 +42,11 @@ const { titolo, attiva } = Astro.props;
               ? 'pergamena'
               : 'tempesta';
         document.documentElement.dataset.tema = tema;
+        const meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', tema === 'pergamena' ? '#efe7d6' : '#0a0c10');
       })();
     </script>
     <meta name="robots" content="noindex, nofollow" />
-    <meta name="theme-color" content="#0a0c10" media="(prefers-color-scheme: dark)" />
-    <meta name="theme-color" content="#efe7d6" media="(prefers-color-scheme: light)" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
