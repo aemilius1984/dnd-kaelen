@@ -12,7 +12,7 @@ import {
   riposoBreve,
   riposoLungo,
   segnaTsMorte,
-  spendiDadoVita,
+  spendiDadoVitaConCura,
   spendiSlot,
   statoIniziale,
   togglePreparato,
@@ -67,6 +67,20 @@ describe('punti ferita', () => {
     expect(s.pf).toBe(21);
   });
 
+  it('ignora un danno negativo: non genera PF temporanei dal nulla', () => {
+    // Il campo "Quantità" del pannello azioni non impedisce un numero
+    // negativo: applicaDanno deve scartarlo, non trasformarlo in cura.
+    s = applicaDanno(s, -5);
+    expect(s.pfTemporanei).toBe(0);
+    expect(s.pf).toBe(21);
+  });
+
+  it('ignora una cura negativa: non riduce i PF', () => {
+    s = applicaDanno(s, 5);
+    s = applicaCura(s, pg, -3);
+    expect(s.pf).toBe(16);
+  });
+
   it('azzera i tiri salvezza contro morte quando risale sopra zero', () => {
     s = applicaDanno(s, 50);
     s = segnaTsMorte(s, 'fallimento');
@@ -91,11 +105,6 @@ describe('slot e risorse', () => {
   it('non usa una risorsa oltre il massimo', () => {
     for (let i = 0; i < 5; i++) s = usaRisorsa(s, pg, 'incanalare');
     expect(s.risorseUsate['incanalare']).toBe(2);
-  });
-
-  it('non spende più dadi vita di quelli disponibili', () => {
-    for (let i = 0; i < 5; i++) s = spendiDadoVita(s, pg);
-    expect(s.dadiVitaSpesi).toBe(3);
   });
 
   it('puoSpendereSlot è vero lontano dal confine e falso al confine, in accordo con spendiSlot', () => {
@@ -136,9 +145,9 @@ describe('riposi', () => {
     s = impostaPfTemporanei(s, 4);
     s = spendiSlot(s, pg, 2);
     s = usaRisorsa(s, pg, 'ira-tempesta');
-    s = spendiDadoVita(s, pg);
-    s = spendiDadoVita(s, pg);
-    s = spendiDadoVita(s, pg);
+    s = spendiDadoVitaConCura(s, pg, 1);
+    s = spendiDadoVitaConCura(s, pg, 1);
+    s = spendiDadoVitaConCura(s, pg, 1);
     s = riposoLungo(s, pg);
     expect(s.pf).toBe(21);
     expect(s.pfTemporanei).toBe(0);
@@ -247,5 +256,37 @@ describe('hash dei dati', () => {
   it('è stabile e cambia quando cambiano i dati', () => {
     expect(hashDati('kaelen')).toBe(hashDati('kaelen'));
     expect(hashDati('kaelen')).not.toBe(hashDati('kaelen '));
+  });
+});
+
+describe('dadi vita spesi durante il riposo breve', () => {
+  it('spende un dado e cura del totale tirato al tavolo', () => {
+    const pg = caricaPersonaggioDaFile();
+    const s = applicaDanno(statoIniziale(pg, 'v'), 10);
+    const dopo = spendiDadoVitaConCura(s, pg, 6);
+    expect(dopo.dadiVitaSpesi).toBe(1);
+    expect(dopo.pf).toBe(s.pf + 6);
+  });
+
+  it('cura almeno 1 PF anche con un totale minore', () => {
+    const pg = caricaPersonaggioDaFile();
+    const s = applicaDanno(statoIniziale(pg, 'v'), 10);
+    expect(spendiDadoVitaConCura(s, pg, 0).pf).toBe(s.pf + 1);
+    expect(spendiDadoVitaConCura(s, pg, -3).pf).toBe(s.pf + 1);
+  });
+
+  it('non supera i punti ferita massimi', () => {
+    const pg = caricaPersonaggioDaFile();
+    const s = applicaDanno(statoIniziale(pg, 'v'), 2);
+    expect(spendiDadoVitaConCura(s, pg, 9).pf).toBe(pg.pfMax);
+  });
+
+  it('non fa nulla se non restano dadi vita', () => {
+    const pg = caricaPersonaggioDaFile();
+    let s = applicaDanno(statoIniziale(pg, 'v'), 10);
+    for (let i = 0; i < pg.numeroDadiVita; i++) s = spendiDadoVitaConCura(s, pg, 4);
+    // Convenzione del file per i mutatori bloccati: stesso riferimento in
+    // uscita, non solo lo stesso valore — vedi la riga 108-109 sopra.
+    expect(spendiDadoVitaConCura(s, pg, 4)).toBe(s);
   });
 });

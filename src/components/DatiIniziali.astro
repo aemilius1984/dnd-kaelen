@@ -1,0 +1,19 @@
+---
+import type { Personaggio } from '@/lib/schema';
+import type { VoceIncantesimo } from '@/lib/storage';
+import { jsonPerScript } from '@/lib/json-inline';
+
+interface Props {
+  pg: Personaggio;
+  sheetVersion: string;
+  pool: VoceIncantesimo[];
+}
+const { pg, sheetVersion, pool } = Astro.props;
+---
+
+<script
+  type="application/json"
+  id="dati-iniziali"
+  set:html={jsonPerScript({ pg, sheetVersion, pool })}
+  is:inline
+/>

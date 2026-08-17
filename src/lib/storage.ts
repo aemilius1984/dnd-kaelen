@@ -1,6 +1,6 @@
 import { signal } from '@preact/signals';
 import type { Personaggio } from './schema';
-import { carica, statoIniziale, type StatoSessione } from './sheet-state';
+import { carica, type StatoSessione } from './sheet-state';
 
 export const CHIAVE = 'kaelen:v1';
 
@@ -47,12 +47,15 @@ export function muta(fn: (s: StatoSessione) => StatoSessione): void {
   }
 }
 
-export function azzeraTutto(): void {
-  const { pg, sheetVersion } = datiIniziali();
-  stato.value = statoIniziale(pg, sheetVersion);
+/** Azzera la sessione senza bisogno del blocco #dati-iniziali, così il
+ *  comando può vivere nel menu di ogni pagina — anche quelle che non
+ *  incorporano i dati del personaggio. Le preferenze (tema, splash) sono
+ *  chiavi separate e restano. Il ricaricamento è iniettabile per i test. */
+export function azzeraSessione(ricarica: () => void = () => location.reload()): void {
   try {
-    localStorage.setItem(CHIAVE, JSON.stringify(stato.value));
+    localStorage.removeItem(CHIAVE);
   } catch {
-    // quota piena o storage negato: lo stato in memoria resta comunque azzerato
+    // storage negato: non c'era nulla da rimuovere
   }
+  ricarica();
 }

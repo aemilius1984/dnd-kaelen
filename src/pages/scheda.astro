@@ -1,0 +1,122 @@
+---
+import { getCollection } from 'astro:content';
+import { getImage } from 'astro:assets';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Attacchi from '@/components/Attacchi.astro';
+import GrigliaIncantesimi from '@/components/GrigliaIncantesimi.astro';
+import Sprite from '@/components/Sprite.astro';
+import DatiIniziali from '@/components/DatiIniziali.astro';
+import PfTracker from '@/islands/PfTracker';
+import Risorse from '@/islands/Risorse';
+import ControlliLancio from '@/islands/ControlliLancio';
+import PannelloAzioni from '@/islands/PannelloAzioni';
+import { attaccoIncantesimi, cdIncantesimi, classeArmatura, iniziativa, segno } from '@/lib/derive';
+import { caricaScheda } from '@/lib/carica-scheda';
+import ritrattoSrc from '@/assets/kaelen-home.webp';
+
+const ritratto = await getImage({ src: ritrattoSrc, format: 'webp', width: 80 });
+
+const { pg, pool, sheetVersion } = await caricaScheda();
+
+// Il testo completo degli incantesimi non viaggia nel pool condiviso: solo
+// questa pagina lo mostra (trucchetti, dominio e l'intero pool dei preparati),
+// quindi resta qui invece di entrare in `caricaScheda`.
+const tutte = await getCollection('spells');
+const perSlug = new Map(tutte.map((m) => [m.id, m]));
+const conTesto = (slug: string) => {
+  const m = perSlug.get(slug);
+  if (!m) throw new Error(`Incantesimo mancante: ${slug}`);
+  return { ...m.data, slug, testo: (m.body ?? '').trim() };
+};
+
+const trucchetti = pg.trucchetti.map(conTesto);
+const dominio = pg.dominio.map(conTesto);
+
+// Il testo completo di TUTTI gli incantesimi del pool, non solo dei sei
+// preparati all'avvio: dopo uno scambio a fine Riposo Lungo il giocatore deve
+// vedere tempo di lancio, gittata, TS e danno anche del nuovo incantesimo, non
+// solo il nome. Sono tutti presenti in HTML in build; ControlliLancio
+// mostra/nasconde in base allo stato.
+const preparatiPool = pool.map((m) => conTesto(m.slug));
+
+const ca = classeArmatura(pg);
+const cd = cdIncantesimi(pg);
+const bonusIncantesimi = segno(attaccoIncantesimi(pg));
+const bonusIniziativa = segno(iniziativa(pg));
+---
+
+<BaseLayout titolo="Kaelen — Scheda" attiva="scheda">
+  <Sprite />
+  <DatiIniziali pg={pg} sheetVersion={sheetVersion} pool={pool} />
+
+  <header class="identita">
+    <img src={ritratto.src} width="40" height="40" alt="" class="avatar" />
+    <div>
+      <h1 class="nome">{pg.nome}</h1>
+      <p class="tenue qualifica">{pg.classe} {pg.livello} · {pg.sottoclasse}</p>
+    </div>
+  </header>
+
+  <div class="pannello pf-pannello">
+    <PfTracker client:only="preact" />
+  </div>
+
+  <div class="difese">
+    <div><span class="tenue">CA</span><span class="valore">{ca}</span></div>
+    <div><span class="tenue">CD</span><span class="valore">{cd}</span></div>
+    <div><span class="tenue">INIZ</span><span class="valore">{bonusIniziativa}</span></div>
+  </div>
+
+  <section class="pannello">
+    <h2>Attacchi</h2>
+    <Attacchi pg={pg} />
+  </section>
+
+  <section class="pannello">
+    <h2>Incantesimi</h2>
+    <p class="tenue attacco-inc">Attacco {bonusIncantesimi} · CD {cd}</p>
+    <GrigliaIncantesimi titolo="Trucchetti" incantesimi={trucchetti} />
+    <GrigliaIncantesimi
+      titolo="Preparati"
+      incantesimi={preparatiPool}
+      visibiliDiDefault={pg.preparatiIniziali}
+    />
+    <GrigliaIncantesimi titolo="Dominio" incantesimi={dominio} />
+    <p class="tenue">
+      <a href="/preparati/">Cambia i preparati</a>
+    </p>
+  </section>
+
+  <section class="pannello">
+    <h2>Slot e risorse</h2>
+    <div class="risorse-isola">
+      <Risorse client:only="preact" />
+    </div>
+  </section>
+
+  <section class="pannello">
+    <h2>Reazioni: scegline una</h2>
+    <table>
+      <thead><tr><th>Reazione</th><th>Innesco</th><th>Effetto</th></tr></thead>
+      <tbody>
+        {
+          pg.reazioni.map((r) => (
+            <tr>
+              <td>{r.nome}</td>
+              <td class="tenue">{r.innesco}</td>
+              <td>{r.effetto}</td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </section>
+
+  <nav class="altrove">
+    <a href="/personaggio/">Personaggio</a>
+    <a href="/note/">Note di sessione</a>
+  </nav>
+
+  <ControlliLancio client:only="preact" />
+  <PannelloAzioni client:only="preact" />
+</BaseLayout>

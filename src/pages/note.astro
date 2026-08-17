@@ -1,0 +1,17 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import DatiIniziali from '@/components/DatiIniziali.astro';
+import Note from '@/islands/Note';
+import { caricaScheda } from '@/lib/carica-scheda';
+
+const { pg, pool, sheetVersion } = await caricaScheda();
+---
+
+<BaseLayout titolo="Kaelen — Note" attiva="note">
+  <DatiIniziali pg={pg} sheetVersion={sheetVersion} pool={pool} />
+  <h1>Note di sessione</h1>
+  <div class="pannello note-isola">
+    <Note client:only="preact" />
+  </div>
+  <p class="tenue"><a href="/scheda/">Torna alla scheda</a></p>
+</BaseLayout>

@@ -1,0 +1,17 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import DatiIniziali from '@/components/DatiIniziali.astro';
+import PreparatiPicker from '@/islands/PreparatiPicker';
+import { caricaScheda } from '@/lib/carica-scheda';
+
+const { pg, pool, sheetVersion } = await caricaScheda();
+---
+
+<BaseLayout titolo="Kaelen — Preparati" attiva="preparati">
+  <DatiIniziali pg={pg} sheetVersion={sheetVersion} pool={pool} />
+  <h1>Preparati</h1>
+  <div class="pannello preparati-isola">
+    <PreparatiPicker client:only="preact" />
+  </div>
+  <p class="tenue"><a href="/scheda/">Torna alla scheda</a></p>
+</BaseLayout>

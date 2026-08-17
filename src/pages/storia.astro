@@ -1,0 +1,65 @@
+---
+import { getCollection, render } from 'astro:content';
+import { getImage } from 'astro:assets';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import ritrattoSrc from '@/assets/kaelen-home.webp';
+import '@/styles/storia.css';
+
+const capitoli = (await getCollection('background')).sort((a, b) => a.data.ordine - b.data.ordine);
+const resi = await Promise.all(
+  capitoli.map(async (c) => ({
+    titolo: c.data.titolo,
+    ancora: c.id,
+    Content: (await render(c)).Content,
+  })),
+);
+const ritratto = await getImage({ src: ritrattoSrc, format: 'webp', width: 900 });
+// L'incisione va dopo il terzo capitolo: il primo blocco di testo deve
+// respirare da solo, e più in basso l'immagine spezza la colonna nel punto
+// in cui la lettura comincia a pesare.
+const DOPO = 2;
+---
+
+<BaseLayout titolo="Kaelen — Storia" attiva="storia">
+  <article class="storia">
+    <header class="testata">
+      <p class="occhiello">Cronaca dei Mari Interni</p>
+      <h1>Kaelen</h1>
+      <div class="riga-data">
+        <span>Costa della Spada</span>
+        <span>Nove capitoli</span>
+      </div>
+    </header>
+
+    <nav class="sommario">
+      <h2>Sommario</h2>
+      <ol>
+        {
+          resi.map((c) => (
+            <li>
+              <a href={`#${c.ancora}`}>{c.titolo}</a>
+              <span class="filo" aria-hidden="true" />
+            </li>
+          ))
+        }
+      </ol>
+    </nav>
+
+    {
+      resi.map((c, i) => (
+        <>
+          <section class="capitolo" id={c.ancora}>
+            <h2>{c.titolo}</h2>
+            <c.Content />
+          </section>
+          {i === DOPO && (
+            <figure class="incisione">
+              <img src={ritratto.src} width="900" height="1125" alt="Kaelen sulla prua, di notte" />
+              <figcaption>Kaelen alla prua, la notte della tempesta</figcaption>
+            </figure>
+          )}
+        </>
+      ))
+    }
+  </article>
+</BaseLayout>

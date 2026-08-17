@@ -1,0 +1,121 @@
+---
+import { getImage } from 'astro:assets';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import DatiIniziali from '@/components/DatiIniziali.astro';
+import Statistiche from '@/components/Statistiche.astro';
+import Capacita from '@/components/Capacita.astro';
+import Borsa from '@/islands/Borsa';
+import ritrattoSrc from '@/assets/kaelen-home.webp';
+import { capacitaTrasporto, percezionePassiva } from '@/lib/derive';
+import { caricaScheda } from '@/lib/carica-scheda';
+
+const { pg, pool, sheetVersion } = await caricaScheda();
+
+// Il crop dello style qui sotto ingrandisce l'immagine ~2.5× oltre il minimo
+// di "cover" (vedi il commento sul .mezzobusto): senza risoluzione sorgente
+// piena il ritaglio risulterebbe sfocato sugli schermi ad alta densità.
+const ritratto = await getImage({ src: ritrattoSrc, format: 'webp', width: 1120 });
+const interpretazione = [
+  ['Tratto', pg.interpretazione.tratto],
+  ['Ideale', pg.interpretazione.ideale],
+  ['Legame', pg.interpretazione.legame],
+  ['Difetto', pg.interpretazione.difetto],
+  ['Paura', pg.interpretazione.paura],
+] as const;
+---
+
+<BaseLayout titolo="Kaelen — Personaggio" attiva="personaggio">
+  <DatiIniziali pg={pg} sheetVersion={sheetVersion} pool={pool} />
+
+  <h1>{pg.nome}</h1>
+  <p class="tenue">
+    {pg.specie}
+    {pg.taglia} · {pg.classe}
+    {pg.livello} · {pg.sottoclasse} · {pg.allineamento} · Divinità: {pg.divinita}
+  </p>
+
+  <div class="mezzobusto">
+    <img src={ritratto.src} width="1120" height="1400" alt={`Ritratto di ${pg.nome}`} />
+  </div>
+
+  <section class="pannello">
+    <h2>Interpretazione</h2>
+    <dl class="interpretazione">
+      {
+        interpretazione.map(([voce, testo]) => (
+          <>
+            <dt>{voce}</dt>
+            <dd>{testo}</dd>
+          </>
+        ))
+      }
+    </dl>
+  </section>
+
+  <section class="pannello">
+    <h2>Caratteristiche e abilità</h2>
+    <Statistiche pg={pg} />
+    <p class="tenue">
+      Percezione passiva {percezionePassiva(pg)} · Velocità {pg.velocita} ft · Capacità di trasporto
+      {capacitaTrasporto(pg)} lb
+    </p>
+  </section>
+
+  <section class="pannello">
+    <h2>Capacità</h2>
+    <Capacita pg={pg} />
+  </section>
+
+  <section class="pannello">
+    <h2>Borsa</h2>
+    <div class="borsa-isola">
+      <Borsa client:only="preact" />
+    </div>
+    <p class="tenue">
+      Lingue: {pg.lingue.join(', ')}. Strumenti: {pg.strumenti.map((x) => x.nome).join(', ')}.
+      {pg.armatura.note}
+    </p>
+  </section>
+
+  <p class="tenue"><a href="/scheda/">Torna alla scheda</a></p>
+</BaseLayout>
+
+<style>
+  /* Il ritratto sorgente è a figura intera (1120×1400): con solo
+   * `object-fit: cover` in un riquadro quadrato, il crop minimo lascia
+   * visibile l'80% dell'altezza dell'immagine (lo scarto è al più il 20%,
+   * qualunque `object-position` si scelga) — mostra ancora tutto il corpo.
+   * Per un vero mezzobusto (testa, spalle, amuleto, senza il resto del
+   * corpo) serve uno zoom oltre il minimo di "cover": l'immagine è quindi
+   * ingrandita con `transform: scale()` e ritagliata dal contenitore.
+   * Vedi il rapporto del task per la taratura a occhio. */
+  .mezzobusto {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    border-radius: var(--raggio);
+    border: 1px solid var(--bordo);
+    margin: var(--spazio) 0;
+  }
+  .mezzobusto img {
+    display: block;
+    width: 100%;
+    height: auto;
+    transform: scale(2.55) translateY(-6%);
+    transform-origin: 50% 0%;
+  }
+  .interpretazione {
+    margin: 0;
+    display: grid;
+    grid-template-columns: 6rem 1fr;
+    gap: 0.35rem 0.6rem;
+    font-size: 0.92rem;
+  }
+  .interpretazione dt {
+    color: var(--testo-tenue);
+    font-family: var(--font-display);
+  }
+  .interpretazione dd {
+    margin: 0;
+  }
+</style>

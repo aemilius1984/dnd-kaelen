@@ -1,10 +1,11 @@
 ---
-import TabBar from '@/components/TabBar.astro';
+import Menu from '@/components/Menu.astro';
+import AvvisoAzzeramento from '@/islands/AvvisoAzzeramento';
 import '@/styles/tokens.css';
 
 interface Props {
   titolo: string;
-  attiva: 'scheda' | 'tattiche' | 'background';
+  attiva: 'scheda' | 'personaggio' | 'storia' | 'preparati' | 'note' | null;
 }
 const { titolo, attiva } = Astro.props;
 ---
@@ -14,18 +15,59 @@ const { titolo, attiva } = Astro.props;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Un solo theme-color, senza `media`: il tema vero non viene dal sistema
+      operativo ma da `data-tema`, quindi due meta divisi per
+      `prefers-color-scheme` contraddirebbero chi ha scelto il tema dal menu.
+      Il valore qui è quello di Tempesta, che è anche il ripiego del CSS quando
+      `data-tema` manca; lo script qui sotto lo corregge al primo paint e
+      AzioniMenu quando l'utente commuta. Deve stare *prima* dello script, che
+      lo cerca nel DOM già analizzato. -->
+    <meta name="theme-color" content="#0a0c10" />
+    <script is:inline>
+      // Deve girare prima del primo rendering, quindi non può importare
+      // src/lib/tema.ts: la regola e i due colori sono duplicati a mano. Vedi
+      // i commenti in risolviTema() e COLORE_TEMA. Resta sincrono, senza
+      // dipendenze, e non tocca il DOM oltre documentElement e il meta.
+      (function () {
+        let salvato = null;
+        try {
+          salvato = localStorage.getItem('kaelen:tema');
+        } catch {
+          // storage negato o non disponibile: resta il valore nullo già impostato
+        }
+        const chiaro = window.matchMedia('(prefers-color-scheme: light)').matches;
+        const tema =
+          salvato === 'tempesta' || salvato === 'pergamena'
+            ? salvato
+            : chiaro
+              ? 'pergamena'
+              : 'tempesta';
+        document.documentElement.dataset.tema = tema;
+        const meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', tema === 'pergamena' ? '#efe7d6' : '#0a0c10');
+      })();
+    </script>
     <meta name="robots" content="noindex, nofollow" />
-    <meta name="theme-color" content="#0b0d10" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <title>{titolo}</title>
   </head>
   <body>
+    {attiva !== null && <Menu attiva={attiva} />}
     <main>
+      {
+        /* `assicuraInizializzato()` alza l'avviso su tutte le pagine che
+        incorporano DatiIniziali, non solo sulla Scheda: l'avviso deve poter
+        comparire su tutte, altrimenti un azzeramento incassato su /note/ è
+        silenzioso e va perso alla prima `muta()`. Le due rotte escluse sono
+        esattamente quelle senza il blocco `#dati-iniziali`: la splash, che non
+        mostra il menu e ha `attiva` null, e la Storia, che non ha isole
+        proprie. */
+        attiva !== null && attiva !== 'storia' && <AvvisoAzzeramento client:only="preact" />
+      }
       <slot />
     </main>
-    <TabBar attiva={attiva} />
     <script is:inline>
       if (
         'serviceWorker' in navigator &&

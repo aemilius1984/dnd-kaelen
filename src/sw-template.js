@@ -32,6 +32,19 @@ function rispostaOffline() {
   });
 }
 
+// Il ripiego sulla home vale solo per le navigazioni. Servirlo anche a
+// script, fogli di stile e immagini significa consegnare dell'HTML a chi
+// aspetta altro: il browser rifiuta il modulo con un errore di MIME type
+// («expected a JavaScript module script but the server responded with
+// text/html») che nasconde la causa vera, cioè che quel file non era in
+// cache. Succede davvero dopo un deploy, quando un HTML già in cache punta
+// a bundle con hash che questa cache non ha mai visto. Meglio un 503
+// esplicito, che si legge per quello che è.
+function ripiego(richiesta) {
+  if (richiesta.mode !== 'navigate') return rispostaOffline();
+  return caches.match('/').then((home) => home || rispostaOffline());
+}
+
 self.addEventListener('fetch', (e) => {
   const richiesta = e.request;
   if (richiesta.method !== 'GET' || new URL(richiesta.url).origin !== self.location.origin) return;
@@ -46,7 +59,7 @@ self.addEventListener('fetch', (e) => {
           }
           return risposta;
         })
-        .catch(() => salvata || caches.match('/').then((home) => home || rispostaOffline()));
+        .catch(() => salvata || ripiego(richiesta));
       return salvata || dalla_rete;
     }),
   );
