@@ -1,10 +1,19 @@
-.pannello {
-  background: var(--superficie);
-  border: 1px solid var(--filetto);
-  border-radius: var(--raggio);
-  padding: var(--spazio-2);
-  margin: var(--spazio-2) 0;
+/* Il nome inglese è un nome, non una traduzione: si gioca con le regole in
+ * inglese e ogni cosa nominata da un manuale porta accanto la voce con cui la
+ * si cerca. Le regole stanno qui e non in uno `<style>` dentro
+ * `NomeDoppio.astro` perché la borsa è un'isola Preact: non può montare un
+ * componente `.astro` e riscrive lo stesso markup a mano. Con uno stile ad
+ * ambito i due lati si vedrebbero diversi e nessun test lo direbbe. */
+.nome-doppio:not(.in-linea) {
+  display: grid;
+  gap: 0.1rem;
 }
+.nome-doppio .en {
+  font-family: var(--font-mono);
+  font-size: var(--fs-piccolo);
+  color: var(--inchiostro-muto);
+}
+
 button {
   font: inherit;
   color: var(--inchiostro);
@@ -79,9 +88,16 @@ button:active {
  * alla prima idratazione. Misurata con Chrome headless via CDP a 390px di
  * larghezza, stato normale (6 preparati): .preparati-isola ~344px idratata
  * → riservati 346px (con un paio di pixel di margine, come .pf-pannello).
- * Vedi il rapporto del task per il metodo e i numeri. */
+ * Vedi il rapporto del task per il metodo e i numeri.
+ *
+ * La fase 2 ha sostituito `.pannello` con `Superficie`, che imbottisce di
+ * 1.5rem per lato invece di 0.75rem: +24px, esattamente come per .pf-pannello.
+ * 346 + 24 = 370. È CALCOLATO, non misurato — vedi la voce delle altezze
+ * riservate in BACKLOG.md. Il margine sta qui e non in `Superficie`: il
+ * primitivo sa cos'è, non quanto stare lontano dai vicini. */
 .preparati-isola {
-  min-height: 346px;
+  min-height: 370px;
+  margin: var(--spazio-2) 0;
 }
 
 .caselle {
@@ -155,8 +171,11 @@ button[disabled] {
 .borsa-isola {
   min-height: 996px;
 }
+/* 221px erano misurati dentro `.pannello`; `Superficie` imbottisce di 24px in
+ * più in totale, come sopra. 221 + 24 = 245, calcolato e da confermare. */
 .note-isola {
-  min-height: 221px;
+  min-height: 245px;
+  margin: var(--spazio-2) 0;
 }
 
 .monete {
@@ -443,10 +462,15 @@ dialog.azioni input[type='number'] {
  * 4×20.4 + 3×6.4 = 100.8px → riservati 101px (altezza invariata dalla
  * larghezza: il numero di righe non cambia fra 340px e 324px).
  *
- * Le altre quattro altezze riservate del file (.preparati-isola,
- * .borsa-isola, .note-isola, sopra) restano calibrate sui 340px di contenuto
- * di prima della rinomina dei token: vedi BACKLOG.md per la nota di
- * ri-misurazione. */
+ * Le altre altezze riservate del file (.preparati-isola, .borsa-isola,
+ * .note-isola, sopra) restano calibrate sui 340px di contenuto di prima della
+ * rinomina dei token: vedi BACKLOG.md per la nota di ri-misurazione.
+ *
+ * AGGIORNAMENTO fase 2: la sezione ha perso il riquadro, quindi il contenuto
+ * torna a 390 − 2×1rem = 358px. Più largo significa mai più righe, quindi
+ * 101px resta un tetto valido e non va alzato — ma potrebbe ora riservare più
+ * del necessario se le tre risorse entrano in due righe invece di tre. Da
+ * confermare nella stessa verifica. */
 .risorse-isola {
   min-height: 101px;
 }
