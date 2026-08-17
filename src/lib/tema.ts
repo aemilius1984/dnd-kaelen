@@ -18,7 +18,7 @@ export function risolviTema(salvato: string | null, preferisceChiaro: boolean): 
 
 /** Il colore con cui il browser tinge la propria cromatura: sul dispositivo
  *  bersaglio l'app è installata, quindi è una striscia di schermo intera
- *  sopra la pagina. Sono i valori di `--fondo` dei due temi in tokens.css: se
+ *  sopra la pagina. Sono i valori di `--carta` dei due temi in tokens.css: se
  *  cambiano là, cambiano qui. Come `risolviTema`, questa tabella è ripetuta a
  *  mano nello script inline di BaseLayout, che deve girare prima del primo
  *  rendering e non può importare nulla. */

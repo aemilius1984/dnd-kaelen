@@ -28,9 +28,18 @@ function contrasto(a: string, b: string): number {
   return (x + 0.05) / (y + 0.05);
 }
 
+// Il file dichiara ogni token due volte, uno per tema: un match senza scopo
+// prenderebbe il primo per ordine nel file, non per intenzione. Pergamena è
+// l'unico tema attivo (Tempesta è dormiente), quindi è l'unico che le prove
+// di contrasto devono misurare — a prescindere da quale blocco viene prima.
+const PERGAMENA = TOKENS.slice(
+  TOKENS.indexOf("data-tema='pergamena'"),
+  TOKENS.indexOf("data-tema='tempesta'"),
+);
+
 function valore(nome: string): string {
-  const m = TOKENS.match(new RegExp(`${nome}\\s*:\\s*(#[0-9a-fA-F]{6})`));
-  if (!m) throw new Error(`Token assente o non esadecimale: ${nome}`);
+  const m = PERGAMENA.match(new RegExp(`${nome}\\s*:\\s*(#[0-9a-fA-F]{6})`));
+  if (!m) throw new Error(`Token assente o non esadecimale nel blocco pergamena: ${nome}`);
   return m[1];
 }
 
@@ -38,7 +47,7 @@ it('ogni token usato è un token dichiarato', () => {
   const dichiarati = definiti();
   const orfani = new Set<string>();
 
-  for (const p of [...file('src/styles', ['.css']), ...file('src', ['.astro', '.tsx'])]) {
+  for (const p of file('src', ['.css', '.astro', '.tsx'])) {
     const testo = readFileSync(p, 'utf8');
     for (const m of testo.matchAll(/var\(\s*(--[a-z0-9-]+)/g)) {
       if (!dichiarati.has(m[1])) orfani.add(`${m[1]} in ${p}`);
@@ -63,7 +72,7 @@ describe('contrasto delle coppie che si leggono davvero', () => {
   ];
 
   for (const [testo, fondo] of coppie) {
-    it(`${testo} su ${fondo} sta ad almeno 4,5:1`, () => {
+    it(`${testo} su ${fondo} sta ad almeno 4,5:1 in pergamena`, () => {
       expect(contrasto(valore(testo), valore(fondo))).toBeGreaterThanOrEqual(4.5);
     });
   }

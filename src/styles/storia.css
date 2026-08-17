@@ -15,7 +15,7 @@
   color: var(--inchiostro);
   background:
     radial-gradient(circle at 18% 12%, rgb(120 100 60 / 0.07), transparent 55%),
-    radial-gradient(circle at 82% 68%, rgb(120 100 60 / 0.06), transparent 55%), var(--carta);
+    radial-gradient(circle at 82% 68%, rgb(120 100 60 / 0.06), transparent 55%), var(--superficie);
 }
 .storia > * {
   padding-inline: var(--spazio-2);
