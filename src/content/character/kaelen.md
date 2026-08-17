@@ -13,19 +13,20 @@ competenza: 2
 caratteristicaIncantesimi: sag
 tsCompetenti: [sag, car]
 abilita:
-  - { nome: Atletica, caratteristica: for, origine: Background }
-  - { nome: Rapidità di mano, caratteristica: des, origine: Background }
-  - { nome: Intuizione, caratteristica: sag, origine: Chierico }
-  - { nome: Medicina, caratteristica: sag, origine: Chierico }
-  - { nome: Percezione, caratteristica: sag, origine: Skilled }
-  - { nome: Religione, caratteristica: int, origine: Skilled }
-  - { nome: Sopravvivenza, caratteristica: sag, origine: Skilled }
+  - { nome: Atletica, nomeEn: Athletics, caratteristica: for, origine: Background }
+  - { nome: Rapidità di mano, nomeEn: Sleight of Hand, caratteristica: des, origine: Background }
+  - { nome: Intuizione, nomeEn: Insight, caratteristica: sag, origine: Chierico }
+  - { nome: Medicina, nomeEn: Medicine, caratteristica: sag, origine: Chierico }
+  - { nome: Percezione, nomeEn: Perception, caratteristica: sag, origine: Skilled }
+  - { nome: Religione, nomeEn: Religion, caratteristica: int, origine: Skilled }
+  - { nome: Sopravvivenza, nomeEn: Survival, caratteristica: sag, origine: Skilled }
 pfMax: 21
 dadoVita: d8
 numeroDadiVita: 3
 velocita: 35
 armatura:
   nome: Cotta di maglia
+  nomeEn: Chain Mail
   ca: 16
   tipo: pesante
   scudo: 2
@@ -33,29 +34,74 @@ armatura:
 attacchi:
   - id: maglio-una-mano
     nome: Maglio da guerra, una mano
+    nomeEn: Warhammer
     caratteristica: for
     competente: true
+    gittata: 5 ft
+    proprieta: [Versatile (1d10)]
     danno: { dado: 1d8, fisso: 0 }
     tipoDanno: contundenti
+    descrizione: >-
+      Un martello da guerra a testa piena, arma marziale da mischia. Impugnato a
+      una mano tira 1d8: è la forma base dell'arma, quella su cui la proprietà
+      Versatile calcola il proprio aumento.
     note: Permette di usare lo scudo. Scelta normale.
   - id: maglio-due-mani
     nome: Maglio da guerra, due mani
+    nomeEn: Warhammer
     caratteristica: for
     competente: true
+    gittata: 5 ft
+    proprieta: [Versatile (1d10)]
     danno: { dado: 1d10, fisso: 0 }
     tipoDanno: contundenti
+    descrizione: >-
+      Lo stesso maglio stretto a due mani. È quello che concede la proprietà
+      Versatile: il dado di danno sale da 1d8 a 1d10, e in cambio nessuna mano
+      resta libera.
     note: Devi rinunciare allo scudo, la CA scende a 16.
   - id: colpo-senzarmi
     nome: Colpo senz'armi
+    nomeEn: Unarmed Strike
     caratteristica: for
     competente: true
+    gittata: 5 ft
+    proprieta: []
     danno: { dado: null, fisso: 1 }
     tipoDanno: contundenti
+    descrizione: >-
+      Pugno, calcio o testata contro un bersaglio entro 5 ft. Non è un'arma e non
+      ha un dado: infligge 1 danno più il modificatore di Forza. Le sue altre due
+      opzioni, afferrare e spingere, non tirano per colpire.
     note: In alternativa puoi afferrare o spingere, CD 13.
 risorse:
-  - { id: incanalare, nome: Incanalare Divinità, max: 2, recupero: breve }
-  - { id: ira-tempesta, nome: Ira della Tempesta, max: 3, recupero: lungo }
-  - { id: tuono-tempesta, nome: Tuono della Tempesta, max: 2, recupero: lungo }
+  - id: incanalare
+    nome: Incanalare Divinità
+    nomeEn: Channel Divinity
+    max: 2
+    recupero: breve
+    descrizione: >-
+      L'energia che Stronmaus ti presta, due cariche che tornano con un Riposo
+      Breve. È il carburante comune di Scintilla Divina, Scacciare Non Morti e
+      Ira Distruttiva: spenderla per una la toglie alle altre.
+  - id: ira-tempesta
+    nome: Ira della Tempesta
+    nomeEn: Wrath of the Storm
+    max: 3
+    recupero: lungo
+    descrizione: >-
+      La risposta del dominio a chi ti colpisce corpo a corpo: il cielo lo punisce
+      per te, con fulmine o tuono, prima ancora che tu abbia deciso come reagire.
+      Tre usi per Riposo Lungo.
+  - id: tuono-tempesta
+    nome: Tuono della Tempesta
+    nomeEn: Storm's Thunder
+    max: 2
+    recupero: lungo
+    descrizione: >-
+      L'eredità dei Giganti della Tempesta che ti scorre nel sangue: chi ti ferisce
+      sente il rimbombo, anche da lontano e anche senza averti attaccato. Due usi
+      per Riposo Lungo.
 slot:
   - { livello: 1, max: 4 }
   - { livello: 2, max: 2 }
@@ -65,31 +111,56 @@ dominio: [nube-di-nebbia, onda-tonante, folata-di-vento, frantumare]
 limitePreparati: 6
 monete: { mo: 16, ma: 8, mr: 0 }
 equipaggiamento:
-  - { id: cotta-di-maglia, nome: Cotta di maglia, quantita: 1, consumabile: false }
-  - { id: scudo, nome: Scudo, quantita: 1, consumabile: false }
-  - { id: maglio, nome: Maglio da guerra, quantita: 1, consumabile: false }
+  - {
+      id: cotta-di-maglia,
+      nome: Cotta di maglia,
+      nomeEn: Chain Mail,
+      quantita: 1,
+      consumabile: false,
+    }
+  - { id: scudo, nome: Scudo, nomeEn: Shield, quantita: 1, consumabile: false }
+  - { id: maglio, nome: Maglio da guerra, nomeEn: Warhammer, quantita: 1, consumabile: false }
   - {
       id: simbolo-sacro,
       nome: 'Simbolo sacro: disco di pietra lavica',
+      nomeEn: 'Holy Symbol: Lava-Stone Disk',
       quantita: 1,
       consumabile: false,
       note: 'Focus da incantatore, indossato sul petto.',
     }
-  - { id: strumenti-tessitore, nome: Strumenti da tessitore, quantita: 1, consumabile: false }
-  - { id: acqua-santa, nome: Fiala di acqua santa, quantita: 1, consumabile: true }
-  - { id: razioni, nome: Razioni (giorni), quantita: 7, consumabile: true }
-  - { id: lampada, nome: Lampada, quantita: 1, consumabile: false }
-  - { id: acciarino, nome: Acciarino, quantita: 1, consumabile: false }
-  - { id: coperta, nome: Coperta, quantita: 1, consumabile: false }
-  - { id: sacco-a-pelo, nome: Sacco a pelo, quantita: 1, consumabile: false }
-  - { id: veste, nome: Veste, quantita: 1, consumabile: false }
-  - { id: vestiti-viaggio, nome: Vestiti da viaggio, quantita: 1, consumabile: false }
-  - { id: borraccia, nome: Borraccia, quantita: 1, consumabile: false }
-  - { id: corda, nome: Corda da 50 ft, quantita: 1, consumabile: false }
-  - { id: zaino, nome: Zaino, quantita: 1, consumabile: false }
+  - {
+      id: strumenti-tessitore,
+      nome: Strumenti da tessitore,
+      nomeEn: Weaver's Tools,
+      quantita: 1,
+      consumabile: false,
+    }
+  - {
+      id: acqua-santa,
+      nome: Fiala di acqua santa,
+      nomeEn: Holy Water,
+      quantita: 1,
+      consumabile: true,
+    }
+  - { id: razioni, nome: Razioni (giorni), nomeEn: Rations (days), quantita: 7, consumabile: true }
+  - { id: lampada, nome: Lampada, nomeEn: Lamp, quantita: 1, consumabile: false }
+  - { id: acciarino, nome: Acciarino, nomeEn: Tinderbox, quantita: 1, consumabile: false }
+  - { id: coperta, nome: Coperta, nomeEn: Blanket, quantita: 1, consumabile: false }
+  - { id: sacco-a-pelo, nome: Sacco a pelo, nomeEn: Bedroll, quantita: 1, consumabile: false }
+  - { id: veste, nome: Veste, nomeEn: Robe, quantita: 1, consumabile: false }
+  - {
+      id: vestiti-viaggio,
+      nome: Vestiti da viaggio,
+      nomeEn: Traveler's Clothes,
+      quantita: 1,
+      consumabile: false,
+    }
+  - { id: borraccia, nome: Borraccia, nomeEn: Waterskin, quantita: 1, consumabile: false }
+  - { id: corda, nome: Corda da 50 ft, nomeEn: Rope, quantita: 1, consumabile: false }
+  - { id: zaino, nome: Zaino, nomeEn: Backpack, quantita: 1, consumabile: false }
 lingue: [Comune, Gigante, Lingua dei Segni Comune]
 strumenti:
-  - { nome: Strumenti da tessitore, caratteristica: des, competente: true }
+  - { nome: Strumenti da tessitore, nomeEn: Weaver's Tools, caratteristica: des, competente: true }
 capacita:
   - titolo: 'Ordine Divino: Protettore'
     paragrafi:
@@ -120,12 +191,17 @@ capacita:
       - "Un incantesimo non distingue amici e nemici: controlla l'area di Onda Tonante e Frantumare prima di lanciarli."
 reazioni:
   - nome: Ira della Tempesta
+    nomeEn: Wrath of the Storm
     innesco: Una creatura che vedi entro 5 ft ti colpisce con un attacco.
     effetto: TS Destrezza, 2d8 fulmine o tuono, metà se riesce. Tre usi per Riposo Lungo.
+    risorsa: ira-tempesta
   - nome: Tuono della Tempesta
+    nomeEn: Storm's Thunder
     innesco: Subisci danni da una creatura entro 60 ft.
     effetto: Quella creatura subisce 1d8 danni da tuono, senza TS. Due usi per Riposo Lungo.
+    risorsa: tuono-tempesta
   - nome: Attacco di Opportunità
+    nomeEn: Opportunity Attack
     innesco: Un nemico visibile lascia volontariamente la tua portata.
     effetto: Un attacco di maglio.
 interpretazione:

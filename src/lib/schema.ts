@@ -27,6 +27,7 @@ export const personaggioSchema = z.object({
   abilita: z.array(
     z.object({
       nome: z.string(),
+      nomeEn: z.string(),
       caratteristica: caratteristicaEnum,
       origine: z.string(),
     }),
@@ -37,6 +38,7 @@ export const personaggioSchema = z.object({
   velocita: z.number().int(),
   armatura: z.object({
     nome: z.string(),
+    nomeEn: z.string(),
     ca: z.number().int(),
     tipo: z.enum(['leggera', 'media', 'pesante']),
     scudo: z.number().int(),
@@ -46,10 +48,14 @@ export const personaggioSchema = z.object({
     z.object({
       id: z.string(),
       nome: z.string(),
+      nomeEn: z.string(),
       caratteristica: caratteristicaEnum,
       competente: z.boolean(),
+      gittata: z.string(),
+      proprieta: z.array(z.string()).default([]),
       danno: z.object({ dado: z.string().nullable(), fisso: z.number().int() }),
       tipoDanno: z.string(),
+      descrizione: z.string(),
       note: z.string().optional(),
     }),
   ),
@@ -57,8 +63,10 @@ export const personaggioSchema = z.object({
     z.object({
       id: z.string(),
       nome: z.string(),
+      nomeEn: z.string(),
       max: z.number().int().positive(),
       recupero: z.enum(['breve', 'lungo']),
+      descrizione: z.string(),
     }),
   ),
   slot: z.array(z.object({ livello: z.number().int(), max: z.number().int() })),
@@ -71,6 +79,7 @@ export const personaggioSchema = z.object({
     z.object({
       id: z.string(),
       nome: z.string(),
+      nomeEn: z.string(),
       quantita: z.number().int(),
       consumabile: z.boolean(),
       note: z.string().optional(),
@@ -78,10 +87,26 @@ export const personaggioSchema = z.object({
   ),
   lingue: z.array(z.string()),
   strumenti: z.array(
-    z.object({ nome: z.string(), caratteristica: caratteristicaEnum, competente: z.boolean() }),
+    z.object({
+      nome: z.string(),
+      nomeEn: z.string(),
+      caratteristica: caratteristicaEnum,
+      competente: z.boolean(),
+    }),
   ),
   capacita: z.array(z.object({ titolo: z.string(), paragrafi: z.array(z.string()) })),
-  reazioni: z.array(z.object({ nome: z.string(), innesco: z.string(), effetto: z.string() })),
+  reazioni: z.array(
+    z.object({
+      nome: z.string(),
+      nomeEn: z.string(),
+      innesco: z.string(),
+      effetto: z.string(),
+      // Solo le reazioni che consumano un contatore lo portano: l'Attacco di
+      // Opportunità non ne ha uno, e un campo obbligatorio lo costringerebbe
+      // a dichiarare una risorsa che non esiste.
+      risorsa: z.string().optional(),
+    }),
+  ),
   interpretazione: z.object({
     tratto: z.string(),
     ideale: z.string(),

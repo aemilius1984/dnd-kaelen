@@ -25,6 +25,46 @@ describe('campiVersione', () => {
     expect(dopo).toBe(base);
   });
 
+  // La prosa non sta più solo fuori dagli oggetti versionati: da quando
+  // `risorse` ha una `descrizione` ed `equipaggiamento` un `nomeEn`, versionare
+  // gli oggetti interi rimetterebbe il refuso dentro l'hash.
+  it('non azzera la sessione quando cambia solo prosa dentro risorse ed equipaggiamento', () => {
+    const prima = campiVersione(pg, pool);
+    const dopo = campiVersione(
+      {
+        ...pg,
+        risorse: pg.risorse.map((r) => ({
+          ...r,
+          descrizione: 'testo riscritto',
+          nomeEn: 'Renamed',
+        })),
+        equipaggiamento: pg.equipaggiamento.map((e) => ({ ...e, nomeEn: 'Renamed' })),
+      },
+      pool,
+    );
+
+    // La versione dipende da ciò da cui dipende lo *stato*: quanti usi ha una
+    // risorsa, non come la descriviamo.
+    expect(dopo).toEqual(prima);
+  });
+
+  it('cambia quando cambia il numero di usi di una risorsa o la quantità di un oggetto', () => {
+    const base = hashDati(JSON.stringify(campiVersione(pg, pool)));
+    const conUnUsoInPiu = {
+      ...pg,
+      risorse: pg.risorse.map((r) => (r.id === 'incanalare' ? { ...r, max: r.max + 1 } : r)),
+    };
+    const conUnaRazioneInPiu = {
+      ...pg,
+      equipaggiamento: pg.equipaggiamento.map((e) =>
+        e.id === 'razioni' ? { ...e, quantita: e.quantita + 1 } : e,
+      ),
+    };
+
+    expect(hashDati(JSON.stringify(campiVersione(conUnUsoInPiu, pool)))).not.toBe(base);
+    expect(hashDati(JSON.stringify(campiVersione(conUnaRazioneInPiu, pool)))).not.toBe(base);
+  });
+
   it('cambia quando cambia un campo da cui lo stato di sessione dipende', () => {
     const base = hashDati(JSON.stringify(campiVersione(pg, pool)));
     expect(hashDati(JSON.stringify(campiVersione({ ...pg, pfMax: pg.pfMax + 1 }, pool)))).not.toBe(
