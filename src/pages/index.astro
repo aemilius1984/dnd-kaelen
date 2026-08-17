@@ -29,7 +29,6 @@ const desk = await getImage({ src: desktop, format: 'webp' });
     </picture>
 
     <div class="lampo" aria-hidden="true"></div>
-    <div class="pioggia" aria-hidden="true"></div>
 
     <div class="porte">
       <p class="nome">{pg.nome}</p>
@@ -145,22 +144,11 @@ const desk = await getImage({ src: desktop, format: 'webp' });
     }
   }
 
-  .pioggia {
-    position: absolute;
-    inset: -20% -10%;
-    background-image: repeating-linear-gradient(
-      104deg,
-      transparent 0 6px,
-      rgb(210 228 244 / 0.16) 6px 7px
-    );
-    animation: pioggia 0.9s linear infinite;
-    opacity: 0.5;
-  }
-  @keyframes pioggia {
-    to {
-      transform: translate3d(-24px, 96px, 0);
-    }
-  }
+  /* Il velo di pioggia — righe diagonali chiare in scorrimento perpetuo — è
+     stato tolto: sul ritratto peggiorava la fotografia invece di ambientarla,
+     e da quando la grana di `base.css` copre l'intera pagina il ritratto
+     portava due texture sovrapposte. Il lampo resta: agisce sulla luce, non
+     sul dettaglio dell'immagine. */
 
   .porte {
     position: absolute;
@@ -237,15 +225,11 @@ const desk = await getImage({ src: desktop, format: 'webp' });
   @media (prefers-reduced-motion: reduce) {
     .splash img,
     .splash .lampo,
-    .splash .pioggia,
     .splash .porte {
       animation: none;
     }
     .splash .porte {
       opacity: 1;
-    }
-    .splash .pioggia {
-      opacity: 0.25;
     }
   }
 
