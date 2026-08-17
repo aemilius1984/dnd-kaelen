@@ -3,6 +3,85 @@
 Cose decise, non fatte, e il perché. Una voce esce di qui solo con il suo giro
 di domande: niente entra in un ramo "già che ci siamo".
 
+## Verifiche visive della fase 1, mai eseguite
+
+**Questa è la voce da chiudere per prima: è l'unico buco vero della fase.**
+Il ridisegno è stato costruito e revisionato interamente senza browser. Ogni
+verifica a 390×844 che il piano chiedeva è stata sostituita da controlli
+meccanici sull'HTML e sul CSS costruiti — che dicono se un valore è arrivato,
+mai se si vede bene. Le cose sotto sono ordinate per probabilità di essere
+davvero sbagliate.
+
+**Su qualunque rotta**
+
+1. **Le superfici si staccano dal fondo?** `--superficie` sta a 1,09:1 contro
+   `--carta`: praticamente lo stesso colore. La separazione è affidata tutta
+   alle due ombre lunghe, che su pergamena sono nero all'5-11% di alfa. Se
+   quelle ombre non si vedono, l'intera scommessa del ridisegno cade e ogni
+   pannello è testo piatto su carta.
+2. **I bottoni sembrano ancora bottoni?** Il riempimento è a 1,13:1 dalla
+   pagina e il bordo, ora traslucido, a 1,26:1. Guarda «Azzera sessione» nel
+   menu, i `+`/`−` e i campi numerici del pannello ⚡, i bottoni di lancio.
+3. **Apri il menu ☰.** Ha `z-index: 20` e crea un contesto d'impilamento, quindi
+   la sua tendina è l'unica superficie del sito **senza** grana sopra: cerca uno
+   stacco di luminosità all'apertura.
+4. **Primo caricamento**: nessun lampo scuro, e i sei woff2 non devono spostare
+   il layout quando atterrano — Fraunces e Inter hanno metriche molto diverse da
+   Georgia e dal sans di sistema.
+
+**`/scheda/`**
+
+5. **Il blocco dei PF all'idratazione.** `min-height: 172px` è _calcolato_, non
+   misurato. Se le difese e il titolo «Attacchi» saltano quando `PfTracker` si
+   monta, quel numero è sbagliato — ed è in cima allo `start_url` dell'app.
+6. Il blocco dei PF deve avere **un solo** filetto e stare visibilmente più in
+   alto delle sezioni sotto: quel contrasto è tutto il senso di `sollevata`.
+7. «Slot e risorse»: i 101px riservati non sono mai stati misurati con la
+   larghezza nuova. Controlla il salto e se «Tuono della Tempesta» va a capo.
+8. I numeri sono passati a JetBrains Mono, molto più larga del monospazio di
+   sistema su iOS: CA/CD/INIZ e il numero dei PF non devono traboccare a 390px.
+9. Gli `h2` sono Fraunces **600** ambra dove erano Marcellus 400: controlla che
+   non urlino.
+10. La griglia dei sigilli ha perso 8px di larghezza utile: i nomi a 0.68rem non
+    devono spezzarsi peggio di prima.
+11. Apri il pannello ⚡: la grana deve restare **sotto** (è nel top layer, quindi
+    dovrebbe), e il pannello deve staccarsi dal suo velo scuro.
+
+**`/personaggio/`**
+
+12. `.borsa-isola` riserva 996px, misurati alla larghezza vecchia: è la più
+    esposta delle quattro. Guarda il fondo pagina all'idratazione.
+13. Le tabelle: `th` è passato da 500 a 600 e i numeri a JetBrains Mono.
+14. Il ritratto è incorniciato da un solo filetto a 1,26:1 — potrebbe essere
+    semplicemente sparito.
+
+**`/storia/`**
+
+15. **Il foglio si stacca dal fondo?** È la decisione presa in corsa durante il
+    task 3: sopra i 34rem dovresti vedere un foglio su una pagina. Se non si
+    distingue, la scelta non valeva.
+16. I capitoli devono essere ancora EB Garamond, **non** Inter, e il capolettera
+    Fraunces e non un ripiego Georgia: è il punto dove un woff2 mancante si vede
+    di più.
+17. Il titolo di testata è Fraunces, molto più larga di Marcellus: non deve
+    traboccare a 390px. Il suo filo doppio al 12% di alfa potrebbe non esserci.
+
+**`/preparati/`, `/note/`, `/`**
+
+18. Salto all'idratazione su `.preparati-isola` (346px) e `.note-isola` (221px).
+19. `/note/`: l'area di testo si riconosce come campo, a 1,23:1 di riempimento e
+    1,26:1 di bordo?
+20. **Splash**: la grana è `fixed` e sta sopra una fotografia a tutto schermo che
+    si muove sotto di lei. Al 5% può leggersi come schermo sporco invece che
+    come texture della carta — è l'unico posto dove non ha carta di cui essere
+    la grana.
+21. Splash con movimento ridotto attivo: le due porte devono restare visibili.
+    Il modo in cui fallisce è una home morta.
+
+Da chiudere prima del rilascio. Le voci 1, 2, 5 e 20 possono ciascuna
+significare «il ridisegno si vede sbagliato», e costano poco da correggere
+finché il ramo è ancora aperto.
+
 ## Tema scuro grafite
 
 Un secondo tema sul modello di potenza.dev — grafite, accento schiarito per il
