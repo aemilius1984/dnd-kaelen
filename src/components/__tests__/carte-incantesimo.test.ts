@@ -78,3 +78,19 @@ it('parte nascosto solo ciò che non è preparato, e solo se glielo si chiede', 
   expect(html).toContain('hidden');
   expect(html).toContain(`data-slug="${diLivello.slug}"`);
 });
+
+describe('tag rituale', () => {
+  it('l’etichetta compare su un rituale', async () => {
+    const html = await rendi([con('presagio')]);
+
+    expect(html).toContain('rituale · Ritual');
+  });
+
+  it('e non compare su chi rituale non è', async () => {
+    // `cura-ferite` è stato controllato sulla lista del Chierico: colonna
+    // Special vuota.
+    const html = await rendi([diLivello]);
+
+    expect(html).not.toContain('Ritual');
+  });
+});

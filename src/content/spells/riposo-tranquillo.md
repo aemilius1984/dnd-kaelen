@@ -12,6 +12,7 @@ danno: null
 slotSuperiore: null
 tag: [utilità]
 dominio: false
+rituale: true
 ---
 
 Blocca decomposizione e trasformazione in Non Morto su un cadavere toccato per 10 giorni,

@@ -132,6 +132,11 @@ export const incantesimoSchema = z.object({
   slotSuperiore: z.string().nullable(),
   tag: z.array(z.enum(['cura', 'danno', 'controllo', 'utilità'])),
   dominio: z.boolean().default(false),
+  /** Il tag Ritual del manuale: si può lanciare senza spendere uno slot, con
+   *  dieci minuti in più. Sbagliarlo fa spendere uno slot che non serviva, o
+   *  peggio non spenderne uno che serviva: ogni valore `true` deve venire
+   *  dalla colonna Special della lista del Chierico, non a memoria. */
+  rituale: z.boolean().default(false),
 });
 
 export type Incantesimo = z.infer<typeof incantesimoSchema>;

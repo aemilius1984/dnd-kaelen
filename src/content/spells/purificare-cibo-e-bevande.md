@@ -12,6 +12,7 @@ danno: null
 slotSuperiore: null
 tag: [utilità]
 dominio: false
+rituale: true
 ---
 
 Bonifica scorte non magiche di cibo e acqua in una sfera di 5 ft, cancellando veleno e

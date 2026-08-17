@@ -55,6 +55,15 @@ const { incantesimi, visibiliDiDefault } = Astro.props;
           )}
         </div>
 
+        {m.rituale && (
+          <p class="etichette">
+            {/* Il rituale si lancia senza spendere uno slot, con dieci minuti
+                in più: è la prima cosa da sapere quando si guarda quanto
+                costa, quindi sta sopra la riga dei dati e non dentro. */}
+            <span class="etichetta">rituale · Ritual</span>
+          </p>
+        )}
+
         <p class="meta tenue">
           {m.lancio} · {m.gittata} · {m.componenti}
           {m.concentrazione && ' · concentrazione'}
@@ -117,6 +126,23 @@ const { incantesimi, visibiliDiDefault } = Astro.props;
 
   .a-volonta {
     font-size: var(--fs-piccolo);
+  }
+
+  /* Stessa forma delle proprietà dell'arma: sono entrambe termini di
+     regolamento che si cercano a colpo d'occhio, non prosa. */
+  .etichette {
+    margin: var(--spazio-2) 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+
+  .etichetta {
+    font-family: var(--font-mono);
+    font-size: var(--fs-piccolo);
+    padding: 0.1rem 0.4rem;
+    border: 1px solid var(--filetto);
+    border-radius: var(--raggio);
   }
 
   .meta {

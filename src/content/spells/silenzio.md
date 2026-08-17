@@ -12,6 +12,7 @@ danno: null
 slotSuperiore: null
 tag: [controllo]
 dominio: false
+rituale: true
 ---
 
 Nessun suono entra o esce da una sfera di 20 ft di raggio: chi vi si trova interamente
