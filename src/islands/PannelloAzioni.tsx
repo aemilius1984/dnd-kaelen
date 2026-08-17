@@ -2,6 +2,7 @@ import { useRef, useState } from 'preact/hooks';
 import {
   applicaCura,
   applicaDanno,
+  impostaIspirazione,
   impostaPfTemporanei,
   puoSpendereSlot,
   puoUsareRisorsa,
@@ -183,6 +184,15 @@ export default function PannelloAzioni() {
             Spendi
           </button>
         </div>
+        <label class="riga">
+          <input
+            type="checkbox"
+            checked={s.ispirazione}
+            onChange={(e) => muta((x) => impostaIspirazione(x, e.currentTarget.checked))}
+          />
+          Ispirazione Eroica <span class="tenue">Heroic Inspiration</span>
+        </label>
+
         <div class="riga">
           <button type="button" onClick={() => muta((x) => riposoBreve(x, pg))}>
             Concludi riposo breve

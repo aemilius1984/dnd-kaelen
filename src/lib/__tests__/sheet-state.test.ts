@@ -6,6 +6,7 @@ import {
   applicaCura,
   applicaDanno,
   carica,
+  impostaIspirazione,
   impostaPfTemporanei,
   puoPreparare,
   puoSpendereSlot,
@@ -323,5 +324,23 @@ describe('slot che ricordano cosa hanno bruciato', () => {
 
   it('recuperare uno slot mai speso non inventa una lista storta', () => {
     expect(recuperaSlot(s, 2).slotSpesi[2]).toEqual([]);
+  });
+});
+
+describe('Ispirazione Eroica', () => {
+  it('nasce spenta e si accende e si spegne', () => {
+    expect(s.ispirazione).toBe(false);
+    expect(impostaIspirazione(s, true).ispirazione).toBe(true);
+    expect(impostaIspirazione(impostaIspirazione(s, true), false).ispirazione).toBe(false);
+  });
+
+  it('il riposo lungo non la tocca', () => {
+    // Non è una risorsa che si recupera: la dà il DM. Azzerarla al riposo
+    // toglierebbe al giocatore qualcosa che nessuna regola gli toglie.
+    expect(riposoLungo(impostaIspirazione(s, true), pg).ispirazione).toBe(true);
+  });
+
+  it('nemmeno il riposo breve', () => {
+    expect(riposoBreve(impostaIspirazione(s, true), pg).ispirazione).toBe(true);
   });
 });

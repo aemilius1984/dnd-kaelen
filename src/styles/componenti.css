@@ -395,14 +395,30 @@ dialog.azioni input[type='number'] {
   margin: 0;
   font-size: 0.8rem;
 }
+/* Quattro colonne dalla fase 3: CA, CD, INIZ e l'Ispirazione Eroica.
+ *
+ * L'altezza della fascia non va riservata a parte, a differenza delle altre
+ * isole del sito: le tre colonne statiche la tengono su da sole, e la quarta
+ * — l'unica idratata — è alta quanto loro perché condivide le stesse due
+ * regole `.tenue` e `.valore`. Se in futuro l'indicatore diventasse più alto
+ * del resto, questo smetterebbe di essere vero e servirebbe una `min-height`
+ * come per `.pf-pannello`. */
 .difese {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 0.25rem;
   text-align: center;
   margin: var(--spazio-2) 0;
   padding: 0.5rem 0;
   border-block: 1px solid var(--filetto);
+}
+/* Spenta è un contorno, accesa è ambra piena: la differenza si deve cogliere
+ * senza leggere, perché è un sì/no e non un numero. */
+.ispirazione .valore {
+  color: var(--inchiostro-muto);
+}
+.ispirazione.accesa .valore {
+  color: var(--ambra);
 }
 .difese .tenue {
   display: block;

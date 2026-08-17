@@ -25,6 +25,9 @@ export interface StatoSessione {
   monete: { mo: number; ma: number; mr: number };
   oggetti: Record<string, number>;
   note: string;
+  /** Ispirazione Eroica: la dà il DM e la si spende, non si recupera con un
+   *  riposo. Per questo nessuno dei due riposi la tocca. */
+  ispirazione: boolean;
   aggiornatoIl: string;
 }
 
@@ -44,6 +47,7 @@ export function statoIniziale(pg: Personaggio, sheetVersion: string): StatoSessi
     monete: { ...pg.monete },
     oggetti: Object.fromEntries(pg.equipaggiamento.map((e) => [e.id, e.quantita])),
     note: '',
+    ispirazione: false,
     aggiornatoIl: adesso(),
   };
 }
@@ -184,6 +188,10 @@ export function impostaOggetto(s: StatoSessione, id: string, quantita: number): 
 
 export function impostaNote(s: StatoSessione, testo: string): StatoSessione {
   return aggiorna(s, { note: testo });
+}
+
+export function impostaIspirazione(s: StatoSessione, valore: boolean): StatoSessione {
+  return aggiorna(s, { ispirazione: valore });
 }
 
 /** Riposo Breve: recupera un uso delle risorse a recupero breve. Non tocca PF,

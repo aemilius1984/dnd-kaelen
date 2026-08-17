@@ -99,6 +99,15 @@ davvero sbagliate.
 33. I contatori delle risorse dentro le card usano la stessa classe `.casella`
     e sono cresciuti con lei: controlla che non sbilancino la testa della
     card.
+34. **La fascia delle difese è passata da tre colonne a quattro** (CA, CD,
+    INIZ, ISP). A 390px ogni colonna scende da ~119px a ~89px: controlla che
+    «INIZ» non vada a capo e che il `+1` non tocchi i bordi. È l'unico punto
+    della fase 3 dove ho scelto di **non** riservare l'altezza — la quarta
+    colonna è idratata ma le altre tre la tengono su — quindi se salta, salta
+    in cima alla rotta principale.
+35. La stella dell'Ispirazione: spenta è `☆` in inchiostro muto, accesa è `★`
+    in ambra. Deve distinguersi senza leggere l'etichetta, e le due glifi
+    devono avere la stessa larghezza o la fascia balla quando si accende.
 
 **`/personaggio/`**
 
