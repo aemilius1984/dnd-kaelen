@@ -44,9 +44,25 @@ function attacco(pg: Personaggio, id: string) {
   return a;
 }
 
-export function perColpire(pg: Personaggio, idAttacco: string): number {
+export interface ParteTiro {
+  etichetta: string;
+  valore: number;
+}
+
+/** Le parti del tiro, nell'ordine in cui si leggono sulla card. `perColpire`
+ *  è la loro somma e non un calcolo parallelo: due strade per lo stesso numero
+ *  sono due strade che prima o poi divergono. */
+export function scomposizioneColpire(pg: Personaggio, idAttacco: string): ParteTiro[] {
   const a = attacco(pg, idAttacco);
-  return mod(pg, a.caratteristica) + (a.competente ? pg.competenza : 0);
+  const parti: ParteTiro[] = [
+    { etichetta: a.caratteristica.toUpperCase(), valore: mod(pg, a.caratteristica) },
+  ];
+  if (a.competente) parti.push({ etichetta: 'competenza', valore: pg.competenza });
+  return parti;
+}
+
+export function perColpire(pg: Personaggio, idAttacco: string): number {
+  return scomposizioneColpire(pg, idAttacco).reduce((t, p) => t + p.valore, 0);
 }
 
 export function dannoTesto(pg: Personaggio, idAttacco: string): string {

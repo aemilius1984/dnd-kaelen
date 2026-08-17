@@ -12,6 +12,7 @@ import {
   modificatore,
   perColpire,
   percezionePassiva,
+  scomposizioneColpire,
   segno,
 } from '@/lib/derive';
 
@@ -99,5 +100,36 @@ describe('numeri scritti nella prosa', () => {
     for (const paragrafo of scintillaDivina?.paragrafi ?? []) {
       expect(paragrafo).toContain(dado);
     }
+  });
+});
+
+describe('scomposizione del tiro per colpire', () => {
+  it('somma esattamente al totale, su ogni attacco', () => {
+    // È l'unica proprietà che conta davvero: la card mostra le parti *e* il
+    // totale, e se divergono il giocatore tira il numero sbagliato.
+    for (const a of pg.attacchi) {
+      const parti = scomposizioneColpire(pg, a.id);
+      const somma = parti.reduce((t, p) => t + p.valore, 0);
+
+      expect(somma).toBe(perColpire(pg, a.id));
+    }
+  });
+
+  it('nomina la caratteristica e la competenza', () => {
+    expect(scomposizioneColpire(pg, 'maglio-una-mano')).toEqual([
+      { etichetta: 'FOR', valore: 3 },
+      { etichetta: 'competenza', valore: 2 },
+    ]);
+  });
+
+  it('tace sulla competenza quando non si è competenti', () => {
+    const senza = {
+      ...pg,
+      attacchi: pg.attacchi.map((a) => ({ ...a, competente: false })),
+    };
+
+    expect(scomposizioneColpire(senza, 'maglio-una-mano')).toEqual([
+      { etichetta: 'FOR', valore: 3 },
+    ]);
   });
 });
