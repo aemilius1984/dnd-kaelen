@@ -47,6 +47,23 @@ davvero sbagliate.
 11. Apri il pannello ⚡: la grana deve restare **sotto** (è nel top layer, quindi
     dovrebbe), e il pannello deve staccarsi dal suo velo scuro.
 
+**`/scheda/` — aggiunte dalla fase 2**
+
+22. **Le card degli attacchi a 390px.** Il totale del tiro è a destra in
+    JetBrains Mono a 1.6rem, con `1d20+5` e la scomposizione sotto, allineati a
+    destra: controlla che quella colonna non spinga «Maglio da guerra, due
+    mani» a spezzarsi male, e che le tre righe del tiro restino allineate fra
+    loro e non scalinate.
+23. Le etichette delle proprietà (`Versatile (1d10)`) sono riquadri con bordo:
+    a 390px devono stare su una riga sola, non andare a capo dentro le
+    parentesi.
+24. Le quattro sezioni hanno perso il riquadro: guarda che il filetto sotto la
+    testata basti a separarle, e che due sezioni consecutive non sembrino una
+    sola. È la stessa scommessa della voce 1, su un confine diverso.
+25. `.preparati-isola` (370px) e `.note-isola` (245px) hanno riserve
+    **ricalcolate** per l'imbottitura di `Superficie`, mai misurate: stesso
+    difetto di `.pf-pannello` alla voce 5.
+
 **`/personaggio/`**
 
 12. `.borsa-isola` riserva 996px, misurati alla larghezza vecchia: è la più
