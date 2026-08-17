@@ -69,6 +69,9 @@ describe('contrasto delle coppie che si leggono davvero', () => {
     ['--inchiostro-muto', '--superficie'],
     ['--lampo', '--carta'],
     ['--lampo', '--superficie'],
+    ['--ambra', '--carta'],
+    ['--ambra', '--superficie-incassata'],
+    ['--inchiostro-muto', '--superficie-incassata'],
   ];
 
   for (const [testo, fondo] of coppie) {

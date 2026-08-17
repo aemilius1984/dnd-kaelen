@@ -14,6 +14,12 @@ function corpo(sorgente: string, intestazione: string): string {
   let profondita = 1;
   const inizio = i;
   while (profondita > 0) {
+    // Senza questo limite, graffe sbilanciate farebbero scorrere `i` oltre
+    // la fine della stringa: `sorgente[i]` diventa `undefined` per sempre,
+    // il ciclo non termina mai e — essendo sincrono — blocca il worker.
+    // Vitest non può far scattare il proprio timeout su un thread bloccato,
+    // quindi `npm run gate` si impianterebbe invece di fallire.
+    if (i >= sorgente.length) throw new Error(`graffe sbilanciate in: ${intestazione}`);
     if (sorgente[i] === '{') profondita++;
     else if (sorgente[i] === '}') profondita--;
     i++;
@@ -46,6 +52,6 @@ it('il movimento del puntatore non si accende su touch', () => {
   // Su touch `:hover` resta attaccato dopo il tocco: la regola di
   // sollevamento deve stare dentro la guardia, non scappare a livello
   // globale del foglio.
-  expect(blocco).toContain('.superficie.livello-1:hover');
+  expect(blocco).toContain('.superficie.livello-appoggiata:hover');
   expect(blocco).toContain('box-shadow: var(--ombra-2)');
 });

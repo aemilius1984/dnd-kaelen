@@ -1,13 +1,13 @@
 /* La Storia è l'unica pagina a lettura lunga: prende un foglio di stile
  * proprio invece di gonfiare i token condivisi. Carta e inchiostro sono
- * token tematizzati, quindi la pagina segue Tempesta o Pergamena senza
- * conoscerli. */
+ * token tematizzati, quindi la pagina segue il tema attivo (Pergamena, oggi
+ * l'unico) senza conoscerlo. */
 .storia {
   max-width: var(--misura);
   margin: 0 auto;
   /* 3.75rem in cima quanto ogni altra pagina, per liberare il pulsante ☰
    * fisso — vedi la nota su `body:has(.menu):not(:has(.storia)) main` in
-   * tokens.css: qui, non lì, perché la carta deve toccare il bordo. */
+   * base.css: qui, non lì, perché la carta deve toccare il bordo. */
   padding: 3.75rem 0 4rem;
   font-family: var(--font-narrativa);
   font-size: 1.12rem;
@@ -92,7 +92,7 @@
   border-bottom: 1px dotted var(--filetto);
   transform: translateY(-0.25rem);
 }
-/* 44px di bersaglio come ovunque nel ramo (vedi `button` in tokens.css). Il
+/* 44px di bersaglio come ovunque nel ramo (vedi `button` in componenti.css). Il
  * testo del sommario è alto 1.12rem × 1.62 = 29px: mancano 15px, mezzo rem
  * sopra e mezzo sotto (16px) li copre con un pixel di margine. */
 .sommario a {

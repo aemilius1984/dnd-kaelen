@@ -9,7 +9,12 @@ function selettori(percorso: string): string[] {
 }
 
 it('tokens.css dichiara token e nient altro', () => {
-  const estranei = selettori('src/styles/tokens.css').filter((s) => !s.startsWith(':root'));
+  // Un selettore composto come `:root, .componente { … }` supererebbe un
+  // controllo su tutta la stringa: bisogna che *ogni* parte separata da
+  // virgola inizi per `:root`, non che lo faccia la prima.
+  const estranei = selettori('src/styles/tokens.css').filter(
+    (s) => !s.split(',').every((parte) => parte.trim().startsWith(':root')),
+  );
 
   // Il foglio dei token è il vocabolario: se ci entra una regola di componente,
   // la fase 2 non può più riscrivere i componenti senza rileggerlo tutto.

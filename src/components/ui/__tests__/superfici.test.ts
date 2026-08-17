@@ -6,11 +6,11 @@ import TestaSezione from '@/components/ui/TestaSezione.astro';
 it('la superficie porta il livello richiesto', async () => {
   const container = await AstroContainer.create();
   const html = await container.renderToString(Superficie, {
-    props: { livello: 2 },
+    props: { livello: 'sollevata' },
     slots: { default: 'contenuto' },
   });
 
-  expect(html).toContain('livello-2');
+  expect(html).toContain('livello-sollevata');
   expect(html).toContain('contenuto');
 });
 
@@ -18,7 +18,7 @@ it('la superficie è appoggiata quando non le si dice niente', async () => {
   const container = await AstroContainer.create();
   const html = await container.renderToString(Superficie, { slots: { default: 'x' } });
 
-  expect(html).toContain('livello-1');
+  expect(html).toContain('livello-appoggiata');
 });
 
 it('la superficie può essere incassata', async () => {

@@ -162,7 +162,7 @@ body::after {
  * decorazione gestita con prudenza: su touch `:hover` resta attaccato dopo il
  * tocco, quindi una card toccata resterebbe sollevata per sempre. */
 @media (hover: hover) and (pointer: fine) {
-  .superficie.livello-1:hover {
+  .superficie.livello-appoggiata:hover {
     box-shadow: var(--ombra-2);
     transition: box-shadow 0.25s ease;
   }
