@@ -6,6 +6,7 @@ import Attacchi from '@/components/Attacchi.astro';
 import GrigliaIncantesimi from '@/components/GrigliaIncantesimi.astro';
 import Sprite from '@/components/Sprite.astro';
 import DatiIniziali from '@/components/DatiIniziali.astro';
+import Superficie from '@/components/ui/Superficie.astro';
 import PfTracker from '@/islands/PfTracker';
 import Risorse from '@/islands/Risorse';
 import ControlliLancio from '@/islands/ControlliLancio';
@@ -57,9 +58,9 @@ const bonusIniziativa = segno(iniziativa(pg));
     </div>
   </header>
 
-  <div class="pannello pf-pannello">
+  <Superficie livello={2} class="pf-pannello">
     <PfTracker client:only="preact" />
-  </div>
+  </Superficie>
 
   <div class="difese">
     <div><span class="tenue">CA</span><span class="valore">{ca}</span></div>

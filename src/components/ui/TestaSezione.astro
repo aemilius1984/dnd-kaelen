@@ -1,0 +1,34 @@
+---
+import Kicker from './Kicker.astro';
+
+/** Quello che sostituisce il riquadro attorno a una sezione: un kicker, un
+ *  titolo e un filetto. Il confine si vede, il contenitore non c'è. */
+interface Props {
+  kicker?: string;
+  as?: 'h2' | 'h3';
+}
+const { kicker, as: Tag = 'h2' } = Astro.props;
+---
+
+<div class="testa-sezione">
+  {kicker && <Kicker>{kicker}</Kicker>}
+  <Tag class={Tag}><slot /></Tag>
+</div>
+
+<style>
+  .testa-sezione {
+    display: grid;
+    gap: var(--spazio-1);
+    margin: var(--spazio-6) 0 var(--spazio-3);
+    padding-bottom: var(--spazio-1);
+    border-bottom: 1px solid var(--filetto);
+  }
+
+  .h2 {
+    font-size: var(--fs-h2);
+  }
+
+  .h3 {
+    font-size: var(--fs-h3);
+  }
+</style>

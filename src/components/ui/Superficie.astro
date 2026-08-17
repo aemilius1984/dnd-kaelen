@@ -1,0 +1,42 @@
+---
+/** Il contenitore non marca l'argomento, marca l'unità ripetibile con cui
+ *  interagisci: una carta di attacco, un incantesimo, una capacità. Una
+ *  sezione non è mai una Superficie — quello era il riquadro di prima, ed è
+ *  la cosa che il ridisegno toglie.
+ *
+ *  Livello 1 = appoggiato (unità ripetibile), 2 = sollevato (blocco d'azione),
+ *  'incassata' = incavo, per ciò che sta *dentro* un'altra superficie. */
+interface Props {
+  livello?: 1 | 2 | 'incassata';
+  class?: string;
+}
+const { livello = 1, class: classe } = Astro.props;
+---
+
+<div class:list={['superficie', `livello-${livello}`, classe]}>
+  <slot />
+</div>
+
+<style>
+  .superficie {
+    border-radius: var(--raggio-superficie);
+    padding: var(--spazio-3);
+  }
+
+  .livello-1 {
+    background: var(--superficie);
+    border: 1px solid var(--filetto);
+    box-shadow: var(--ombra-1);
+  }
+
+  .livello-2 {
+    background: var(--superficie);
+    border: 1px solid var(--filetto);
+    box-shadow: var(--ombra-2);
+  }
+
+  .livello-incassata {
+    background: var(--superficie-incassata);
+    border: 1px solid transparent;
+  }
+</style>

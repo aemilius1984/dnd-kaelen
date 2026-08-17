@@ -1,0 +1,18 @@
+---
+interface Props {
+  as?: 'p' | 'span';
+}
+const { as: Tag = 'p' } = Astro.props;
+---
+
+<Tag class="kicker"><slot /></Tag>
+
+<style>
+  .kicker {
+    font-family: var(--font-mono);
+    font-size: var(--fs-piccolo);
+    letter-spacing: var(--tracking-kicker);
+    text-transform: uppercase;
+    color: var(--inchiostro-muto);
+  }
+</style>
