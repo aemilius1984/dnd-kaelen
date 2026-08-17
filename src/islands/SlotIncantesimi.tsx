@@ -21,9 +21,9 @@ export default function SlotIncantesimi() {
           <span>{slot.livello}° liv.</span>
           <span
             class="caselle"
-            aria-label={`${slot.max - (s.slotSpesi[slot.livello] ?? 0)} di ${slot.max} slot di ${slot.livello}° livello`}
+            aria-label={`${slot.max - (s.slotSpesi[slot.livello] ?? []).length} di ${slot.max} slot di ${slot.livello}° livello`}
           >
-            {caselle(s.slotSpesi[slot.livello] ?? 0, slot.max).map((piena, i) => (
+            {caselle((s.slotSpesi[slot.livello] ?? []).length, slot.max).map((piena, i) => (
               <i key={i} class={piena ? 'casella piena' : 'casella'} />
             ))}
           </span>

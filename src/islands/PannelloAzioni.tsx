@@ -12,6 +12,7 @@ import {
   segnaTsMorte,
   spendiDadoVitaConCura,
   spendiSlot,
+  SLOT_MANUALE,
   usaRisorsa,
 } from '@/lib/sheet-state';
 import { assicuraInizializzato, datiIniziali, muta, stato } from '@/lib/storage';
@@ -116,20 +117,21 @@ export default function PannelloAzioni() {
         {pg.slot.map((slot) => (
           <div class="riga" key={`slot-${slot.livello}`}>
             <span>
-              Slot {slot.livello}° — {slot.max - (s.slotSpesi[slot.livello] ?? 0)}/{slot.max}
+              Slot {slot.livello}° — {slot.max - (s.slotSpesi[slot.livello] ?? []).length}/
+              {slot.max}
             </span>
             <button
               type="button"
               aria-label={`Usa uno slot di ${slot.livello}° livello`}
               disabled={!puoSpendereSlot(s, pg, slot.livello)}
-              onClick={() => muta((x) => spendiSlot(x, pg, slot.livello))}
+              onClick={() => muta((x) => spendiSlot(x, pg, slot.livello, SLOT_MANUALE))}
             >
               Usa
             </button>
             <button
               type="button"
               aria-label={`Recupera uno slot di ${slot.livello}° livello`}
-              disabled={(s.slotSpesi[slot.livello] ?? 0) === 0}
+              disabled={(s.slotSpesi[slot.livello] ?? []).length === 0}
               onClick={() => muta((x) => recuperaSlot(x, slot.livello))}
             >
               ↺

@@ -21,14 +21,14 @@ describe('livelli con cui si può lanciare', () => {
 
   it('toglie i livelli esauriti', () => {
     let s = fresco();
-    for (let i = 0; i < 4; i++) s = spendiSlot(s, pg, 1);
+    for (let i = 0; i < 4; i++) s = spendiSlot(s, pg, 1, 'comando');
     expect(livelliLanciabili(s, pg, 1)).toEqual([2]);
   });
 
   it('non offre nulla quando tutti gli slot sono spesi', () => {
     let s = fresco();
-    for (let i = 0; i < 4; i++) s = spendiSlot(s, pg, 1);
-    for (let i = 0; i < 2; i++) s = spendiSlot(s, pg, 2);
+    for (let i = 0; i < 4; i++) s = spendiSlot(s, pg, 1, 'comando');
+    for (let i = 0; i < 2; i++) s = spendiSlot(s, pg, 2, 'frantumare');
     expect(livelliLanciabili(s, pg, 1)).toEqual([]);
   });
 });

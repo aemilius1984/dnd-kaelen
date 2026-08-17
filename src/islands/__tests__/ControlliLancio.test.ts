@@ -52,8 +52,8 @@ it('con slot disponibili la card è viva e offre i bottoni', () => {
 it('a slot esauriti la card si spegne, senza sparire', async () => {
   // Quattro slot di 1° e due di 2°: finiti quelli, un incantesimo di 1° non ha
   // più niente con cui essere lanciato.
-  for (let i = 0; i < 4; i++) muta((x) => spendiSlot(x, pg, 1));
-  for (let i = 0; i < 2; i++) muta((x) => spendiSlot(x, pg, 2));
+  for (let i = 0; i < 4; i++) muta((x) => spendiSlot(x, pg, 1, 'comando'));
+  for (let i = 0; i < 2; i++) muta((x) => spendiSlot(x, pg, 2, 'frantumare'));
   await giro();
 
   expect(carta().getAttribute('aria-disabled')).toBe('true');
@@ -64,8 +64,8 @@ it('a slot esauriti la card si spegne, senza sparire', async () => {
 });
 
 it('recuperare uno slot riaccende la card', async () => {
-  for (let i = 0; i < 4; i++) muta((x) => spendiSlot(x, pg, 1));
-  for (let i = 0; i < 2; i++) muta((x) => spendiSlot(x, pg, 2));
+  for (let i = 0; i < 4; i++) muta((x) => spendiSlot(x, pg, 1, 'comando'));
+  for (let i = 0; i < 2; i++) muta((x) => spendiSlot(x, pg, 2, 'frantumare'));
   await giro();
   expect(carta().getAttribute('aria-disabled')).toBe('true');
 
