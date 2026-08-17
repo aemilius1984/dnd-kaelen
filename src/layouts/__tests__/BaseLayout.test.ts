@@ -18,4 +18,17 @@ describe('BaseLayout', () => {
     expect(html).not.toContain('sw.js');
     expect(html).not.toContain('serviceWorker');
   });
+
+  it('scrive il tema in build, senza script che lo scelga a runtime', async () => {
+    const container = await AstroContainer.create();
+    const html = await container.renderToString(BaseLayout, {
+      props: { titolo: 'Prova', attiva: null },
+    });
+
+    expect(html).toContain('data-tema="pergamena"');
+    // Lo script anti-lampeggio esisteva solo per scegliere fra due temi: con un
+    // tema solo è codice che gira su ogni pagina per non decidere niente.
+    expect(html).not.toContain('kaelen:tema');
+    expect(html).not.toContain('prefers-color-scheme');
+  });
 });

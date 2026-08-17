@@ -22,7 +22,6 @@
 
 /* Tempesta è anche il ripiego: senza JavaScript, o prima che lo script
  * inline scriva data-tema, la pagina è già scura e leggibile. */
-:root,
 :root[data-tema='tempesta'] {
   --fondo: #0a0c10;
   --superficie: #161c24;
@@ -39,6 +38,7 @@
   --inchiostro: #d8cdb4;
 }
 
+:root,
 :root[data-tema='pergamena'] {
   --fondo: #efe7d6;
   --superficie: #f7f1e3;
@@ -63,7 +63,7 @@
   --font-numeri: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, monospace;
   --font-display: 'Marcellus', Georgia, 'Times New Roman', serif;
   --font-testo: 'EB Garamond', Georgia, 'Times New Roman', serif;
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 :root[data-tema='pergamena'] {
