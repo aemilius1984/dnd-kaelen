@@ -21,6 +21,16 @@ it('la superficie è appoggiata quando non le si dice niente', async () => {
   expect(html).toContain('livello-1');
 });
 
+it('la superficie può essere incassata', async () => {
+  const container = await AstroContainer.create();
+  const html = await container.renderToString(Superficie, {
+    props: { livello: 'incassata' },
+    slots: { default: 'x' },
+  });
+
+  expect(html).toContain('livello-incassata');
+});
+
 it('la testa di sezione rende kicker e titolo, e il kicker è opzionale', async () => {
   const container = await AstroContainer.create();
   const con = await container.renderToString(TestaSezione, {
