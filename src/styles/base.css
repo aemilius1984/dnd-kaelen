@@ -26,10 +26,10 @@
 
 body {
   margin: 0;
-  padding: 0 var(--spazio) 1.5rem;
-  background: var(--fondo);
-  color: var(--testo);
-  font-family: var(--font);
+  padding: 0 var(--spazio-2) 1.5rem;
+  background: var(--carta);
+  color: var(--inchiostro);
+  font-family: var(--font-testo);
   font-size: 16px;
   line-height: 1.5;
   -webkit-text-size-adjust: 100%;
@@ -68,7 +68,7 @@ body:has(.storia) {
  * esclusa: il suo foglio disegna la carta da bordo a bordo, quindi è lei
  * stessa a riservare lo spazio in `.storia { padding-top }` — se lo
  * riservasse anche `main`, la carta smetterebbe di toccare il bordo
- * superiore e lascerebbe una striscia di `--fondo` sopra la testata. */
+ * superiore e lascerebbe una striscia di `--carta` sopra la testata. */
 body:has(.menu):not(:has(.storia)) main {
   padding-top: 3.75rem;
 }
@@ -102,23 +102,23 @@ th,
 td {
   text-align: left;
   padding: 0.4rem 0.35rem;
-  border-bottom: 1px solid var(--bordo);
+  border-bottom: 1px solid var(--filetto);
 }
 th {
-  color: var(--testo-tenue);
+  color: var(--inchiostro-tenue);
   font-weight: 500;
 }
 td.num,
 th.num {
   text-align: right;
-  font-family: var(--font-numeri);
+  font-family: var(--font-mono);
 }
 
 .valore {
-  font-family: var(--font-numeri);
+  font-family: var(--font-mono);
   color: var(--lampo);
   font-variant-numeric: tabular-nums;
 }
 .tenue {
-  color: var(--testo-tenue);
+  color: var(--inchiostro-tenue);
 }

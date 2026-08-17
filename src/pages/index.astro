@@ -98,7 +98,7 @@ const desk = await getImage({ src: desktop, format: 'webp' });
     position: fixed;
     inset: 0;
     overflow: hidden;
-    background: var(--fondo);
+    background: var(--carta);
   }
   .splash img {
     position: absolute;
@@ -165,7 +165,7 @@ const desk = await getImage({ src: desktop, format: 'webp' });
   .porte {
     position: absolute;
     inset: auto 0 0 0;
-    padding: 0 var(--spazio) calc(2rem + env(safe-area-inset-bottom));
+    padding: 0 var(--spazio-2) calc(2rem + env(safe-area-inset-bottom));
     text-align: center;
     opacity: 0;
     animation: entra 1s ease-out 1.2s forwards;

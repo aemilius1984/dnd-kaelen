@@ -55,7 +55,7 @@ const voci = [
     cursor: pointer;
     border-radius: var(--raggio);
     background: color-mix(in srgb, var(--superficie) 78%, transparent);
-    border: 1px solid var(--bordo);
+    border: 1px solid var(--filetto);
   }
   summary::-webkit-details-marker {
     display: none;
@@ -84,7 +84,7 @@ const voci = [
     display: block;
     width: 20px;
     height: 2px;
-    background: var(--testo);
+    background: var(--inchiostro);
     content: '';
   }
   .barre::before {
@@ -106,12 +106,12 @@ const voci = [
     position: fixed;
     inset: 0;
     z-index: -1;
-    background: var(--fondo);
+    background: var(--carta);
     display: flex;
     flex-direction: column;
     justify-content: center;
     gap: 1.4rem;
-    padding: 4rem var(--spazio) 2rem;
+    padding: 4rem var(--spazio-2) 2rem;
   }
   ul {
     list-style: none;
@@ -126,9 +126,9 @@ const voci = [
     padding: 0.7rem 0;
     font-family: var(--font-display);
     font-size: 1.7rem;
-    color: var(--testo);
+    color: var(--inchiostro);
     text-decoration: none;
-    border-bottom: 1px solid var(--bordo);
+    border-bottom: 1px solid var(--filetto);
   }
   nav a[aria-current='page'] {
     color: var(--ambra);
