@@ -143,3 +143,37 @@ th.num {
 .tenue {
   color: var(--inchiostro-tenue);
 }
+
+/* Grana — texture di carta generata in codice (feTurbulence), nessuna
+ * immagine e nessuna richiesta di rete: il sito deve reggere offline.
+ * Overlay fisso, non interattivo, sotto ai dialog. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+  opacity: var(--grana);
+}
+
+/* Il sollevamento al passaggio esiste solo dove c'è un puntatore vero. Non è
+ * decorazione gestita con prudenza: su touch `:hover` resta attaccato dopo il
+ * tocco, quindi una card toccata resterebbe sollevata per sempre. */
+@media (hover: hover) and (pointer: fine) {
+  .superficie.livello-1:hover {
+    box-shadow: var(--ombra-2);
+    transition: box-shadow 0.25s ease;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
