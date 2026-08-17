@@ -92,3 +92,34 @@ describe('i nomi inglesi arrivano fino alla pagina', () => {
     expect(html).toContain('Backpack');
   });
 });
+
+describe('l’archivio', () => {
+  it('è markup statico in entrambe le sedi, non prodotto da un’isola', () => {
+    // Trentanove testi di incantesimo dentro un bundle JavaScript sarebbero
+    // peso iniziale su ogni pagina: l'isola governa le spunte, non l'elenco.
+    for (const rotta of ['scheda', 'preparati']) {
+      const html = dist(rotta);
+      expect(html).toContain('Individuazione del Magico');
+      expect(html).toContain('rituale · Ritual');
+    }
+  });
+
+  it('offre una spunta per ogni incantesimo preparabile, e non di più', () => {
+    const html = dist('scheda');
+    const pool = JSON.parse(/id="dati-iniziali">(.*?)<\/script>/s.exec(html)![1]).pool as {
+      slug: string;
+    }[];
+
+    expect(html.match(/data-preparabile/g) ?? []).toHaveLength(pool.length);
+  });
+
+  it('non offre spunte per trucchetti e dominio', () => {
+    const html = dist('scheda');
+
+    // Sono nell'elenco — si leggono — ma sempre disponibili: una spunta lì
+    // sarebbe l'invito a un gesto che non serve.
+    for (const slug of ['fiamma-sacra', 'frantumare', 'onda-tonante']) {
+      expect(html).not.toContain(`data-preparabile="${slug}"`);
+    }
+  });
+});

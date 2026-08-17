@@ -9,11 +9,13 @@ import DatiIniziali from '@/components/DatiIniziali.astro';
 import Superficie from '@/components/ui/Superficie.astro';
 import TestaSezione from '@/components/ui/TestaSezione.astro';
 import CapacitaEReazioni from '@/components/CapacitaEReazioni.astro';
+import ElencoArchivio from '@/components/ElencoArchivio.astro';
 import PfTracker from '@/islands/PfTracker';
 import SlotIncantesimi from '@/islands/SlotIncantesimi';
 import Contatori from '@/islands/Contatori';
 import ControlliLancio from '@/islands/ControlliLancio';
 import Ispirazione from '@/islands/Ispirazione';
+import Archivio from '@/islands/Archivio';
 import PannelloAzioni from '@/islands/PannelloAzioni';
 import { attaccoIncantesimi, cdIncantesimi, classeArmatura, iniziativa, segno } from '@/lib/derive';
 import { caricaScheda } from '@/lib/carica-scheda';
@@ -43,6 +45,13 @@ const dominio = pg.dominio.map(conTesto);
 // solo il nome. Sono tutti presenti in HTML in build; ControlliLancio
 // mostra/nasconde in base allo stato.
 const preparatiPool = pool.map((m) => conTesto(m.slug));
+
+// L'archivio porta tutto: trucchetti, dominio e pool, ordinati per livello.
+// È lo stesso testo già presente nelle card di lancio, ma qui c'è anche ciò
+// che non è preparato — il motivo per cui l'archivio esiste.
+const tuttoArchivio = [...trucchetti, ...dominio, ...preparatiPool].sort(
+  (a, b) => a.livello - b.livello || a.nome.localeCompare(b.nome, 'it'),
+);
 
 const ca = classeArmatura(pg);
 const cd = cdIncantesimi(pg);
@@ -99,7 +108,10 @@ const bonusIniziativa = segno(iniziativa(pg));
     <CarteIncantesimo incantesimi={dominio} />
 
     <p class="tenue">
-      <a href="/preparati/">Cambia i preparati</a>
+      <button type="button" class="apri-archivio" data-apre="archivio">
+        Tutti gli incantesimi
+      </button>
+      · <a href="/preparati/">apri come pagina</a>
     </p>
   </section>
 
@@ -125,7 +137,37 @@ const bonusIniziativa = segno(iniziativa(pg));
     <a href="/note/">Note di sessione</a>
   </nav>
 
+  {
+    /* L'archivio: elenco statico, spunte dall'isola. Il `<dialog>` nativo va in
+      top layer, quindi fuori dallo z-index del documento — come il pannello
+      azioni. Lo apre il bottone qui sopra e, alla sua chiusura, il riposo
+      lungo dal pannello. */
+  }
+  <dialog id="archivio" class="archivio" aria-labelledby="titolo-archivio">
+    <div class="testa">
+      <strong id="titolo-archivio">Tutti gli incantesimi</strong>
+      <button type="button" data-chiude="archivio">Chiudi</button>
+    </div>
+    <ElencoArchivio incantesimi={tuttoArchivio} preparabili={pool.map((m) => m.slug)} />
+  </dialog>
+
+  {
+    /* Aprire e chiudere un `<dialog>` non è stato: sono due chiamate al DOM.
+      Un'isola qui monterebbe Preact per due `addEventListener`, e il bottone
+      resterebbe morto finché non si idrata. Sette righe inline lo fanno
+      funzionare appena il markup esiste. */
+  }
+  <script is:inline>
+    for (const b of document.querySelectorAll('[data-apre]')) {
+      b.addEventListener('click', () => document.getElementById(b.dataset.apre)?.showModal());
+    }
+    for (const b of document.querySelectorAll('[data-chiude]')) {
+      b.addEventListener('click', () => document.getElementById(b.dataset.chiude)?.close());
+    }
+  </script>
+
   <ControlliLancio client:only="preact" />
+  <Archivio client:only="preact" />
   <Contatori client:only="preact" />
   <PannelloAzioni client:only="preact" />
 </BaseLayout>

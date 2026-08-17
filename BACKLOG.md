@@ -109,6 +109,20 @@ davvero sbagliate.
     in ambra. Deve distinguersi senza leggere l'etichetta, e le due glifi
     devono avere la stessa larghezza o la fascia balla quando si accende.
 
+36. **L'archivio a tutto schermo.** Apri «Tutti gli incantesimi» dalla coda
+    dell'area magia: il `<dialog>` deve coprire lo schermo su fondo pergamena
+    (non il velo scuro delle azioni), la testa deve restare appiccicata in
+    alto mentre scorri, e «Chiudi» deve essere raggiungibile senza tornare in
+    cima a un elenco lungo uno schermo e mezzo.
+37. **Le spunte dell'archivio arrivano dopo.** L'elenco è statico ma le spunte
+    sono idratate: il loro posto è riservato da un contenitore di 44px in
+    `ElencoArchivio.astro`. Guarda che le righe non ballino quando atterrano.
+38. A limite raggiunto — sei preparati — le spunte non messe devono risultare
+    disabilitate e quelle messe no. È l'unico modo per accorgersi che il
+    limite esiste.
+39. `/preparati/` è la stessa cosa senza finestra: controlla che il titolo di
+    sezione e il testo di aiuto non ripetano quello che dice già l'elenco.
+
 **`/personaggio/`**
 
 12. `.borsa-isola` riserva 996px, misurati alla larghezza vecchia: è la più

@@ -1,18 +1,43 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import DatiIniziali from '@/components/DatiIniziali.astro';
-import PreparatiPicker from '@/islands/PreparatiPicker';
-import Superficie from '@/components/ui/Superficie.astro';
+import Sprite from '@/components/Sprite.astro';
+import ElencoArchivio from '@/components/ElencoArchivio.astro';
+import TestaSezione from '@/components/ui/TestaSezione.astro';
+import Archivio from '@/islands/Archivio';
+import { getCollection } from 'astro:content';
 import { caricaScheda } from '@/lib/carica-scheda';
 
 const { pg, pool, sheetVersion } = await caricaScheda();
+
+// Lo stesso elenco che la Scheda mette nel suo `<dialog>`: questa rotta ne è
+// la seconda sede, non una versione ridotta. Mantiene URL e voce di menu
+// perché è il posto dove si legge con calma, senza una scheda dietro.
+const tutte = await getCollection('spells');
+const perSlug = new Map(tutte.map((m) => [m.id, m]));
+const conTesto = (slug: string) => {
+  const m = perSlug.get(slug);
+  if (!m) throw new Error(`Incantesimo mancante: ${slug}`);
+  return { ...m.data, slug, testo: (m.body ?? '').trim() };
+};
+const tuttoArchivio = [...pg.trucchetti, ...pg.dominio, ...pool.map((m) => m.slug)]
+  .map(conTesto)
+  .sort((a, b) => a.livello - b.livello || a.nome.localeCompare(b.nome, 'it'));
 ---
 
-<BaseLayout titolo="Kaelen — Preparati" attiva="preparati">
+<BaseLayout titolo="Kaelen — Incantesimi" attiva="preparati">
+  <Sprite />
   <DatiIniziali pg={pg} sheetVersion={sheetVersion} pool={pool} />
-  <h1>Preparati</h1>
-  <Superficie class="preparati-isola">
-    <PreparatiPicker client:only="preact" />
-  </Superficie>
+
+  <TestaSezione kicker="l'archivio">Tutti gli incantesimi</TestaSezione>
+  <p class="tenue">
+    Puoi tenerne {pg.limitePreparati} preparati. I quattro del dominio sono sempre pronti e non contano;
+    i trucchetti si lanciano a volontà.
+  </p>
+
+  <ElencoArchivio incantesimi={tuttoArchivio} preparabili={pool.map((m) => m.slug)} />
+
   <p class="tenue"><a href="/scheda/">Torna alla scheda</a></p>
+
+  <Archivio client:only="preact" />
 </BaseLayout>

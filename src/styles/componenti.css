@@ -83,21 +83,28 @@ button:active {
   font-size: 0.9rem;
 }
 
-/* Stesso motivo di .pf-pannello: con client:only="preact" non c'è alcun
- * render lato server, quindi senza altezza riservata la sezione "salta"
- * alla prima idratazione. Misurata con Chrome headless via CDP a 390px di
- * larghezza, stato normale (6 preparati): .preparati-isola ~344px idratata
- * → riservati 346px (con un paio di pixel di margine, come .pf-pannello).
- * Vedi il rapporto del task per il metodo e i numeri.
+/* `.preparati-isola` non c'è più: la rotta /preparati/ è passata da un'isola
+ * che produceva l'elenco a markup statico con le sole spunte idratate. Non
+ * c'è più niente da riservare, perché non c'è più niente che compare dopo.
+ * È la stessa mossa fatta per gli incantesimi della Scheda, un'altezza
+ * riservata in meno da indovinare senza browser.
  *
- * La fase 2 ha sostituito `.pannello` con `Superficie`, che imbottisce di
- * 1.5rem per lato invece di 0.75rem: +24px, esattamente come per .pf-pannello.
- * 346 + 24 = 370. È CALCOLATO, non misurato — vedi la voce delle altezze
- * riservate in BACKLOG.md. Il margine sta qui e non in `Superficie`: il
- * primitivo sa cos'è, non quanto stare lontano dai vicini. */
-.preparati-isola {
-  min-height: 370px;
-  margin: var(--spazio-2) 0;
+ * Le spunte dell'archivio, quelle sì, arrivano dopo: il loro posto se lo
+ * riserva `ElencoArchivio.astro` con un contenitore di 44px, che è anche la
+ * dimensione minima di un bersaglio da toccare. */
+.prepara {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+}
+.etichetta-prepara {
+  font-family: var(--font-mono);
+  font-size: var(--fs-piccolo);
+  color: var(--inchiostro-muto);
+}
+.prepara.scelto .etichetta-prepara {
+  color: var(--ambra);
 }
 
 .caselle {
@@ -162,31 +169,6 @@ button[disabled] {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-}
-
-.pool {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-.pool label {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  min-height: 44px;
-  padding: 0.55rem 0;
-  border-bottom: 1px solid var(--filetto);
-}
-.pool label > span:nth-child(2) {
-  flex: 1;
-}
-.pool label.scelto > span:nth-child(2) {
-  color: var(--lampo);
-}
-.pool input {
-  width: 22px;
-  height: 22px;
-  accent-color: var(--ambra);
 }
 
 /* Stesso motivo di .pf-pannello / .risorse-isola: con client:only="preact"
@@ -327,6 +309,54 @@ dialog.azioni {
 }
 dialog.azioni::backdrop {
   background: rgb(0 0 0 / 0.6);
+}
+
+/* L'archivio: a tutto schermo, non una tendina dal basso come le azioni. Si
+ * apre per leggere trentanove incantesimi, non per premere due bottoni, e una
+ * finestra alta 85vh su un elenco lungo costringerebbe a due scorrimenti
+ * annidati. */
+dialog.archivio {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: var(--spazio-3) var(--spazio-2) calc(2rem + env(safe-area-inset-bottom));
+  border: none;
+  background: var(--carta);
+  color: var(--inchiostro);
+  overflow-y: auto;
+}
+dialog.archivio::backdrop {
+  background: var(--carta);
+}
+/* La testa resta visibile mentre si scorre: senza, per chiudere si torna in
+ * cima a un elenco lungo uno schermo e mezzo. */
+dialog.archivio .testa {
+  position: sticky;
+  top: calc(var(--spazio-3) * -1);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spazio-2);
+  margin: calc(var(--spazio-3) * -1) 0 var(--spazio-3);
+  padding: var(--spazio-3) 0 var(--spazio-2);
+  background: var(--carta);
+  border-bottom: 1px solid var(--filetto);
+}
+
+/* Un bottone che si comporta da collegamento: apre l'archivio, che è una
+ * finestra e non una rotta. Non deve sembrare un bottone d'azione fra quelli
+ * di lancio poco sopra. */
+.apri-archivio {
+  min-height: 0;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--lampo);
+  text-decoration: underline;
 }
 dialog.azioni .testa {
   display: flex;
