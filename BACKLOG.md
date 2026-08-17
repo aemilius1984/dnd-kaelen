@@ -85,6 +85,21 @@ davvero sbagliate.
     **ricalcolate** per l'imbottitura di `Superficie`, mai misurate: stesso
     difetto di `.pf-pannello` alla voce 5.
 
+**`/scheda/` — aggiunte dalla fase 3**
+
+31. **Le caselle degli slot sono passate da 14px a 20px** per contenere un
+    sigillo. Guarda la fila a 390px: le sei caselle (4 di 1° + 2 di 2°) e le
+    loro etichette devono ancora stare su una riga sola, e i sigilli dentro
+    non devono sembrare francobolli.
+32. **Lancia un incantesimo e guarda la sua casella.** Deve comparire il
+    sigillo giusto, in ambra su fondo incassato, e restare dov'è quando ne
+    lanci un secondo — le caselle si consumano da destra apposta. Poi spendi
+    uno slot dal pannello ⚡: quella casella deve portare un trattino neutro,
+    non un sigillo.
+33. I contatori delle risorse dentro le card usano la stessa classe `.casella`
+    e sono cresciuti con lei: controlla che non sbilancino la testa della
+    card.
+
 **`/personaggio/`**
 
 12. `.borsa-isola` riserva 996px, misurati alla larghezza vecchia: è la più
