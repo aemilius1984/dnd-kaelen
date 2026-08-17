@@ -415,8 +415,13 @@ dialog.azioni input[type='number'] {
  * 101px resta un tetto valido e non va alzato — ma potrebbe ora riservare più
  * del necessario se le tre risorse entrano in due righe invece di tre. Da
  * confermare nella stessa verifica. */
+/* AGGIORNAMENTO fase 2, task 6: l'isola ha perso le tre risorse — i loro
+ * contatori sono dentro le card delle capacità — e le restano le due voci
+ * degli slot, che stavano già insieme sulla prima riga. Delle quattro righe
+ * del calcolo qui sopra ne resta una: 20.4px, riservati 24px. Anche questo è
+ * CALCOLATO. */
 .risorse-isola {
-  min-height: 101px;
+  min-height: 24px;
 }
 .striscia-risorse {
   display: flex;

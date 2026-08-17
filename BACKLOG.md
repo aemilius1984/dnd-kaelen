@@ -72,7 +72,16 @@ davvero sbagliate.
     attributi, non che l'attenuazione si veda.
 27. Il sigillo nella testa della card è passato da 30px a 26px accanto a un
     nome su due righe: controlla che non sembri schiacciato.
-28. `.preparati-isola` (370px) e `.note-isola` (245px) hanno riserve
+28. **I contatori dentro le card.** Le caselle di Incanalare Divinità, Ira
+    della Tempesta e Tuono della Tempesta ora le disegna l'isola `Contatori`
+    per portale dentro le card. Sono l'unica cosa della sezione che arriva
+    dopo l'idratazione: guarda che la testa della card non salti quando
+    atterrano, e che le caselle restino allineate al testo «2 · Riposo Breve»
+    sotto di loro.
+29. `.risorse-isola` è scesa da 101px a **24px** perché le restano solo le due
+    file di slot. Se il calcolo è sbagliato il salto è in mezzo alla rotta
+    principale, come la voce 5.
+30. `.preparati-isola` (370px) e `.note-isola` (245px) hanno riserve
     **ricalcolate** per l'imbottitura di `Superficie`, mai misurate: stesso
     difetto di `.pf-pannello` alla voce 5.
 

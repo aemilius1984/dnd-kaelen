@@ -44,7 +44,7 @@ describe('le sezioni non stanno più dentro un riquadro', () => {
       'in combattimento',
       'magia',
       'quel che si consuma',
-      'fuori dal tuo turno',
+      'cosa puoi spendere',
     ]) {
       expect(html).toContain(kicker);
     }
@@ -59,6 +59,16 @@ describe('i nomi inglesi arrivano fino alla pagina', () => {
 
     expect(html).toContain('Wrath of the Storm');
     expect(html).toContain('Opportunity Attack');
+  });
+
+  it('non nomina due volte una capacità che è anche una reazione', () => {
+    // Prima del task 6 «Ira della Tempesta» compariva come contatore in una
+    // sezione e come innesco in un'altra, senza niente che dicesse che erano
+    // la stessa cosa.
+    const html = dist('scheda');
+
+    expect(html.match(/>Ira della Tempesta</g) ?? []).toHaveLength(1);
+    expect(html.match(/>Tuono della Tempesta</g) ?? []).toHaveLength(1);
   });
 
   it('/personaggio/ li mostra in entrambe le tabelle e sull’armatura', () => {

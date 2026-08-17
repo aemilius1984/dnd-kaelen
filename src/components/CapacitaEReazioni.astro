@@ -1,0 +1,152 @@
+---
+import type { Personaggio } from '@/lib/schema';
+import { fondiCapacita } from '@/lib/capacita';
+import Superficie from '@/components/ui/Superficie.astro';
+import NomeDoppio from '@/components/ui/NomeDoppio.astro';
+
+/** Una card per capacità, con il suo contatore addosso.
+ *
+ *  Prima Ira della Tempesta e Tuono della Tempesta esistevano due volte: una
+ *  riga di caselle in «Slot e risorse» e una riga di innesco in «Reazioni»,
+ *  senza niente che dicesse che erano la stessa cosa. Il numero di usi e la
+ *  condizione che li consuma si guardano nello stesso istante.
+ *
+ *  Incanalare Divinità elenca dentro i propri usi, che stanno in `pg.capacita`
+ *  come voci con il prefisso del suo nome. */
+interface Props {
+  pg: Personaggio;
+}
+const { pg } = Astro.props;
+
+const capacita = fondiCapacita(pg);
+
+const PREFISSO_INCANALARE = 'Incanalare Divinità: ';
+const usiDiIncanalare = pg.capacita
+  .filter((c) => c.titolo.startsWith(PREFISSO_INCANALARE))
+  .map((c) => ({ titolo: c.titolo.slice(PREFISSO_INCANALARE.length), paragrafi: c.paragrafi }));
+
+const recuperoTesto = { breve: 'Riposo Breve', lungo: 'Riposo Lungo' } as const;
+---
+
+<div class="capacita-reazioni">
+  {
+    capacita.map((c) => (
+      <Superficie class="capacita-card">
+        <div class="testa">
+          <h3 class="titolo">
+            <NomeDoppio it={c.nome} en={c.nomeEn} />
+          </h3>
+          {c.max !== undefined && (
+            <div class="contatore">
+              {/* Le caselle le disegna l'isola `Contatori` per portale: qui c'è
+                  solo il posto dove andranno, e il numero che si legge anche
+                  senza JavaScript. */}
+              <div data-caselle={c.id} />
+              <span class="recupero tenue">
+                {c.max} · {c.recupero && recuperoTesto[c.recupero]}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {c.descrizione && <p class="descrizione">{c.descrizione}</p>}
+
+        {c.innesco && (
+          <dl class="innesco">
+            <dt>Quando</dt>
+            <dd>{c.innesco}</dd>
+            <dt>Effetto</dt>
+            <dd>{c.effetto}</dd>
+          </dl>
+        )}
+
+        {c.id === 'incanalare' && (
+          <ul class="usi">
+            {usiDiIncanalare.map((u) => (
+              <li>
+                <strong>{u.titolo}</strong>
+                {u.paragrafi.map((p) => (
+                  <p>{p}</p>
+                ))}
+              </li>
+            ))}
+          </ul>
+        )}
+      </Superficie>
+    ))
+  }
+</div>
+
+<style>
+  .capacita-reazioni {
+    display: grid;
+    gap: var(--spazio-2);
+  }
+
+  .testa {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--spazio-2);
+  }
+
+  .titolo {
+    margin: 0;
+    font-size: var(--fs-h3);
+  }
+
+  .contatore {
+    flex: none;
+    display: grid;
+    justify-items: end;
+    gap: 0.15rem;
+  }
+
+  .recupero {
+    font-family: var(--font-mono);
+    font-size: var(--fs-piccolo);
+  }
+
+  .descrizione {
+    margin: var(--spazio-2) 0 0;
+    font-size: 0.92rem;
+  }
+
+  /* Innesco ed effetto sono due domande diverse — «quando scatta» e «cosa fa»
+   * — e in una frase sola si leggono male al tavolo, dove si cerca la prima
+   * per decidere e la seconda per applicare. */
+  .innesco {
+    margin: var(--spazio-2) 0 0;
+    display: grid;
+    grid-template-columns: 4.5rem 1fr;
+    gap: 0.25rem 0.6rem;
+    font-size: 0.9rem;
+  }
+
+  .innesco dt {
+    font-family: var(--font-display);
+    color: var(--inchiostro-tenue);
+  }
+
+  .innesco dd {
+    margin: 0;
+  }
+
+  .usi {
+    margin: var(--spazio-2) 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: var(--spazio-2);
+  }
+
+  .usi li {
+    padding-top: var(--spazio-2);
+    border-top: 1px solid var(--filetto);
+  }
+
+  .usi p {
+    margin: 0.25rem 0 0;
+    font-size: 0.9rem;
+  }
+</style>
