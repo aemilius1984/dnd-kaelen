@@ -34,10 +34,15 @@ button:active {
  * prima: vedi il rapporto del task.
  *
  * Il fondo, il bordo e il raggio non stanno più qui: il markup non porta più
- * la classe `pannello`, li dà `Superficie`. Questa classe resta solo per
- * l'altezza riservata, che è disposizione interna sua e di nessun altro. */
+ * la classe `pannello`, li dà `Superficie`. La distanza dai vicini invece
+ * resta qui e non nel componente: `Superficie` è un primitivo, sa cos'è
+ * (fondo, filetto, raggio, ombra, spaziatura interna) ma non deve sapere
+ * quanto stare lontano da chi le sta intorno — quella è una proprietà della
+ * pagina che la monta, e la fase 2 la monterà in una dozzina di punti
+ * ciascuno con la propria spaziatura. */
 .pf-pannello {
   min-height: 148px;
+  margin: var(--spazio-2) 0;
 }
 .pf .riga {
   display: flex;
