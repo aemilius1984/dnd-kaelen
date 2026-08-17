@@ -201,17 +201,26 @@ export default function PannelloAzioni() {
             type="button"
             class="pericoloso"
             onClick={() => {
-              if (confirm('Riposo lungo: PF al massimo, slot e risorse ripristinati. Procedere?')) {
-                muta((x) => riposoLungo(x, pg));
+              if (
+                !confirm('Riposo lungo: PF al massimo, slot e risorse ripristinati. Procedere?')
+              ) {
+                return;
               }
+              muta((x) => riposoLungo(x, pg));
+              // Cambiare i preparati è dovuto proprio adesso: il pannello si
+              // toglie di mezzo e apre l'archivio. Cerca il dialogo per id e
+              // basta — non sa cosa ci sia dentro, e su /personaggio/ non c'è
+              // affatto, dove l'assenza non deve buttare giù il riposo.
+              finestra.current?.close();
+              document.querySelector<HTMLDialogElement>('#archivio')?.showModal();
             }}
           >
             Riposo lungo
           </button>
         </div>
         <p class="tenue">
-          Dopo un riposo lungo puoi cambiare i preparati: <a href="/preparati/">vai ai preparati</a>
-          .
+          Il riposo lungo apre l'archivio degli incantesimi. Puoi aprirlo anche da solo:{' '}
+          <a href="/preparati/">vai all'archivio</a>.
         </p>
       </dialog>
     </>
