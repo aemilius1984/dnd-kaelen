@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { h, render } from 'preact';
 import PannelloAzioni from '@/islands/PannelloAzioni';
 import { caricaPersonaggioDaFile } from '@/lib/carica-personaggio';
@@ -126,5 +126,62 @@ describe('campo dei dadi vita', () => {
     digita(campo, '6');
     await giro();
     expect(campo.value).toBe('6');
+  });
+});
+
+describe('apertura dell’archivio dopo il riposo lungo', () => {
+  // Cambiare i preparati è dovuto alla fine di un Riposo Lungo: il momento in
+  // cui il giocatore deve decidere è quello, non dieci minuti dopo quando se
+  // lo ricorda.
+  let aperture: string[];
+
+  beforeEach(() => {
+    aperture = [];
+    // jsdom non implementa né `confirm` né `showModal`.
+    vi.stubGlobal('confirm', () => true);
+    HTMLDialogElement.prototype.showModal = function () {
+      aperture.push(this.id);
+      this.open = true;
+    };
+    HTMLDialogElement.prototype.close = function () {
+      this.open = false;
+    };
+    document.body.insertAdjacentHTML('beforeend', '<dialog id="archivio"></dialog>');
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const premi = (etichetta: string) => {
+    const b = [...radice.querySelectorAll('button')].find((x) =>
+      x.textContent?.includes(etichetta),
+    );
+    b!.click();
+  };
+
+  it('il riposo lungo apre l’archivio', async () => {
+    premi('Riposo lungo');
+    await giro();
+
+    expect(aperture).toContain('archivio');
+  });
+
+  it('il riposo breve no: i preparati non si toccano', async () => {
+    premi('Concludi riposo breve');
+    await giro();
+
+    expect(aperture).not.toContain('archivio');
+  });
+
+  it('se l’archivio non c’è, il riposo lungo funziona lo stesso', async () => {
+    document.getElementById('archivio')!.remove();
+
+    premi('Riposo lungo');
+    await giro();
+
+    // La pagina /personaggio/ monta il pannello ma non l'archivio: cercare un
+    // dialogo assente non deve buttare giù il riposo.
+    expect(stato.value.pf).toBe(pg.pfMax);
   });
 });

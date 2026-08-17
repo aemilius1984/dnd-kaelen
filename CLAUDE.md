@@ -14,8 +14,9 @@ PWA e utilizzabile offline, stato di sessione in localStorage.
   pagina.
 - I valori derivati (CA, CD, bonus, danni) si calcolano in `src/lib/derive.ts`,
   non si scrivono nei dati.
-- Due temi, `tempesta` (default) e `pergamena`, differiscono **solo** nei token:
-  nessun componente conosce il tema.
+- Un tema solo, `pergamena`, scritto su `<html>` in build. I componenti non
+  conoscono il tema: differenze solo nei token. Tempesta è spento ma i suoi
+  token restano — vedi `BACKLOG.md`.
 - Tutti i contenuti sono in italiano; sintesi proprie, mai testo dei manuali.
 - Il middleware di Basic auth è fail-closed: senza segreti risponde 401.
 - Verifica visiva sempre a 390×844.

@@ -1,0 +1,19 @@
+---
+// Solo la registrazione del service worker, isolata in un componente perché
+// BaseLayout la include dietro `import.meta.env.PROD`: uno `<script is:inline>`
+// scritto dentro un'espressione del template verrebbe letto come JSX — graffe e
+// frecce comprese — e non passerebbe da Prettier. Un elemento componente dentro
+// l'espressione invece sì.
+//
+// Il guardiano deve stare nel template e non qui dentro lo script: `is:inline`
+// non passa da Vite, quindi `import.meta.env` non verrebbe sostituito.
+---
+
+<script is:inline>
+  if (
+    'serviceWorker' in navigator &&
+    (location.protocol === 'https:' || location.hostname === 'localhost')
+  ) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+  }
+</script>

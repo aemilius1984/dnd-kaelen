@@ -1,0 +1,179 @@
+@font-face {
+  font-family: 'Fraunces';
+  src: url('/fonts/fraunces-latin-600-normal.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/inter-latin-400-normal.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/inter-latin-600-normal.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/fonts/jetbrains-mono-latin-400-normal.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'EB Garamond';
+  src: url('/fonts/eb-garamond-latin-400-normal.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'EB Garamond';
+  src: url('/fonts/eb-garamond-latin-400-italic.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0 var(--spazio-2) 1.5rem;
+  background: var(--carta);
+  color: var(--inchiostro);
+  font-family: var(--font-testo);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Il pulsante ⚡ delle azioni (PannelloAzioni) è `position: fixed` in basso a
+ * destra: 60px di diametro più 1rem di scarto dal fondo, quindi occupa gli
+ * ultimi ~76px dello schermo. Con 1.5rem di padding l'ultimo blocco della
+ * Scheda — la `.altrove` con i suoi 2rem di margine inferiore — gli finisce
+ * sotto a fine scroll. Lo scarto si restituisce solo alle pagine che il
+ * pulsante ce l'hanno: sulle altre sarebbe spazio morto in fondo. */
+body:has(.apri-azioni) {
+  padding-bottom: 6rem;
+}
+
+/* La splash è a tutto schermo: il padding orizzontale del body la
+ * rimpicciolirebbe di 1,5rem su ogni lato. */
+body:has(.splash) {
+  padding: 0;
+  overflow: hidden;
+}
+
+/* La Storia disegna la propria carta da bordo a bordo: il padding del body
+ * lascerebbe due strisce di fondo ai lati del foglio. */
+body:has(.storia) {
+  padding-inline: 0;
+}
+
+/* Il pulsante ☰ del menu (Menu.astro) è `position: fixed` in alto a
+ * sinistra e sovrappone i primi ~54px di qualunque pagina che lo mostra.
+ * Lo spazio si riserva qui una volta per tutte, invece di lasciare che ogni
+ * pagina lo scopra da sola — il Task 8 aveva rattoppato solo `.identita`
+ * (vedi sotto), un rimedio locale a un problema globale. La splash non
+ * mostra il menu (`attiva` è null su quella pagina, vedi BaseLayout), quindi
+ * `body:has(.menu)` non la tocca e resta fixed, edge-to-edge. La Storia è
+ * esclusa: il suo foglio disegna la carta da bordo a bordo, quindi è lei
+ * stessa a riservare lo spazio in `.storia { padding-top }` — se lo
+ * riservasse anche `main`, la carta smetterebbe di toccare il bordo
+ * superiore e lascerebbe una striscia di `--carta` sopra la testata. */
+body:has(.menu):not(:has(.storia)) main {
+  padding-top: 3.75rem;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+h1 {
+  font-size: 1.4rem;
+  margin: 0.6rem 0 0.2rem;
+}
+h2 {
+  font-size: 1.05rem;
+  color: var(--ambra);
+  margin: 0;
+}
+a {
+  color: var(--lampo);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+th,
+td {
+  text-align: left;
+  padding: 0.4rem 0.35rem;
+  border-bottom: 1px solid var(--filetto);
+}
+th {
+  color: var(--inchiostro-tenue);
+  font-weight: 600;
+}
+td.num,
+th.num {
+  text-align: right;
+  font-family: var(--font-mono);
+}
+
+.valore {
+  font-family: var(--font-mono);
+  color: var(--lampo);
+  font-variant-numeric: tabular-nums;
+}
+.tenue {
+  color: var(--inchiostro-tenue);
+}
+
+/* Grana — texture di carta generata in codice (feTurbulence), nessuna
+ * immagine e nessuna richiesta di rete: il sito deve reggere offline.
+ * Overlay fisso, non interattivo, sotto ai dialog. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+  opacity: var(--grana);
+}
+
+/* Il sollevamento al passaggio esiste solo dove c'è un puntatore vero. Non è
+ * decorazione gestita con prudenza: su touch `:hover` resta attaccato dopo il
+ * tocco, quindi una card toccata resterebbe sollevata per sempre. */
+@media (hover: hover) and (pointer: fine) {
+  .superficie.livello-appoggiata:hover {
+    box-shadow: var(--ombra-2);
+    transition: box-shadow 0.25s ease;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

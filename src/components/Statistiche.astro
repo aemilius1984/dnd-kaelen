@@ -1,6 +1,8 @@
 ---
 import type { Personaggio } from '@/lib/schema';
 import { bonusAbilita, bonusTiroSalvezza, modificatore, segno } from '@/lib/derive';
+import { NOME_EN_CARATTERISTICA } from '@/lib/caratteristiche';
+import NomeDoppio from '@/components/ui/NomeDoppio.astro';
 
 interface Props {
   pg: Personaggio;
@@ -29,7 +31,9 @@ const chiavi = Object.keys(nomi) as (keyof typeof pg.caratteristiche)[];
     {
       chiavi.map((c) => (
         <tr>
-          <td>{nomi[c]}</td>
+          <td>
+            <NomeDoppio inline it={nomi[c]} en={NOME_EN_CARATTERISTICA[c]} />
+          </td>
           <td class="num">{pg.caratteristiche[c]}</td>
           <td class="num">{segno(modificatore(pg.caratteristiche[c]))}</td>
           <td class="num valore">{segno(bonusTiroSalvezza(pg, c))}</td>
@@ -45,7 +49,9 @@ const chiavi = Object.keys(nomi) as (keyof typeof pg.caratteristiche)[];
     {
       pg.abilita.map((a) => (
         <tr>
-          <td>{a.nome}</td>
+          <td>
+            <NomeDoppio inline it={a.nome} en={a.nomeEn} />
+          </td>
           <td class="num valore">{segno(bonusAbilita(pg, a.nome))}</td>
           <td class="tenue">{a.origine}</td>
         </tr>

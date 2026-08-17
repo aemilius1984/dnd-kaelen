@@ -10,5 +10,10 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'npm'
       - run: npm ci
-      - run: npm test
+      # Build prima di test, come `npm run gate`: i test di pagina leggono
+      # l'HTML costruito in `dist/` invece di rendere le pagine con la
+      # container API, che sotto vitest trova le content collection vuote.
+      # Con l'ordine inverso, su un checkout pulito `dist/` non esiste e
+      # quei test falliscono.
       - run: npm run build
+      - run: npm test

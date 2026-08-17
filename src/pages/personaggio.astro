@@ -4,6 +4,8 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 import DatiIniziali from '@/components/DatiIniziali.astro';
 import Statistiche from '@/components/Statistiche.astro';
 import Capacita from '@/components/Capacita.astro';
+import TestaSezione from '@/components/ui/TestaSezione.astro';
+import NomeDoppio from '@/components/ui/NomeDoppio.astro';
 import Borsa from '@/islands/Borsa';
 import ritrattoSrc from '@/assets/kaelen-home.webp';
 import { capacitaTrasporto, percezionePassiva } from '@/lib/derive';
@@ -38,8 +40,8 @@ const interpretazione = [
     <img src={ritratto.src} width="1120" height="1400" alt={`Ritratto di ${pg.nome}`} />
   </div>
 
-  <section class="pannello">
-    <h2>Interpretazione</h2>
+  <section>
+    <TestaSezione kicker="chi è">Interpretazione</TestaSezione>
     <dl class="interpretazione">
       {
         interpretazione.map(([voce, testo]) => (
@@ -52,8 +54,8 @@ const interpretazione = [
     </dl>
   </section>
 
-  <section class="pannello">
-    <h2>Caratteristiche e abilità</h2>
+  <section>
+    <TestaSezione kicker="i numeri">Caratteristiche e abilità</TestaSezione>
     <Statistiche pg={pg} />
     <p class="tenue">
       Percezione passiva {percezionePassiva(pg)} · Velocità {pg.velocita} ft · Capacità di trasporto
@@ -61,18 +63,23 @@ const interpretazione = [
     </p>
   </section>
 
-  <section class="pannello">
-    <h2>Capacità</h2>
+  <section>
+    <TestaSezione kicker="cosa sa fare">Capacità</TestaSezione>
     <Capacita pg={pg} />
   </section>
 
-  <section class="pannello">
-    <h2>Borsa</h2>
+  <section>
+    <TestaSezione kicker="cosa porta addosso">Borsa</TestaSezione>
+    <p class="armatura-indossata">
+      <NomeDoppio it={pg.armatura.nome} en={pg.armatura.nomeEn} />
+    </p>
     <div class="borsa-isola">
       <Borsa client:only="preact" />
     </div>
     <p class="tenue">
-      Lingue: {pg.lingue.join(', ')}. Strumenti: {pg.strumenti.map((x) => x.nome).join(', ')}.
+      Lingue: {pg.lingue.join(', ')}. Strumenti: {
+        pg.strumenti.map((x) => `${x.nome} (${x.nomeEn})`).join(', ')
+      }.
       {pg.armatura.note}
     </p>
   </section>
@@ -94,8 +101,8 @@ const interpretazione = [
     aspect-ratio: 1 / 1;
     overflow: hidden;
     border-radius: var(--raggio);
-    border: 1px solid var(--bordo);
-    margin: var(--spazio) 0;
+    border: 1px solid var(--filetto);
+    margin: var(--spazio-2) 0;
   }
   .mezzobusto img {
     display: block;
@@ -112,7 +119,7 @@ const interpretazione = [
     font-size: 0.92rem;
   }
   .interpretazione dt {
-    color: var(--testo-tenue);
+    color: var(--inchiostro-tenue);
     font-family: var(--font-display);
   }
   .interpretazione dd {

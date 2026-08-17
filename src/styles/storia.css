@@ -1,29 +1,29 @@
 /* La Storia è l'unica pagina a lettura lunga: prende un foglio di stile
  * proprio invece di gonfiare i token condivisi. Carta e inchiostro sono
- * token tematizzati, quindi la pagina segue Tempesta o Pergamena senza
- * conoscerli. */
+ * token tematizzati, quindi la pagina segue il tema attivo (Pergamena, oggi
+ * l'unico) senza conoscerlo. */
 .storia {
   max-width: var(--misura);
   margin: 0 auto;
   /* 3.75rem in cima quanto ogni altra pagina, per liberare il pulsante ☰
    * fisso — vedi la nota su `body:has(.menu):not(:has(.storia)) main` in
-   * tokens.css: qui, non lì, perché la carta deve toccare il bordo. */
+   * base.css: qui, non lì, perché la carta deve toccare il bordo. */
   padding: 3.75rem 0 4rem;
-  font-family: var(--font-testo);
+  font-family: var(--font-narrativa);
   font-size: 1.12rem;
   line-height: 1.62;
   color: var(--inchiostro);
   background:
     radial-gradient(circle at 18% 12%, rgb(120 100 60 / 0.07), transparent 55%),
-    radial-gradient(circle at 82% 68%, rgb(120 100 60 / 0.06), transparent 55%), var(--carta);
+    radial-gradient(circle at 82% 68%, rgb(120 100 60 / 0.06), transparent 55%), var(--superficie);
 }
 .storia > * {
-  padding-inline: var(--spazio);
+  padding-inline: var(--spazio-2);
 }
 
 .testata {
   text-align: center;
-  border-bottom: 3px double var(--bordo);
+  border-bottom: 3px double var(--filetto);
   padding-bottom: 0.8rem;
   margin-bottom: 0.6rem;
 }
@@ -39,7 +39,7 @@
   font-size: 0.72rem;
   letter-spacing: 0.3em;
   text-transform: uppercase;
-  color: var(--testo-tenue);
+  color: var(--inchiostro-tenue);
   margin: 0 0 0.3rem;
 }
 .testata .riga-data {
@@ -48,8 +48,8 @@
   font-size: 0.72rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--testo-tenue);
-  border-top: 1px solid var(--bordo);
+  color: var(--inchiostro-tenue);
+  border-top: 1px solid var(--filetto);
   margin-top: 0.6rem;
   padding-top: 0.35rem;
 }
@@ -63,7 +63,7 @@
   letter-spacing: 0.24em;
   text-transform: uppercase;
   text-align: center;
-  color: var(--testo-tenue);
+  color: var(--inchiostro-tenue);
   margin: 0 0 0.6rem;
 }
 .sommario ol {
@@ -89,10 +89,10 @@
 }
 .sommario .filo {
   flex: 1;
-  border-bottom: 1px dotted var(--bordo);
+  border-bottom: 1px dotted var(--filetto);
   transform: translateY(-0.25rem);
 }
-/* 44px di bersaglio come ovunque nel ramo (vedi `button` in tokens.css). Il
+/* 44px di bersaglio come ovunque nel ramo (vedi `button` in componenti.css). Il
  * testo del sommario è alto 1.12rem × 1.62 = 29px: mancano 15px, mezzo rem
  * sopra e mezzo sotto (16px) li copre con un pixel di margine. */
 .sommario a {
@@ -144,7 +144,7 @@
   position: relative;
   margin: 1.6rem 0;
   padding: 0;
-  border: 1px solid var(--bordo);
+  border: 1px solid var(--filetto);
 }
 .incisione img {
   display: block;
@@ -169,9 +169,9 @@
   font-size: 0.74rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--testo-tenue);
-  padding: 0.5rem var(--spazio);
-  border-top: 1px solid var(--bordo);
+  color: var(--inchiostro-tenue);
+  padding: 0.5rem var(--spazio-2);
+  border-top: 1px solid var(--filetto);
   text-align: center;
 }
 

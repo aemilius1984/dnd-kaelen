@@ -41,7 +41,13 @@ export default function Borsa() {
           return (
             <li key={e.id}>
               <div class="info">
-                <span class={quantita === 0 ? 'tenue' : undefined}>{e.nome}</span>
+                {/* Stesso markup di `NomeDoppio.astro`, scritto a mano perché
+                    un'isola Preact non può montare un componente `.astro`. Lo
+                    stile è condiviso, in `componenti.css`. */}
+                <span class={`nome-doppio${quantita === 0 ? ' tenue' : ''}`}>
+                  <span class="it">{e.nome}</span>
+                  <span class="en">{e.nomeEn}</span>
+                </span>
                 {e.note && <span class="tenue nota">{e.note}</span>}
               </div>
               <button

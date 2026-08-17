@@ -47,3 +47,39 @@ describe('collezione degli incantesimi', () => {
     }
   });
 });
+
+describe('tag rituale', () => {
+  // L'elenco viene dalla tabella «CLERIC SPELL LIST» del PHB 2024, colonna
+  // Special, dove `R` significa Ritual: livello 1 righe Detect Magic (C,R),
+  // Detect Poison and Disease (C,R) e Purify Food and Drink (R); livello 2
+  // righe Augury (R,M), Gentle Repose (R,M) e Silence (C,R). Individuazione
+  // del Male e del Bene, Individuare Trappole e Localizzare Oggetto sono
+  // stati controllati e NON sono rituali.
+  const ATTESI = [
+    'Individuazione del Magico',
+    'Individuazione di Veleni e Malattie',
+    'Presagio',
+    'Purificare Cibo e Bevande',
+    'Riposo Tranquillo',
+    'Silenzio',
+  ];
+
+  it('marca come rituali solo incantesimi verificati sul manuale', () => {
+    const rituali = [...magie.values()]
+      .filter((m) => m.rituale)
+      .map((m) => m.nome)
+      .sort((a, b) => a.localeCompare(b, 'it'));
+
+    expect(rituali).toEqual(ATTESI);
+  });
+
+  it('nessun trucchetto è rituale', () => {
+    for (const m of magie.values()) if (m.livello === 0) expect(m.rituale).toBe(false);
+  });
+
+  it('ogni incantesimo dichiara il campo, anche chi non è rituale', () => {
+    // `undefined` e `false` si comportano uguale in un `if`, ma solo il
+    // secondo dice «controllato, non è un rituale».
+    for (const m of magie.values()) expect(typeof m.rituale).toBe('boolean');
+  });
+});

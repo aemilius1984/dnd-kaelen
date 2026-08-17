@@ -12,6 +12,7 @@ danno: null
 slotSuperiore: null
 tag: [utilità]
 dominio: false
+rituale: true
 ---
 
 Per 10 minuti percepisci veleni, creature velenose e contagi magici entro 30 ft, e ne

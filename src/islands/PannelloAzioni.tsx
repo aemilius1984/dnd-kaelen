@@ -2,6 +2,7 @@ import { useRef, useState } from 'preact/hooks';
 import {
   applicaCura,
   applicaDanno,
+  impostaIspirazione,
   impostaPfTemporanei,
   puoSpendereSlot,
   puoUsareRisorsa,
@@ -12,6 +13,7 @@ import {
   segnaTsMorte,
   spendiDadoVitaConCura,
   spendiSlot,
+  SLOT_MANUALE,
   usaRisorsa,
 } from '@/lib/sheet-state';
 import { assicuraInizializzato, datiIniziali, muta, stato } from '@/lib/storage';
@@ -116,20 +118,21 @@ export default function PannelloAzioni() {
         {pg.slot.map((slot) => (
           <div class="riga" key={`slot-${slot.livello}`}>
             <span>
-              Slot {slot.livello}° — {slot.max - (s.slotSpesi[slot.livello] ?? 0)}/{slot.max}
+              Slot {slot.livello}° — {slot.max - (s.slotSpesi[slot.livello] ?? []).length}/
+              {slot.max}
             </span>
             <button
               type="button"
               aria-label={`Usa uno slot di ${slot.livello}° livello`}
               disabled={!puoSpendereSlot(s, pg, slot.livello)}
-              onClick={() => muta((x) => spendiSlot(x, pg, slot.livello))}
+              onClick={() => muta((x) => spendiSlot(x, pg, slot.livello, SLOT_MANUALE))}
             >
               Usa
             </button>
             <button
               type="button"
               aria-label={`Recupera uno slot di ${slot.livello}° livello`}
-              disabled={(s.slotSpesi[slot.livello] ?? 0) === 0}
+              disabled={(s.slotSpesi[slot.livello] ?? []).length === 0}
               onClick={() => muta((x) => recuperaSlot(x, slot.livello))}
             >
               ↺
@@ -181,6 +184,15 @@ export default function PannelloAzioni() {
             Spendi
           </button>
         </div>
+        <label class="riga">
+          <input
+            type="checkbox"
+            checked={s.ispirazione}
+            onChange={(e) => muta((x) => impostaIspirazione(x, e.currentTarget.checked))}
+          />
+          Ispirazione Eroica <span class="tenue">Heroic Inspiration</span>
+        </label>
+
         <div class="riga">
           <button type="button" onClick={() => muta((x) => riposoBreve(x, pg))}>
             Concludi riposo breve
@@ -189,17 +201,26 @@ export default function PannelloAzioni() {
             type="button"
             class="pericoloso"
             onClick={() => {
-              if (confirm('Riposo lungo: PF al massimo, slot e risorse ripristinati. Procedere?')) {
-                muta((x) => riposoLungo(x, pg));
+              if (
+                !confirm('Riposo lungo: PF al massimo, slot e risorse ripristinati. Procedere?')
+              ) {
+                return;
               }
+              muta((x) => riposoLungo(x, pg));
+              // Cambiare i preparati è dovuto proprio adesso: il pannello si
+              // toglie di mezzo e apre l'archivio. Cerca il dialogo per id e
+              // basta — non sa cosa ci sia dentro, e su /personaggio/ non c'è
+              // affatto, dove l'assenza non deve buttare giù il riposo.
+              finestra.current?.close();
+              document.querySelector<HTMLDialogElement>('#archivio')?.showModal();
             }}
           >
             Riposo lungo
           </button>
         </div>
         <p class="tenue">
-          Dopo un riposo lungo puoi cambiare i preparati: <a href="/preparati/">vai ai preparati</a>
-          .
+          Il riposo lungo apre l'archivio degli incantesimi. Puoi aprirlo anche da solo:{' '}
+          <a href="/preparati/">vai all'archivio</a>.
         </p>
       </dialog>
     </>

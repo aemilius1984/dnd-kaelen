@@ -1,656 +1,81 @@
-@font-face {
-  font-family: 'Marcellus';
-  src: url('/fonts/marcellus-latin-400-normal.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'EB Garamond';
-  src: url('/fonts/eb-garamond-latin-400-normal.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'EB Garamond';
-  src: url('/fonts/eb-garamond-latin-400-italic.woff2') format('woff2');
-  font-weight: 400;
-  font-style: italic;
-  font-display: swap;
+/* Token — carta pergamena su struttura "carta e luce".
+ *
+ * La struttura (carta / superficie / superficie incassata, tre livelli di
+ * inchiostro, filetto, due ombre lunghe) è quella di potenza.dev; i valori
+ * sono la tavolozza pergamena di questo sito. L'accento è l'ottanio della
+ * tempesta: il cobalto di quel sito è il suo marchio e qui non entra.
+ *
+ * Un tema solo: `<html data-tema="pergamena">` è scritto in build. I token di
+ * Tempesta restano qui sotto, dormienti — vedi BACKLOG.md. */
+
+:root,
+:root[data-tema='pergamena'] {
+  --carta: #efe7d6;
+  --superficie: #f7f1e3;
+  --superficie-incassata: #e4dac4;
+  --inchiostro: #241e16;
+  --inchiostro-tenue: #554c3d;
+  --inchiostro-muto: #655c4d;
+  --filetto: rgba(36, 30, 22, 0.12);
+
+  --lampo: #1a5468;
+  --lampo-fondo: #dce8ec;
+  --lampo-cupo: #123c4b;
+
+  --ambra: #8d520f;
+  --oro: #7a5410;
+  --allerta: #9c2f1b;
+  --spento: #b08a86;
+
+  --ombra-1: 0 1px 2px rgba(36, 30, 22, 0.05), 0 6px 16px rgba(36, 30, 22, 0.07);
+  --ombra-2: 0 2px 4px rgba(36, 30, 22, 0.06), 0 14px 40px rgba(36, 30, 22, 0.11);
+  --grana: 0.05;
+
+  color-scheme: light;
 }
 
-/* Tempesta è anche il ripiego: senza JavaScript, o prima che lo script
- * inline scriva data-tema, la pagina è già scura e leggibile. */
-:root,
 :root[data-tema='tempesta'] {
-  --fondo: #0a0c10;
+  --carta: #0a0c10;
   --superficie: #161c24;
-  --superficie-alta: #1e2732;
-  --bordo: #2c3745;
-  --testo: #e8e3d9;
-  --testo-tenue: #9aa4b2;
+  --superficie-incassata: #1e2732;
+  --inchiostro: #e8e3d9;
+  --inchiostro-tenue: #b3bcc7;
+  --inchiostro-muto: #9aa4b2;
+  --filetto: rgba(232, 227, 217, 0.14);
   --lampo: #9fd8f0;
+  --lampo-fondo: #16303c;
+  --lampo-cupo: #c8e8f7;
   --ambra: #e2a24a;
   --oro: #f0c27a;
   --allerta: #d9694f;
   --spento: #7a3b3b;
-  --carta: #1a1610;
-  --inchiostro: #d8cdb4;
-}
-
-:root[data-tema='pergamena'] {
-  --fondo: #efe7d6;
-  --superficie: #f7f1e3;
-  --superficie-alta: #e4dac4;
-  --bordo: #cbbea2;
-  --testo: #241e16;
-  --testo-tenue: #6b6152;
-  --lampo: #1f5e77;
-  --ambra: #9a5b12;
-  --oro: #7a5410;
-  --allerta: #9c2f1b;
-  --spento: #b08a86;
-  --carta: #f3ead6;
-  --inchiostro: #241e16;
-}
-
-:root {
-  --raggio: 10px;
-  --spazio: 0.75rem;
-  --misura: 34rem;
-  --font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-numeri: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, monospace;
-  --font-display: 'Marcellus', Georgia, 'Times New Roman', serif;
-  --font-testo: 'EB Garamond', Georgia, 'Times New Roman', serif;
+  --ombra-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 16px rgba(0, 0, 0, 0.5);
+  --ombra-2: 0 2px 4px rgba(0, 0, 0, 0.4), 0 14px 40px rgba(0, 0, 0, 0.6);
+  --grana: 0.07;
   color-scheme: dark;
 }
 
-:root[data-tema='pergamena'] {
-  color-scheme: light;
-}
+:root {
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-testo: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-narrativa: 'EB Garamond', Georgia, 'Times New Roman', serif;
 
-* {
-  box-sizing: border-box;
-}
+  --fs-h1: clamp(1.9rem, 1.4rem + 2.4vw, 2.6rem);
+  --fs-h2: 1.5rem;
+  --fs-h3: 1.15rem;
+  --fs-corpo: 1.0625rem;
+  --fs-piccolo: 0.8125rem;
+  --lh-corpo: 1.55;
+  --tracking-kicker: 0.13em;
 
-body {
-  margin: 0;
-  padding: 0 var(--spazio) 1.5rem;
-  background: var(--fondo);
-  color: var(--testo);
-  font-family: var(--font);
-  font-size: 16px;
-  line-height: 1.5;
-  -webkit-text-size-adjust: 100%;
-}
-
-/* Il pulsante ⚡ delle azioni (PannelloAzioni) è `position: fixed` in basso a
- * destra: 60px di diametro più 1rem di scarto dal fondo, quindi occupa gli
- * ultimi ~76px dello schermo. Con 1.5rem di padding l'ultimo blocco della
- * Scheda — la `.altrove` con i suoi 2rem di margine inferiore — gli finisce
- * sotto a fine scroll. Lo scarto si restituisce solo alle pagine che il
- * pulsante ce l'hanno: sulle altre sarebbe spazio morto in fondo. */
-body:has(.apri-azioni) {
-  padding-bottom: 6rem;
-}
-
-/* La splash è a tutto schermo: il padding orizzontale del body la
- * rimpicciolirebbe di 1,5rem su ogni lato. */
-body:has(.splash) {
-  padding: 0;
-  overflow: hidden;
-}
-
-/* La Storia disegna la propria carta da bordo a bordo: il padding del body
- * lascerebbe due strisce di fondo ai lati del foglio. */
-body:has(.storia) {
-  padding-inline: 0;
-}
-
-/* Il pulsante ☰ del menu (Menu.astro) è `position: fixed` in alto a
- * sinistra e sovrappone i primi ~54px di qualunque pagina che lo mostra.
- * Lo spazio si riserva qui una volta per tutte, invece di lasciare che ogni
- * pagina lo scopra da sola — il Task 8 aveva rattoppato solo `.identita`
- * (vedi sotto), un rimedio locale a un problema globale. La splash non
- * mostra il menu (`attiva` è null su quella pagina, vedi BaseLayout), quindi
- * `body:has(.menu)` non la tocca e resta fixed, edge-to-edge. La Storia è
- * esclusa: il suo foglio disegna la carta da bordo a bordo, quindi è lei
- * stessa a riservare lo spazio in `.storia { padding-top }` — se lo
- * riservasse anche `main`, la carta smetterebbe di toccare il bordo
- * superiore e lascerebbe una striscia di `--fondo` sopra la testata. */
-body:has(.menu):not(:has(.storia)) main {
-  padding-top: 3.75rem;
-}
-
-h1,
-h2,
-h3 {
-  font-family: var(--font-display);
-  font-weight: 400;
-  letter-spacing: 0.01em;
-}
-h1 {
-  font-size: 1.4rem;
-  margin: 0.6rem 0 0.2rem;
-}
-h2 {
-  font-size: 1.05rem;
-  color: var(--ambra);
-  margin: 0;
-}
-a {
-  color: var(--lampo);
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.92rem;
-}
-th,
-td {
-  text-align: left;
-  padding: 0.4rem 0.35rem;
-  border-bottom: 1px solid var(--bordo);
-}
-th {
-  color: var(--testo-tenue);
-  font-weight: 500;
-}
-td.num,
-th.num {
-  text-align: right;
-  font-family: var(--font-numeri);
-}
-
-.valore {
-  font-family: var(--font-numeri);
-  color: var(--lampo);
-  font-variant-numeric: tabular-nums;
-}
-.tenue {
-  color: var(--testo-tenue);
-}
-.pannello {
-  background: var(--superficie);
-  border: 1px solid var(--bordo);
-  border-radius: var(--raggio);
-  padding: var(--spazio);
-  margin: var(--spazio) 0;
-}
-button {
-  font: inherit;
-  color: var(--testo);
-  background: var(--superficie-alta);
-  border: 1px solid var(--bordo);
-  border-radius: var(--raggio);
-  min-height: 44px;
-  min-width: 44px;
-  padding: 0 0.8rem;
-  cursor: pointer;
-}
-button:active {
-  background: var(--ambra);
-  color: var(--fondo);
-}
-
-/* client:only="preact" non fa alcun render lato server: il pannello resta
- * vuoto finché l'idratazione non disegna i controlli reali. Senza altezza
- * riservata la pagina "salta" nel punto guardato più spesso a ogni apertura,
- * proprio in cima alla scheda. Il Task 8 ha riscritto PfTracker in sola
- * lettura (niente più pulsanti né campo PF temporanei, in compenso una barra
- * di riempimento): misurata di nuovo con Chrome headless via CDP a 390px di
- * larghezza, stato normale (PF > 0, e già allora senza l'avviso di
- * azzeramento, che adesso è un'isola a parte resa dal layout): 146px; 148px
- * lascia un margine di un paio di pixel. A 0 PF compare la riga dei TS morte e
- * l'altezza sale a 186px — caso raro, non riservato qui, stesso criterio di
- * prima: vedi il rapporto del task. */
-.pf-pannello {
-  min-height: 148px;
-}
-.pf .riga {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-}
-.pf .numero {
-  font-family: var(--font-numeri);
-  font-size: 2rem;
-  color: var(--lampo);
-  min-width: 5ch;
-  text-align: center;
-}
-.pf .numero.pericolo {
-  color: var(--allerta);
-}
-.avviso {
-  background: var(--superficie-alta);
-  border-left: 3px solid var(--ambra);
-  padding: 0.5rem 0.6rem;
-  font-size: 0.9rem;
-}
-
-/* Stesso motivo di .pf-pannello: con client:only="preact" non c'è alcun
- * render lato server, quindi senza altezza riservata la sezione "salta"
- * alla prima idratazione. Misurata con Chrome headless via CDP a 390px di
- * larghezza, stato normale (6 preparati): .preparati-isola ~344px idratata
- * → riservati 346px (con un paio di pixel di margine, come .pf-pannello).
- * Vedi il rapporto del task per il metodo e i numeri. */
-.preparati-isola {
-  min-height: 346px;
-}
-
-.caselle {
-  display: inline-flex;
-  gap: 0.25rem;
-}
-.casella {
-  width: 14px;
-  height: 14px;
-  border: 1px solid var(--bordo);
-  border-radius: 3px;
-  display: inline-block;
-}
-.casella.piena {
-  background: var(--lampo);
-  border-color: var(--lampo);
-}
-.pericoloso {
-  border-color: var(--spento);
-  color: var(--allerta);
-}
-button[disabled] {
-  opacity: 0.4;
-}
-
-/* I due comandi in fondo al menu li disegna l'isola AzioniMenu: lo stile
- * scoped di Menu.astro non raggiunge il DOM che monta Preact, quindi la
- * regola vive qui insieme agli altri gruppi di controlli. In colonna e a
- * tutta larghezza come le voci di navigazione sopra di loro, invece del
- * flusso di default che li lasciava appiccicati uno sotto l'altro senza
- * respiro. */
-.azioni-menu {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.pool {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-.pool label {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  min-height: 44px;
-  padding: 0.55rem 0;
-  border-bottom: 1px solid var(--bordo);
-}
-.pool label > span:nth-child(2) {
-  flex: 1;
-}
-.pool label.scelto > span:nth-child(2) {
-  color: var(--lampo);
-}
-.pool input {
-  width: 22px;
-  height: 22px;
-  accent-color: var(--ambra);
-}
-
-/* Stesso motivo di .pf-pannello / .risorse-isola: con client:only="preact"
- * non c'è alcun render lato server, quindi senza altezza riservata la
- * sezione "salta" alla prima idratazione. Misurate con Chrome headless via
- * CDP a 390px di larghezza (16 oggetti d'equipaggiamento, 3 valute, 1 nota
- * per oggetto — il simbolo sacro): .borsa-isola ~993.72px idratata →
- * riservati 996px; .note-isola ~219.19px idratata → riservati 221px
- * (entrambe con un paio di pixel di margine, come .pf-pannello). Vedi il
- * rapporto del task per il metodo e i numeri. */
-.borsa-isola {
-  min-height: 996px;
-}
-.note-isola {
-  min-height: 221px;
-}
-
-.monete {
-  display: flex;
-  gap: 0.8rem;
-  margin-bottom: 0.6rem;
-}
-.monete label {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-}
-.monete input {
-  width: 5rem;
-  min-height: 44px;
-  background: var(--superficie-alta);
-  color: var(--testo);
-  border: 1px solid var(--bordo);
-  border-radius: var(--raggio);
-  text-align: right;
-  font: inherit;
-}
-.oggetti {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-.oggetti li {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.35rem 0;
-  border-bottom: 1px solid var(--bordo);
-  font-size: 0.92rem;
-}
-.oggetti li > .info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-}
-.oggetti .nota {
-  font-size: 0.82rem;
-}
-.note {
-  width: 100%;
-  background: var(--superficie-alta);
-  color: var(--testo);
-  border: 1px solid var(--bordo);
-  border-radius: var(--raggio);
-  padding: 0.6rem;
-  font: inherit;
-  resize: vertical;
-}
-.titolo-griglia {
-  font-family: var(--font-display);
-  font-size: 0.82rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--testo-tenue);
-  margin: 1rem 0 0.5rem;
-}
-.griglia {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(5.2rem, 1fr));
-  gap: 0.5rem;
-}
-.sigillo {
-  min-width: 0;
-}
-.sigillo > summary {
-  list-style: none;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.2rem;
-  min-height: 76px;
-  padding: 0.5rem 0.25rem;
-  border: 1px solid var(--bordo);
-  border-radius: var(--raggio);
-  background: var(--superficie);
-  position: relative;
-}
-.sigillo > summary::-webkit-details-marker {
-  display: none;
-}
-.sigillo svg {
-  width: 30px;
-  height: 30px;
-  color: var(--ambra);
-}
-.sigillo .nome {
-  font-size: 0.68rem;
-  line-height: 1.15;
-  text-align: center;
-  color: var(--testo);
-  overflow-wrap: anywhere;
-}
-.sigillo .livello {
-  position: absolute;
-  top: 3px;
-  right: 5px;
-  font-family: var(--font-numeri);
-  font-size: 0.6rem;
-  color: var(--testo-tenue);
-}
-.sigillo[open] > summary {
-  border-color: var(--ambra);
-}
-/* La carta aperta esce dalla cella e occupa tutta la riga: a 390px una
- * scheda dentro una colonna da 5rem sarebbe illeggibile. */
-.sigillo[open] {
-  grid-column: 1 / -1;
-}
-.carta {
-  border: 1px solid var(--ambra);
-  border-top: none;
-  border-radius: 0 0 var(--raggio) var(--raggio);
-  padding: 0.6rem;
-  background: var(--superficie);
-}
-.carta p {
-  margin: 0.3rem 0;
-  font-size: 0.92rem;
-}
-.carta .meta {
-  font-size: 0.82rem;
-}
-.lancio {
-  display: flex;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-  margin-top: 0.6rem;
-}
-.annulla {
-  position: fixed;
-  inset: auto 0 calc(5.5rem + env(safe-area-inset-bottom)) 0;
-  z-index: 15;
-  margin: 0 auto;
-  width: fit-content;
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.4rem 0.5rem 0.4rem 0.9rem;
-  border: 1px solid var(--ambra);
-  border-radius: var(--raggio);
-  background: var(--superficie-alta);
-  font-size: 0.9rem;
-}
-
-.apri-azioni {
-  position: fixed;
-  inset: auto 1rem calc(1rem + env(safe-area-inset-bottom)) auto;
-  z-index: 18;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  font-size: 1.6rem;
-  background: var(--ambra);
-  color: var(--fondo);
-  border: none;
-  box-shadow: 0 6px 18px rgb(0 0 0 / 0.45);
-}
-dialog.azioni {
-  width: 100%;
-  max-width: 34rem;
-  margin: auto auto 0;
-  padding: var(--spazio) var(--spazio) calc(1.5rem + env(safe-area-inset-bottom));
-  border: 1px solid var(--bordo);
-  border-radius: var(--raggio) var(--raggio) 0 0;
-  background: var(--superficie);
-  color: var(--testo);
-  max-height: 85vh;
-  overflow-y: auto;
-}
-dialog.azioni::backdrop {
-  background: rgb(0 0 0 / 0.6);
-}
-dialog.azioni .testa {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-}
-dialog.azioni h4 {
-  font-family: var(--font-display);
-  font-size: 0.78rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--testo-tenue);
-  margin: 1rem 0 0.4rem;
-  border-bottom: 1px solid var(--bordo);
-  padding-bottom: 0.3rem;
-}
-dialog.azioni .riga {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-  padding: 0.3rem 0;
-}
-dialog.azioni .riga > span,
-dialog.azioni label.riga {
-  flex: 1;
-  font-size: 0.92rem;
-}
-dialog.azioni input[type='number'] {
-  width: 4.5rem;
-  min-height: 44px;
-  background: var(--superficie-alta);
-  color: var(--testo);
-  border: 1px solid var(--bordo);
-  border-radius: var(--raggio);
-  text-align: center;
-  font: inherit;
-}
-
-.identita {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding-top: 0.6rem;
-}
-.identita .avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-  object-position: 50% 12%;
-  border: 1px solid var(--bordo);
-}
-/* È l'`<h1>` della Scheda (scheda.astro): la rotta è la `start_url` del
- * manifest, quindi non può saltare dal titolo del documento a `<h2>Attacchi`.
- * La dimensione e i margini restano quelli che aveva da `<p>` — 1.35rem
- * invece di 1.4rem, nessun margine — così la testata non si muove di un
- * pixel: la regola vince sul blocco `h1, h2, h3` per specificità. */
-.identita .nome {
-  font-family: var(--font-display);
-  font-size: 1.35rem;
-  margin: 0;
-}
-.identita .qualifica {
-  margin: 0;
-  font-size: 0.8rem;
-}
-.difese {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.25rem;
-  text-align: center;
-  margin: var(--spazio) 0;
-  padding: 0.5rem 0;
-  border-block: 1px solid var(--bordo);
-}
-.difese .tenue {
-  display: block;
-  font-size: 0.66rem;
-  letter-spacing: 0.14em;
-}
-.difese .valore {
-  font-size: 1.5rem;
-}
-.attacco-inc {
-  margin: 0.2rem 0 0;
-  font-size: 0.85rem;
-}
-/* Stesso motivo di .pf-pannello: con client:only="preact" non c'è alcun
- * render lato server, quindi senza altezza riservata la sezione "salta" alla
- * prima idratazione — qui in mezzo alla rotta principale.
- *
- * ATTENZIONE: questo numero è CALCOLATO dal box model, non misurato con
- * Chrome headless come gli altri quattro: la sessione che l'ha scritto non
- * aveva un browser. È il primo valore da confermare nella verifica a 390×844.
- * Il calcolo: a 390px di larghezza il contenuto di `.pannello` è
- * 390 − 2×0.75rem (padding del body) − 2×(0.75rem + 1px) = 340px. La striscia
- * porta cinque voci (2 livelli di slot + 3 risorse), ognuna alta una riga di
- * testo a 0.85rem con line-height 1.5 → 20.4px, separate da 0.4rem di
- * row-gap → 6.4px. Le due voci degli slot stanno insieme sulla prima riga
- * (~198px con il column-gap da 1rem); le tre risorse hanno nomi lunghi
- * ("Tuono della Tempesta") e non ne entrano due per riga nei 340px, quindi
- * prendono una riga ciascuna. Quattro righe:
- * 4×20.4 + 3×6.4 = 100.8px → riservati 101px. */
-.risorse-isola {
-  min-height: 101px;
-}
-.striscia-risorse {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem 1rem;
-}
-.striscia-risorse .risorsa {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.85rem;
-}
-.striscia-risorse .risorsa > span:first-child {
-  flex: 1;
-}
-.altrove {
-  display: flex;
-  gap: 0.6rem;
-  margin: 1.2rem 0 2rem;
-}
-.altrove a {
-  flex: 1;
-  text-align: center;
-  padding: 0.8rem;
-  border: 1px solid var(--bordo);
-  border-radius: var(--raggio);
-  text-decoration: none;
-  background: var(--superficie);
-}
-
-/* Barra di riempimento dei PF: il numero resta la fonte di verità testuale,
- * la barra è un rinforzo visivo aggiunto in sola lettura dal Task 8 —
- * `role="progressbar"` con `aria-valuenow`/min/max sul contenitore, così
- * la tecnologia assistiva annuncia il nuovo valore quando il pannello
- * applica un danno, invece di dover rileggere un'etichetta intera. La
- * barra interna resta puramente decorativa. */
-.barra-pf {
-  width: 100%;
-  height: 8px;
-  margin-top: 0.5rem;
-  border-radius: 999px;
-  background: var(--superficie-alta);
-  border: 1px solid var(--bordo);
-  overflow: hidden;
-}
-.barra-pf .riempimento {
-  height: 100%;
-  background: var(--lampo);
-  border-radius: inherit;
-}
-.barra-pf .riempimento.pericolo {
-  background: var(--allerta);
+  --raggio: 8px;
+  --raggio-superficie: 12px;
+  --spazio-1: 0.5rem;
+  --spazio-2: 1rem;
+  --spazio-3: 1.5rem;
+  --spazio-4: 2rem;
+  --spazio-6: 3rem;
+  --spazio-8: 4rem;
+  --misura: 34rem;
 }

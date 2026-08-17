@@ -35,14 +35,36 @@ export default function ControlliLancio() {
     });
   }, [s.preparati]);
 
+  // Spegne la card quando non resta uno slot con cui lanciarla. Stessa forma
+  // della commutazione di `hidden` qui sopra: il markup è statico, l'isola gli
+  // cambia un attributo addosso. La regola di *quando* spegnere è già
+  // `livelliLanciabili`, e non viene riscritta qui.
+  //
+  // Spenta, non nascosta: tempo di lancio, gittata e TS restano leggibili
+  // perché sono i numeri che si guardano per decidere se conviene un Riposo
+  // Breve. `aria-disabled` e non `disabled` perché il contenitore non è un
+  // controllo — è una card che smette di offrire i propri bottoni.
+  useEffect(() => {
+    for (const b of bersagli) {
+      const carta = b.nodo.closest<HTMLElement>('.incantesimo');
+      if (!carta) continue;
+      const spenta = livelliLanciabili(s, pg, b.livello).length === 0;
+      carta.classList.toggle('spenta', spenta);
+      if (spenta) carta.setAttribute('aria-disabled', 'true');
+      else carta.removeAttribute('aria-disabled');
+    }
+  }, [bersagli, s.slotSpesi, pg]);
+
   useEffect(() => {
     if (annullabile === null) return;
     const t = setTimeout(() => setAnnullabile(null), 5000);
     return () => clearTimeout(t);
   }, [annullabile]);
 
-  function lancia(livello: number) {
-    muta((x) => spendiSlot(x, pg, livello));
+  function lancia(livello: number, slug: string) {
+    // Lo slug viaggia con la spesa: la casella consumata deve poter mostrare
+    // il sigillo di *questo* incantesimo, non un pallino qualunque.
+    muta((x) => spendiSlot(x, pg, livello, slug));
     // Un secondo lancio entro la finestra sostituisce quello annullabile: si
     // può annullare solo l'ultima azione, non un intero storico di lanci.
     setAnnullabile(livello);
@@ -65,7 +87,7 @@ export default function ControlliLancio() {
           ) : (
             <>
               {livelli.map((l) => (
-                <button key={l} type="button" onClick={() => lancia(l)}>
+                <button key={l} type="button" onClick={() => lancia(l, b.slug)}>
                   Lancia {l}°
                 </button>
               ))}

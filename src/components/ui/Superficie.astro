@@ -1,0 +1,53 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+
+/** Il contenitore non marca l'argomento, marca l'unità ripetibile con cui
+ *  interagisci: una carta di attacco, un incantesimo, una capacità. Una
+ *  sezione non è mai una Superficie — quello era il riquadro di prima, ed è
+ *  la cosa che il ridisegno toglie.
+ *
+ *  'appoggiata' = unità ripetibile, 'sollevata' = blocco d'azione,
+ *  'incassata' = incavo, per ciò che sta *dentro* un'altra superficie. */
+interface Props extends HTMLAttributes<'div'> {
+  livello?: 'appoggiata' | 'sollevata' | 'incassata';
+  class?: string;
+}
+
+/* Tutto il resto passa attraverso: `hidden`, `data-slug`, `aria-*`. Un
+ * primitivo che avvolge markup altrui non può ingoiare gli attributi con cui
+ * quel markup viene trovato e commutato — le card degli incantesimi si
+ * nascondono con `hidden` scritto in build e si ritrovano con `data-slug`. */
+const { livello = 'appoggiata', class: classe, ...resto } = Astro.props;
+---
+
+<div class:list={['superficie', `livello-${livello}`, classe]} {...resto}>
+  <slot />
+</div>
+
+<style>
+  .superficie {
+    border-radius: var(--raggio-superficie);
+    padding: var(--spazio-3);
+  }
+
+  /* Il nome del livello non porta più il numero dell'ombra: la mappa vive
+   * solo qui. 'incassata' non ne prende nessuna — è l'unico membro senza
+   * ombra, il motivo per cui "numero del livello = numero dell'ombra" si è
+   * abbandonato come sistema di nomi. */
+  .livello-appoggiata {
+    background: var(--superficie);
+    border: 1px solid var(--filetto);
+    box-shadow: var(--ombra-1);
+  }
+
+  .livello-sollevata {
+    background: var(--superficie);
+    border: 1px solid var(--filetto);
+    box-shadow: var(--ombra-2);
+  }
+
+  .livello-incassata {
+    background: var(--superficie-incassata);
+    border: 1px solid transparent;
+  }
+</style>

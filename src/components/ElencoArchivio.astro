@@ -1,0 +1,161 @@
+---
+import type { Incantesimo } from '@/lib/schema';
+import { simbolo } from '@/lib/sigilli';
+import NomeDoppio from '@/components/ui/NomeDoppio.astro';
+
+/** L'elenco completo degli incantesimi, raggruppato per livello e con il testo
+ *  intero. È **markup statico generato in build**: l'isola `Archivio` non lo
+ *  produce, lo governa. Vale la regola del repo — un'isola non contiene mai
+ *  contenuto statico — e vale il motivo pratico che le sta sotto, cioè che
+ *  trentanove testi di incantesimo dentro un bundle JavaScript sarebbero peso
+ *  iniziale su ogni pagina.
+ *
+ *  Il contenitore `[data-preparabile]` compare **solo** dove l'incantesimo si
+ *  può davvero preparare. Trucchetti e incantesimi di dominio stanno
+ *  nell'elenco perché si leggono, ma senza contenitore: sono sempre
+ *  disponibili, e una spunta disabilitata lì sarebbe l'invito a un gesto che
+ *  non serve.
+ *
+ *  Dipendenza: la pagina ospite deve montare `Sprite.astro`, una volta sola e
+ *  prima di questo elenco. */
+interface Props {
+  incantesimi: (Incantesimo & { slug: string; testo: string })[];
+  /** Gli slug che si possono preparare — il pool, che esclude già trucchetti
+   *  e dominio. Chi non è qui dentro compare senza spunta. */
+  preparabili: string[];
+}
+const { incantesimi, preparabili } = Astro.props;
+
+const preparabile = new Set(preparabili);
+
+const livelli = [...new Set(incantesimi.map((m) => m.livello))].sort((a, b) => a - b);
+const etichettaLivello = (n: number) => (n === 0 ? 'Trucchetti' : `${n}° livello`);
+---
+
+<div class="archivio-elenco">
+  {
+    livelli.map((livello) => (
+      <section class="gruppo">
+        <h3 class="testa-livello">{etichettaLivello(livello)}</h3>
+        <ul>
+          {incantesimi
+            .filter((m) => m.livello === livello)
+            .map((m) => (
+              <li class="voce">
+                <div class="testa">
+                  <svg class="sigillo" viewBox="0 0 24 24" aria-hidden="true">
+                    <use href={`#${simbolo(m.slug, m.tag)}`} />
+                  </svg>
+                  <h4 class="titolo">
+                    <NomeDoppio it={m.nome} en={m.nomeEn} />
+                  </h4>
+                  {preparabile.has(m.slug) ? (
+                    <div class="spunta" data-preparabile={m.slug} />
+                  ) : (
+                    <span class="sempre tenue">sempre</span>
+                  )}
+                </div>
+
+                {m.rituale && (
+                  <p class="etichette">
+                    <span class="etichetta">rituale · Ritual</span>
+                  </p>
+                )}
+
+                <p class="meta tenue">
+                  {m.lancio} · {m.gittata} · {m.componenti}
+                  {m.concentrazione && ' · concentrazione'}
+                  {m.tiro && ` · TS ${m.tiro}`}
+                  {m.danno && ` · ${m.danno}`}
+                </p>
+
+                <p class="testo">{m.testo}</p>
+
+                {m.slotSuperiore && <p class="tenue">Slot superiore: {m.slotSuperiore}</p>}
+              </li>
+            ))}
+        </ul>
+      </section>
+    ))
+  }
+</div>
+
+<style>
+  .archivio-elenco {
+    display: grid;
+    gap: var(--spazio-4);
+  }
+
+  .testa-livello {
+    margin: 0 0 var(--spazio-2);
+    padding-bottom: var(--spazio-1);
+    border-bottom: 1px solid var(--filetto);
+    font-size: var(--fs-h3);
+  }
+
+  .archivio-elenco ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: var(--spazio-3);
+  }
+
+  .testa {
+    display: flex;
+    align-items: center;
+    gap: var(--spazio-2);
+  }
+
+  .sigillo {
+    width: 24px;
+    height: 24px;
+    flex: none;
+    color: var(--ambra);
+  }
+
+  .titolo {
+    margin: 0;
+    flex: 1;
+    font-size: 1rem;
+  }
+
+  /* La spunta la disegna l'isola `Archivio` per portale: qui c'è solo il posto
+     dove andrà, largo abbastanza da non far ballare la riga quando arriva. */
+  .spunta {
+    flex: none;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .sempre {
+    flex: none;
+    font-family: var(--font-mono);
+    font-size: var(--fs-piccolo);
+  }
+
+  .etichette {
+    margin: var(--spazio-1) 0 0;
+  }
+
+  .etichetta {
+    font-family: var(--font-mono);
+    font-size: var(--fs-piccolo);
+    padding: 0.1rem 0.4rem;
+    border: 1px solid var(--filetto);
+    border-radius: var(--raggio);
+  }
+
+  .meta {
+    margin: var(--spazio-1) 0 0;
+    font-size: 0.82rem;
+  }
+
+  .testo {
+    margin: var(--spazio-1) 0 0;
+    font-size: 0.92rem;
+  }
+</style>

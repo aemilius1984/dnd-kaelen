@@ -32,6 +32,17 @@ export function haSigilloProprio(slug: string): boolean {
   return slug in PROPRI;
 }
 
+/** Il sigillo proprio di un incantesimo, o `null` se non ne ha uno.
+ *
+ *  Diverso da `simbolo()`, che non torna mai `null` perché ripiega sull'icona
+ *  del tag. Il ripiego va bene in una card, dove accanto c'è il nome scritto;
+ *  non va bene in una casella di slot, dove il sigillo è l'unica cosa che c'è
+ *  e l'icona del tag direbbe «un incantesimo di cura» invece di «questo
+ *  incantesimo». Chi chiama questa decide cosa fare del `null`. */
+export function sigilloProprio(slug: string): string | null {
+  return PROPRI[slug] ?? null;
+}
+
 export function simbolo(slug: string, tag: Incantesimo['tag']): string {
   return PROPRI[slug] ?? PER_TAG[tag[0]];
 }

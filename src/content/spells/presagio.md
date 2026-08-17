@@ -12,6 +12,7 @@ danno: null
 slotSuperiore: null
 tag: [utilità]
 dominio: false
+rituale: true
 ---
 
 Interroghi un'entità divina su come andrà un piano d'azione nei prossimi 30 minuti; la

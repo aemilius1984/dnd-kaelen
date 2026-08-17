@@ -1,55 +1,171 @@
 ---
 import type { Personaggio } from '@/lib/schema';
-import { dannoTesto, perColpire, segno } from '@/lib/derive';
+import { dannoTesto, perColpire, scomposizioneColpire, segno } from '@/lib/derive';
+import Superficie from '@/components/ui/Superficie.astro';
+import NomeDoppio from '@/components/ui/NomeDoppio.astro';
 
+/** Una card per arma, non una riga di tabella. La tabella metteva sulla stessa
+ *  riga tre numeri e un nome, e non aveva posto per il resto: gittata,
+ *  proprietà, che cos'è l'arma. Soprattutto non aveva posto per la
+ *  scomposizione del tiro, che è la cosa che serve quando al tavolo qualcuno
+ *  chiede se la competenza è già contata. */
 interface Props {
   pg: Personaggio;
 }
 const { pg } = Astro.props;
+
+// Niente numeri scritti a mano: totale, dado, parti e danno vengono tutti da
+// `derive.ts`, e il totale è la somma delle parti per costruzione.
+const carte = pg.attacchi.map((a) => ({
+  a,
+  totale: segno(perColpire(pg, a.id)),
+  parti: scomposizioneColpire(pg, a.id),
+  danno: dannoTesto(pg, a.id),
+}));
 ---
 
-<table>
-  <thead>
-    <tr><th>Attacco</th><th class="num">Colpire</th><th class="num">Danno</th></tr>
-  </thead>
-  <tbody>
-    {
-      pg.attacchi.map((a) => (
-        <>
-          <tr>
-            <td>{a.nome}</td>
-            <td class="num valore">{segno(perColpire(pg, a.id))}</td>
-            <td class="num valore">
-              {dannoTesto(pg, a.id)}
-              <span class="tipo-danno">{a.tipoDanno}</span>
-            </td>
-          </tr>
-          {a.note && (
-            <tr>
-              <td colspan="3" class="tenue">
-                {a.note}
-              </td>
-            </tr>
-          )}
-        </>
-      ))
-    }
-  </tbody>
-</table>
+<div class="attacchi">
+  {
+    carte.map(({ a, totale, parti, danno }) => (
+      <Superficie class="attacco">
+        <div class="testa">
+          <h3 class="titolo">
+            <NomeDoppio it={a.nome} en={a.nomeEn} />
+          </h3>
+          <div class="tiro">
+            <span class="totale">{totale}</span>
+            <span class="dado">1d20{totale}</span>
+            <span class="parti">
+              {parti.map((p) => (
+                <span class="parte">
+                  {p.etichetta} {segno(p.valore)}
+                </span>
+              ))}
+            </span>
+          </div>
+        </div>
+
+        <p class="colpo">
+          <span class="danno">{danno}</span>
+          <span class="tipo-danno">{a.tipoDanno}</span>
+          <span class="gittata">{a.gittata}</span>
+        </p>
+
+        {a.proprieta.length > 0 && (
+          <p class="proprieta">
+            {a.proprieta.map((p) => (
+              <span class="proprieta-voce">{p}</span>
+            ))}
+          </p>
+        )}
+
+        <p class="descrizione">{a.descrizione}</p>
+
+        {a.note && <p class="quando tenue">{a.note}</p>}
+      </Superficie>
+    ))
+  }
+</div>
 
 <style>
-  /* Il tipo di danno va sotto il valore numerico, non in una quarta colonna:
-   * a 390px di larghezza una colonna in più avrebbe stretto "Attacco" al
-   * punto da spezzare i nomi più lunghi (es. "Maglio da guerra, due mani")
-   * su più righe in modo scomodo. Impilato qui la riga resta di un'altezza
-   * prevedibile e il tipo di danno — spesso rilevante per le resistenze —
-   * resta comunque leggibile accanto al numero. */
+  .attacchi {
+    display: grid;
+    gap: var(--spazio-2);
+  }
+
+  .testa {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--spazio-2);
+  }
+
+  .titolo {
+    margin: 0;
+    font-size: var(--fs-h3);
+  }
+
+  /* Il tiro si legge in tre modi perché al tavolo servono in tre momenti
+   * diversi: il totale quando tiri, `1d20+N` quando lo detti a chi tira per
+   * te, la scomposizione quando il DM chiede da dove viene. */
+  .tiro {
+    display: grid;
+    justify-items: end;
+    text-align: right;
+    flex: none;
+  }
+
+  .totale {
+    font-family: var(--font-mono);
+    font-size: 1.6rem;
+    line-height: 1.1;
+  }
+
+  .dado,
+  .parti {
+    font-family: var(--font-mono);
+    font-size: var(--fs-piccolo);
+    color: var(--inchiostro-muto);
+  }
+
+  .parte + .parte::before {
+    content: ' + ';
+  }
+
+  .colpo {
+    margin: var(--spazio-2) 0 0;
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+
+  .danno {
+    font-family: var(--font-mono);
+    font-size: 1.05rem;
+  }
+
   .tipo-danno {
-    display: block;
-    font-family: var(--font);
-    font-weight: 400;
-    font-size: 0.78rem;
-    color: var(--testo-tenue);
-    white-space: nowrap;
+    font-size: 0.85rem;
+  }
+
+  .gittata {
+    font-family: var(--font-mono);
+    font-size: var(--fs-piccolo);
+    color: var(--inchiostro-muto);
+  }
+  .gittata::before {
+    content: '· ';
+  }
+
+  /* Etichette, non una frase: le proprietà sono termini di regolamento e si
+   * cercano a colpo d'occhio. */
+  .proprieta {
+    margin: var(--spazio-1) 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+
+  .proprieta-voce {
+    font-family: var(--font-mono);
+    font-size: var(--fs-piccolo);
+    padding: 0.1rem 0.4rem;
+    border: 1px solid var(--filetto);
+    border-radius: var(--raggio);
+  }
+
+  .descrizione {
+    margin: var(--spazio-2) 0 0;
+    font-size: 0.92rem;
+  }
+
+  /* La descrizione dice cos'è, la nota dice quando la scegli: sono due
+   * domande diverse e il filetto è lì per non farle leggere come una sola. */
+  .quando {
+    margin: var(--spazio-2) 0 0;
+    padding-top: var(--spazio-2);
+    border-top: 1px solid var(--filetto);
+    font-size: 0.88rem;
   }
 </style>

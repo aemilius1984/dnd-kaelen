@@ -2,13 +2,16 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { caricaPersonaggioDaFile } from '@/lib/carica-personaggio';
 import {
   SCHEMA_VERSION,
+  SLOT_MANUALE,
   applicaCura,
   applicaDanno,
   carica,
+  impostaIspirazione,
   impostaPfTemporanei,
   puoPreparare,
   puoSpendereSlot,
   puoUsareRisorsa,
+  recuperaSlot,
   riposoBreve,
   riposoLungo,
   segnaTsMorte,
@@ -34,7 +37,7 @@ describe('stato iniziale', () => {
     expect(s.pf).toBe(21);
     expect(s.pfTemporanei).toBe(0);
     expect(s.dadiVitaSpesi).toBe(0);
-    expect(s.slotSpesi).toEqual({ 1: 0, 2: 0 });
+    expect(s.slotSpesi).toEqual({ 1: [], 2: [] });
     expect(s.risorseUsate).toEqual({ incanalare: 0, 'ira-tempesta': 0, 'tuono-tempesta': 0 });
   });
 
@@ -98,8 +101,8 @@ describe('punti ferita', () => {
 
 describe('slot e risorse', () => {
   it('non spende più slot di quelli disponibili', () => {
-    for (let i = 0; i < 6; i++) s = spendiSlot(s, pg, 1);
-    expect(s.slotSpesi[1]).toBe(4);
+    for (let i = 0; i < 6; i++) s = spendiSlot(s, pg, 1, 'comando');
+    expect(s.slotSpesi[1]).toHaveLength(4);
   });
 
   it('non usa una risorsa oltre il massimo', () => {
@@ -109,12 +112,12 @@ describe('slot e risorse', () => {
 
   it('puoSpendereSlot è vero lontano dal confine e falso al confine, in accordo con spendiSlot', () => {
     expect(puoSpendereSlot(s, pg, 1)).toBe(true);
-    for (let i = 0; i < 4; i++) s = spendiSlot(s, pg, 1);
-    expect(s.slotSpesi[1]).toBe(4);
+    for (let i = 0; i < 4; i++) s = spendiSlot(s, pg, 1, 'comando');
+    expect(s.slotSpesi[1]).toHaveLength(4);
     expect(puoSpendereSlot(s, pg, 1)).toBe(false);
     // Il predicato falso deve coincidere con un mutatore che non cambia
     // nulla: stesso riferimento in uscita, non solo lo stesso valore.
-    expect(spendiSlot(s, pg, 1)).toBe(s);
+    expect(spendiSlot(s, pg, 1, 'comando')).toBe(s);
   });
 
   it('puoUsareRisorsa è vero lontano dal confine e falso al confine, in accordo con usaRisorsa', () => {
@@ -131,19 +134,19 @@ describe('riposi', () => {
     s = usaRisorsa(s, pg, 'incanalare');
     s = usaRisorsa(s, pg, 'incanalare');
     s = usaRisorsa(s, pg, 'ira-tempesta');
-    s = spendiSlot(s, pg, 1);
+    s = spendiSlot(s, pg, 1, 'comando');
     s = applicaDanno(s, 5);
     s = riposoBreve(s, pg);
     expect(s.risorseUsate['incanalare']).toBe(1);
     expect(s.risorseUsate['ira-tempesta']).toBe(1);
-    expect(s.slotSpesi[1]).toBe(1);
+    expect(s.slotSpesi[1]).toEqual(['comando']);
     expect(s.pf).toBe(16);
   });
 
   it('il riposo lungo ripristina tutto e recupera metà dei dadi vita', () => {
     s = applicaDanno(s, 10);
     s = impostaPfTemporanei(s, 4);
-    s = spendiSlot(s, pg, 2);
+    s = spendiSlot(s, pg, 2, 'frantumare');
     s = usaRisorsa(s, pg, 'ira-tempesta');
     s = spendiDadoVitaConCura(s, pg, 1);
     s = spendiDadoVitaConCura(s, pg, 1);
@@ -151,7 +154,7 @@ describe('riposi', () => {
     s = riposoLungo(s, pg);
     expect(s.pf).toBe(21);
     expect(s.pfTemporanei).toBe(0);
-    expect(s.slotSpesi).toEqual({ 1: 0, 2: 0 });
+    expect(s.slotSpesi).toEqual({ 1: [], 2: [] });
     expect(s.risorseUsate['ira-tempesta']).toBe(0);
     expect(s.dadiVitaSpesi).toBe(2);
     expect(s.tsMorte).toEqual({ successi: 0, fallimenti: 0 });
@@ -288,5 +291,56 @@ describe('dadi vita spesi durante il riposo breve', () => {
     // Convenzione del file per i mutatori bloccati: stesso riferimento in
     // uscita, non solo lo stesso valore — vedi la riga 108-109 sopra.
     expect(spendiDadoVitaConCura(s, pg, 4)).toBe(s);
+  });
+});
+
+describe('slot che ricordano cosa hanno bruciato', () => {
+  it('accoda lo slug di chi ha speso lo slot', () => {
+    expect(spendiSlot(s, pg, 1, 'cura-ferite').slotSpesi[1]).toEqual(['cura-ferite']);
+  });
+
+  it('la spesa manuale dal pannello scrive una costante che nessuno slug può essere', () => {
+    expect(spendiSlot(s, pg, 1, SLOT_MANUALE).slotSpesi[1]).toEqual([SLOT_MANUALE]);
+    // Gli slug vengono dai nomi dei file in content/spells/: un carattere che
+    // un nome di file non può contenere non può collidere.
+    expect(SLOT_MANUALE).toContain(':');
+    for (const slug of [...pg.trucchetti, ...pg.dominio, ...pg.preparatiIniziali]) {
+      expect(slug).not.toBe(SLOT_MANUALE);
+    }
+  });
+
+  it('recuperare toglie l’ultimo, che è ciò che «Annulla» promette', () => {
+    s = spendiSlot(s, pg, 1, 'benedizione');
+    s = spendiSlot(s, pg, 1, 'comando');
+
+    expect(recuperaSlot(s, 1).slotSpesi[1]).toEqual(['benedizione']);
+  });
+
+  it('il riposo lungo svuota le liste, non le azzera a numero', () => {
+    s = riposoLungo(spendiSlot(s, pg, 1, 'comando'), pg);
+
+    for (const x of pg.slot) expect(s.slotSpesi[x.livello]).toEqual([]);
+  });
+
+  it('recuperare uno slot mai speso non inventa una lista storta', () => {
+    expect(recuperaSlot(s, 2).slotSpesi[2]).toEqual([]);
+  });
+});
+
+describe('Ispirazione Eroica', () => {
+  it('nasce spenta e si accende e si spegne', () => {
+    expect(s.ispirazione).toBe(false);
+    expect(impostaIspirazione(s, true).ispirazione).toBe(true);
+    expect(impostaIspirazione(impostaIspirazione(s, true), false).ispirazione).toBe(false);
+  });
+
+  it('il riposo lungo non la tocca', () => {
+    // Non è una risorsa che si recupera: la dà il DM. Azzerarla al riposo
+    // toglierebbe al giocatore qualcosa che nessuna regola gli toglie.
+    expect(riposoLungo(impostaIspirazione(s, true), pg).ispirazione).toBe(true);
+  });
+
+  it('nemmeno il riposo breve', () => {
+    expect(riposoBreve(impostaIspirazione(s, true), pg).ispirazione).toBe(true);
   });
 });

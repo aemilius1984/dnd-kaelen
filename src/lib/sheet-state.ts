@@ -1,6 +1,12 @@
 import type { Personaggio } from './schema';
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
+
+/** Lo slot speso a mano dal pannello azioni non ha un incantesimo dietro, ma
+ *  occupa comunque una casella. Il carattere `:` non può comparire in uno
+ *  slug, che viene dal nome di un file in `content/spells/`: la collisione è
+ *  impossibile per costruzione, non per fortuna. */
+export const SLOT_MANUALE = ':manuale';
 
 export interface StatoSessione {
   schemaVersion: number;
@@ -9,12 +15,19 @@ export interface StatoSessione {
   pfTemporanei: number;
   dadiVitaSpesi: number;
   tsMorte: { successi: number; fallimenti: number };
-  slotSpesi: Record<number, number>;
+  /** Per ogni livello, gli slug degli incantesimi che ne hanno bruciato uno
+   *  slot, in ordine cronologico. Un elenco e non un conteggio perché la
+   *  casella consumata porta il sigillo di ciò che l'ha spesa, e perché
+   *  «Annulla» deve poter togliere *l'ultimo* lancio, non uno qualsiasi. */
+  slotSpesi: Record<number, string[]>;
   risorseUsate: Record<string, number>;
   preparati: string[];
   monete: { mo: number; ma: number; mr: number };
   oggetti: Record<string, number>;
   note: string;
+  /** Ispirazione Eroica: la dà il DM e la si spende, non si recupera con un
+   *  riposo. Per questo nessuno dei due riposi la tocca. */
+  ispirazione: boolean;
   aggiornatoIl: string;
 }
 
@@ -28,12 +41,13 @@ export function statoIniziale(pg: Personaggio, sheetVersion: string): StatoSessi
     pfTemporanei: 0,
     dadiVitaSpesi: 0,
     tsMorte: { successi: 0, fallimenti: 0 },
-    slotSpesi: Object.fromEntries(pg.slot.map((s) => [s.livello, 0])),
+    slotSpesi: Object.fromEntries(pg.slot.map((s) => [s.livello, []])),
     risorseUsate: Object.fromEntries(pg.risorse.map((r) => [r.id, 0])),
     preparati: [...pg.preparatiIniziali],
     monete: { ...pg.monete },
     oggetti: Object.fromEntries(pg.equipaggiamento.map((e) => [e.id, e.quantita])),
     note: '',
+    ispirazione: false,
     aggiornatoIl: adesso(),
   };
 }
@@ -106,19 +120,26 @@ export function spendiDadoVitaConCura(
 
 export function puoSpendereSlot(s: StatoSessione, pg: Personaggio, livello: number): boolean {
   const max = pg.slot.find((x) => x.livello === livello)?.max ?? 0;
-  return (s.slotSpesi[livello] ?? 0) < max;
+  return (s.slotSpesi[livello] ?? []).length < max;
 }
 
-export function spendiSlot(s: StatoSessione, pg: Personaggio, livello: number): StatoSessione {
+export function spendiSlot(
+  s: StatoSessione,
+  pg: Personaggio,
+  livello: number,
+  slug: string,
+): StatoSessione {
   if (!puoSpendereSlot(s, pg, livello)) return s;
   return aggiorna(s, {
-    slotSpesi: { ...s.slotSpesi, [livello]: (s.slotSpesi[livello] ?? 0) + 1 },
+    slotSpesi: { ...s.slotSpesi, [livello]: [...(s.slotSpesi[livello] ?? []), slug] },
   });
 }
 
 export function recuperaSlot(s: StatoSessione, livello: number): StatoSessione {
   return aggiorna(s, {
-    slotSpesi: { ...s.slotSpesi, [livello]: Math.max(0, (s.slotSpesi[livello] ?? 0) - 1) },
+    // L'ultimo, non uno qualsiasi: è ciò che «Annulla» promette al giocatore
+    // che ha appena lanciato.
+    slotSpesi: { ...s.slotSpesi, [livello]: (s.slotSpesi[livello] ?? []).slice(0, -1) },
   });
 }
 
@@ -169,6 +190,10 @@ export function impostaNote(s: StatoSessione, testo: string): StatoSessione {
   return aggiorna(s, { note: testo });
 }
 
+export function impostaIspirazione(s: StatoSessione, valore: boolean): StatoSessione {
+  return aggiorna(s, { ispirazione: valore });
+}
+
 /** Riposo Breve: recupera un uso delle risorse a recupero breve. Non tocca PF,
  *  slot né dadi vita: la spesa dei dadi vita resta una scelta manuale. */
 export function riposoBreve(s: StatoSessione, pg: Personaggio): StatoSessione {
@@ -186,7 +211,7 @@ export function riposoLungo(s: StatoSessione, pg: Personaggio): StatoSessione {
     pfTemporanei: 0,
     tsMorte: { successi: 0, fallimenti: 0 },
     dadiVitaSpesi: Math.max(0, s.dadiVitaSpesi - recuperati),
-    slotSpesi: Object.fromEntries(pg.slot.map((x) => [x.livello, 0])),
+    slotSpesi: Object.fromEntries(pg.slot.map((x) => [x.livello, []])),
     risorseUsate: Object.fromEntries(pg.risorse.map((r) => [r.id, 0])),
   });
 }

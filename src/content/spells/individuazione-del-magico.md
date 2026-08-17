@@ -12,6 +12,7 @@ danno: null
 slotSuperiore: null
 tag: [utilità]
 dominio: false
+rituale: true
 ---
 
 Per 10 minuti percepisci la magia entro 30 ft; un'Azione Magica ti mostra l'aura e la

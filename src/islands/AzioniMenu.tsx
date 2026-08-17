@@ -1,45 +1,11 @@
-import { useEffect, useState } from 'preact/hooks';
-import { CHIAVE_TEMA, COLORE_TEMA, risolviTema, type Tema } from '@/lib/tema';
 import { azzeraSessione } from '@/lib/storage';
 
-/** Due soli controlli, entrambi impossibili in CSS: leggere e scrivere una
- *  preferenza persistente, e cancellare lo stato di sessione. Il resto del
- *  menu è markup statico in Menu.astro. */
+/** Un solo controllo, e impossibile in CSS: cancellare lo stato di sessione.
+ *  Il commutatore di tema viveva qui finché i temi erano due; adesso il tema è
+ *  uno e scritto in build da BaseLayout. Vedi BACKLOG.md. */
 export default function AzioniMenu() {
-  const [tema, setTema] = useState<Tema>('tempesta');
-
-  useEffect(() => {
-    let salvato: string | null;
-    try {
-      salvato = localStorage.getItem(CHIAVE_TEMA);
-    } catch {
-      salvato = null;
-    }
-    setTema(risolviTema(salvato, window.matchMedia('(prefers-color-scheme: light)').matches));
-  }, []);
-
-  function cambia() {
-    const prossimo: Tema = tema === 'tempesta' ? 'pergamena' : 'tempesta';
-    setTema(prossimo);
-    document.documentElement.dataset.tema = prossimo;
-    // La cromatura del browser segue il tema scelto, non il sistema
-    // operativo: il meta lo imposta lo script inline di BaseLayout al primo
-    // paint, qui si aggiorna quando l'utente commuta.
-    document
-      .querySelector('meta[name="theme-color"]')
-      ?.setAttribute('content', COLORE_TEMA[prossimo]);
-    try {
-      localStorage.setItem(CHIAVE_TEMA, prossimo);
-    } catch {
-      // storage negato: il tema vale per questa sola pagina
-    }
-  }
-
   return (
     <div class="azioni-menu">
-      <button type="button" onClick={cambia}>
-        Tema: {tema === 'tempesta' ? 'Tempesta' : 'Pergamena'}
-      </button>
       <button
         type="button"
         class="pericoloso"

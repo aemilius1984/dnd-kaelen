@@ -1,7 +1,10 @@
 ---
 import Menu from '@/components/Menu.astro';
+import RegistraServiceWorker from '@/components/RegistraServiceWorker.astro';
 import AvvisoAzzeramento from '@/islands/AvvisoAzzeramento';
 import '@/styles/tokens.css';
+import '@/styles/base.css';
+import '@/styles/componenti.css';
 
 interface Props {
   titolo: string;
@@ -11,42 +14,16 @@ const { titolo, attiva } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="it">
+<html lang="it" data-tema="pergamena">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- Un solo theme-color, senza `media`: il tema vero non viene dal sistema
-      operativo ma da `data-tema`, quindi due meta divisi per
-      `prefers-color-scheme` contraddirebbero chi ha scelto il tema dal menu.
-      Il valore qui è quello di Tempesta, che è anche il ripiego del CSS quando
-      `data-tema` manca; lo script qui sotto lo corregge al primo paint e
-      AzioniMenu quando l'utente commuta. Deve stare *prima* dello script, che
-      lo cerca nel DOM già analizzato. -->
-    <meta name="theme-color" content="#0a0c10" />
-    <script is:inline>
-      // Deve girare prima del primo rendering, quindi non può importare
-      // src/lib/tema.ts: la regola e i due colori sono duplicati a mano. Vedi
-      // i commenti in risolviTema() e COLORE_TEMA. Resta sincrono, senza
-      // dipendenze, e non tocca il DOM oltre documentElement e il meta.
-      (function () {
-        let salvato = null;
-        try {
-          salvato = localStorage.getItem('kaelen:tema');
-        } catch {
-          // storage negato o non disponibile: resta il valore nullo già impostato
-        }
-        const chiaro = window.matchMedia('(prefers-color-scheme: light)').matches;
-        const tema =
-          salvato === 'tempesta' || salvato === 'pergamena'
-            ? salvato
-            : chiaro
-              ? 'pergamena'
-              : 'tempesta';
-        document.documentElement.dataset.tema = tema;
-        const meta = document.querySelector('meta[name="theme-color"]');
-        if (meta) meta.setAttribute('content', tema === 'pergamena' ? '#efe7d6' : '#0a0c10');
-      })();
-    </script>
+    <!-- Un tema solo, scritto su <html> in build: nessuno script deve
+      correggere il colore prima del primo paint, e questo meta non può
+      contraddire una scelta dell'utente che non esiste più. Il valore è il
+      colore di fondo della pagina in pergamena. Vedi BACKLOG.md per il tema
+      scuro futuro. -->
+    <meta name="theme-color" content="#efe7d6" />
     <meta name="robots" content="noindex, nofollow" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
@@ -68,13 +45,13 @@ const { titolo, attiva } = Astro.props;
       }
       <slot />
     </main>
-    <script is:inline>
-      if (
-        'serviceWorker' in navigator &&
-        (location.protocol === 'https:' || location.hostname === 'localhost')
-      ) {
-        window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
-      }
-    </script>
+    {
+      /* Il service worker non è un sorgente: lo scrive scripts/build-sw.mjs
+      dentro dist/ dopo `astro build`. Sotto `astro dev` non esiste e non può
+      esistere, quindi registrarlo lì sarebbe solo una 404 per ogni pagina
+      aperta. `npm run preview` serve la build, dove PROD è vero: la PWA resta
+      verificabile in locale, che è l'unico posto dove ha senso verificarla. */
+      import.meta.env.PROD && <RegistraServiceWorker />
+    }
   </body>
 </html>

@@ -1,16 +1,14 @@
-import { copyFile, mkdir } from 'node:fs/promises';
+import { copyFile, mkdir, rm } from 'node:fs/promises';
 import { join } from 'node:path';
+import { FONT } from './font-elenco.mjs';
 
-// Copiamo i soli sottoinsiemi latini: il resto (cirillico, greco, vietnamita)
-// non serve a un sito interamente in italiano e triplicherebbe il peso.
-const FILE = [
-  ['@fontsource/marcellus', 'marcellus-latin-400-normal.woff2'],
-  ['@fontsource/eb-garamond', 'eb-garamond-latin-400-normal.woff2'],
-  ['@fontsource/eb-garamond', 'eb-garamond-latin-400-italic.woff2'],
-];
-
+// public/fonts/ è gitignored e non viene mai svuotata da sola: su una
+// macchina che ha già buildato prima di un cambio di font, la faccia vecchia
+// (es. Marcellus) sopravvivrebbe qui, `astro build` la copierebbe in dist/, e
+// il service worker la precaricherebbe offline insieme a quelle vere.
+await rm('public/fonts', { recursive: true, force: true });
 await mkdir('public/fonts', { recursive: true });
-for (const [pacchetto, nome] of FILE) {
+for (const [pacchetto, nome] of FONT) {
   await copyFile(join('node_modules', pacchetto, 'files', nome), join('public/fonts', nome));
 }
-console.log(`font copiati: ${FILE.length}`);
+console.log(`font copiati: ${FONT.length}`);

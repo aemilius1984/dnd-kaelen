@@ -1,0 +1,35 @@
+---
+/** Il nome inglese è un nome, non una traduzione: si gioca con le regole in
+ *  inglese, quindi ogni cosa nominata da un manuale porta accanto la voce con
+ *  cui la si cerca. Il nome italiano non impone famiglia né dimensione — le
+ *  decide chi chiama, perché questo componente compare in titoli di card e in
+ *  celle di tabella, che non si somigliano affatto. */
+interface Props {
+  it: string;
+  en: string;
+  /** Nelle tabelle strette l'inglese sta fra parentesi sulla stessa riga:
+   *  raddoppiare l'altezza di sette righe costa uno schermo di scorrimento. */
+  inline?: boolean;
+}
+const { it, en, inline = false } = Astro.props;
+---
+
+{
+  /* Lo stile sta in `componenti.css`, non qui in uno `<style>` locale: la borsa
+    è un'isola Preact e non può montare un componente `.astro`, quindi emette
+    lo stesso markup a mano. Uno stile con ambito lo hasherebbe e i due lati
+    divergerebbero senza che nessun test se ne accorga. */
+}
+
+{
+  inline ? (
+    <span class="nome-doppio in-linea">
+      {it} <span class="en">({en})</span>
+    </span>
+  ) : (
+    <span class="nome-doppio">
+      <span class="it">{it}</span>
+      <span class="en">{en}</span>
+    </span>
+  )
+}

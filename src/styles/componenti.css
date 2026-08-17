@@ -1,0 +1,557 @@
+/* Il nome inglese è un nome, non una traduzione: si gioca con le regole in
+ * inglese e ogni cosa nominata da un manuale porta accanto la voce con cui la
+ * si cerca. Le regole stanno qui e non in uno `<style>` dentro
+ * `NomeDoppio.astro` perché la borsa è un'isola Preact: non può montare un
+ * componente `.astro` e riscrive lo stesso markup a mano. Con uno stile ad
+ * ambito i due lati si vedrebbero diversi e nessun test lo direbbe. */
+.nome-doppio:not(.in-linea) {
+  display: grid;
+  gap: 0.1rem;
+}
+.nome-doppio .en {
+  font-family: var(--font-mono);
+  font-size: var(--fs-piccolo);
+  color: var(--inchiostro-muto);
+}
+
+button {
+  font: inherit;
+  color: var(--inchiostro);
+  background: var(--superficie-incassata);
+  border: 1px solid var(--filetto);
+  border-radius: var(--raggio);
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 0.8rem;
+  cursor: pointer;
+}
+button:active {
+  background: var(--ambra);
+  color: var(--carta);
+}
+
+/* client:only="preact" non fa alcun render lato server: il pannello resta
+ * vuoto finché l'idratazione non disegna i controlli reali. Senza altezza
+ * riservata la pagina "salta" nel punto guardato più spesso a ogni apertura,
+ * proprio in cima alla scheda. Il Task 8 ha riscritto PfTracker in sola
+ * lettura (niente più pulsanti né campo PF temporanei, in compenso una barra
+ * di riempimento): misurata di nuovo con Chrome headless via CDP a 390px di
+ * larghezza, stato normale (PF > 0, e già allora senza l'avviso di
+ * azzeramento, che adesso è un'isola a parte resa dal layout): 146px; 148px
+ * lascia un margine di un paio di pixel. A 0 PF compare la riga dei TS morte e
+ * l'altezza sale a 186px — caso raro, non riservato qui, stesso criterio di
+ * prima: vedi il rapporto del task.
+ *
+ * Il fondo, il bordo e il raggio non stanno più qui: il markup non porta più
+ * la classe `pannello`, li dà `Superficie`. La distanza dai vicini invece
+ * resta qui e non nel componente: `Superficie` è un primitivo, sa cos'è
+ * (fondo, filetto, raggio, ombra, spaziatura interna) ma non deve sapere
+ * quanto stare lontano da chi le sta intorno — quella è una proprietà della
+ * pagina che la monta, e la fase 2 la monterà in una dozzina di punti
+ * ciascuno con la propria spaziatura.
+ *
+ * ATTENZIONE: 172px è CALCOLATO, non misurato — i 148px sopra venivano da
+ * `.pannello` con 0.75rem di imbottitura per lato; `Superficie` ne mette
+ * 1.5rem (`--spazio-3`) per lato, `box-sizing: border-box`, quindi la riserva
+ * serve 24px in più: 148 + 24 = 172. Da confermare nella verifica a 390×844,
+ * stesso criterio di `.risorse-isola` più sotto. */
+.pf-pannello {
+  min-height: 172px;
+  margin: var(--spazio-2) 0;
+}
+.pf .riga {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.pf .numero {
+  font-family: var(--font-mono);
+  font-size: 2rem;
+  color: var(--lampo);
+  min-width: 5ch;
+  text-align: center;
+}
+.pf .numero.pericolo {
+  color: var(--allerta);
+}
+.avviso {
+  background: var(--superficie-incassata);
+  border-left: 3px solid var(--ambra);
+  padding: 0.5rem 0.6rem;
+  font-size: 0.9rem;
+}
+
+/* `.preparati-isola` non c'è più: la rotta /preparati/ è passata da un'isola
+ * che produceva l'elenco a markup statico con le sole spunte idratate. Non
+ * c'è più niente da riservare, perché non c'è più niente che compare dopo.
+ * È la stessa mossa fatta per gli incantesimi della Scheda, un'altezza
+ * riservata in meno da indovinare senza browser.
+ *
+ * Le spunte dell'archivio, quelle sì, arrivano dopo: il loro posto se lo
+ * riserva `ElencoArchivio.astro` con un contenitore di 44px, che è anche la
+ * dimensione minima di un bersaglio da toccare. */
+.prepara {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+}
+.etichetta-prepara {
+  font-family: var(--font-mono);
+  font-size: var(--fs-piccolo);
+  color: var(--inchiostro-muto);
+}
+.prepara.scelto .etichetta-prepara {
+  color: var(--ambra);
+}
+
+.caselle {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+/* Da 14px a 20px: una casella di slot ora può contenere il sigillo
+ * dell'incantesimo che l'ha bruciata, e sotto i 16px un glifo a 24 viewBox
+ * diventa una macchia. I contatori delle risorse usano la stessa classe e
+ * crescono con lei — restano pallini, solo un po' più grandi. */
+.casella {
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--filetto);
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.casella.piena {
+  background: var(--lampo);
+  border-color: var(--lampo);
+}
+/* La casella consumata: il sigillo di ciò che l'ha spesa, in ambra su fondo
+ * incassato. Non è piena — lo slot non c'è più — ma non è nemmeno vuota. */
+.casella.usata {
+  background: var(--superficie-incassata);
+}
+.casella.usata svg {
+  width: 16px;
+  height: 16px;
+  color: var(--ambra);
+}
+/* Lo slot speso a mano dal pannello, e l'incantesimo senza sigillo proprio:
+ * un segno che dice «consumato» senza attribuirlo a nessuno. */
+.casella.manuale {
+  background: var(--superficie-incassata);
+  position: relative;
+}
+.casella.manuale::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 1px;
+  background: var(--inchiostro-muto);
+}
+.pericoloso {
+  border-color: var(--spento);
+  color: var(--allerta);
+}
+button[disabled] {
+  opacity: 0.4;
+}
+
+/* I due comandi in fondo al menu li disegna l'isola AzioniMenu: lo stile
+ * scoped di Menu.astro non raggiunge il DOM che monta Preact, quindi la
+ * regola vive qui insieme agli altri gruppi di controlli. In colonna e a
+ * tutta larghezza come le voci di navigazione sopra di loro, invece del
+ * flusso di default che li lasciava appiccicati uno sotto l'altro senza
+ * respiro. */
+.azioni-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Stesso motivo di .pf-pannello / .risorse-isola: con client:only="preact"
+ * non c'è alcun render lato server, quindi senza altezza riservata la
+ * sezione "salta" alla prima idratazione. Misurate con Chrome headless via
+ * CDP a 390px di larghezza (16 oggetti d'equipaggiamento, 3 valute, 1 nota
+ * per oggetto — il simbolo sacro): .borsa-isola ~993.72px idratata →
+ * riservati 996px; .note-isola ~219.19px idratata → riservati 221px
+ * (entrambe con un paio di pixel di margine, come .pf-pannello). Vedi il
+ * rapporto del task per il metodo e i numeri. */
+.borsa-isola {
+  min-height: 996px;
+}
+/* 221px erano misurati dentro `.pannello`; `Superficie` imbottisce di 24px in
+ * più in totale, come sopra. 221 + 24 = 245, calcolato e da confermare. */
+.note-isola {
+  min-height: 245px;
+  margin: var(--spazio-2) 0;
+}
+
+.monete {
+  display: flex;
+  gap: 0.8rem;
+  margin-bottom: 0.6rem;
+}
+.monete label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.monete input {
+  width: 5rem;
+  min-height: 44px;
+  background: var(--superficie-incassata);
+  color: var(--inchiostro);
+  border: 1px solid var(--filetto);
+  border-radius: var(--raggio);
+  text-align: right;
+  font: inherit;
+}
+.oggetti {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.oggetti li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--filetto);
+  font-size: 0.92rem;
+}
+.oggetti li > .info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.oggetti .nota {
+  font-size: 0.82rem;
+}
+.note {
+  width: 100%;
+  background: var(--superficie-incassata);
+  color: var(--inchiostro);
+  border: 1px solid var(--filetto);
+  border-radius: var(--raggio);
+  padding: 0.6rem;
+  font: inherit;
+  resize: vertical;
+}
+/* La griglia di sigilli — 32 riquadri da 5rem, ognuno un `<details>` da
+ * aprire — è stata sostituita dalle card di `CarteIncantesimo.astro`, che
+ * portano lo stile con sé. Chiedeva un tocco per vedere se un incantesimo era
+ * ancora lanciabile, che è esattamente l'informazione per cui la si apriva.
+ *
+ * `.lancio` resta qui e non nel componente: è il contenitore che l'isola
+ * `ControlliLancio` trova con `[data-lancio]` e riempie di bottoni via
+ * portale. I bottoni non esistono nel markup del componente, quindi uno stile
+ * ad ambito non li raggiungerebbe.
+ *
+ * `.spenta` è l'incantesimo senza più uno slot con cui lanciarlo. Attenua e
+ * toglie l'interazione, ma non nasconde: tempo di lancio, gittata e TS restano
+ * leggibili perché sono i numeri che si guardano per decidere se conviene un
+ * Riposo Breve. La commutazione la fa `ControlliLancio`, per la stessa ragione
+ * di `.lancio`. */
+.incantesimo.spenta {
+  opacity: 0.55;
+  pointer-events: none;
+}
+.lancio {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-top: 0.6rem;
+}
+.annulla {
+  position: fixed;
+  inset: auto 0 calc(5.5rem + env(safe-area-inset-bottom)) 0;
+  z-index: 15;
+  margin: 0 auto;
+  width: fit-content;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.5rem 0.4rem 0.9rem;
+  border: 1px solid var(--ambra);
+  border-radius: var(--raggio);
+  background: var(--superficie-incassata);
+  font-size: 0.9rem;
+}
+
+.apri-azioni {
+  position: fixed;
+  inset: auto 1rem calc(1rem + env(safe-area-inset-bottom)) auto;
+  z-index: 18;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  font-size: 1.6rem;
+  background: var(--ambra);
+  color: var(--carta);
+  border: none;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.45);
+}
+dialog.azioni {
+  width: 100%;
+  max-width: 34rem;
+  margin: auto auto 0;
+  padding: var(--spazio-2) var(--spazio-2) calc(1.5rem + env(safe-area-inset-bottom));
+  border: 1px solid var(--filetto);
+  border-radius: var(--raggio) var(--raggio) 0 0;
+  background: var(--superficie);
+  color: var(--inchiostro);
+  max-height: 85vh;
+  overflow-y: auto;
+}
+dialog.azioni::backdrop {
+  background: rgb(0 0 0 / 0.6);
+}
+
+/* L'archivio: a tutto schermo, non una tendina dal basso come le azioni. Si
+ * apre per leggere trentanove incantesimi, non per premere due bottoni, e una
+ * finestra alta 85vh su un elenco lungo costringerebbe a due scorrimenti
+ * annidati. */
+dialog.archivio {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: var(--spazio-3) var(--spazio-2) calc(2rem + env(safe-area-inset-bottom));
+  border: none;
+  background: var(--carta);
+  color: var(--inchiostro);
+  overflow-y: auto;
+}
+dialog.archivio::backdrop {
+  background: var(--carta);
+}
+/* La testa resta visibile mentre si scorre: senza, per chiudere si torna in
+ * cima a un elenco lungo uno schermo e mezzo. */
+dialog.archivio .testa {
+  position: sticky;
+  top: calc(var(--spazio-3) * -1);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spazio-2);
+  margin: calc(var(--spazio-3) * -1) 0 var(--spazio-3);
+  padding: var(--spazio-3) 0 var(--spazio-2);
+  background: var(--carta);
+  border-bottom: 1px solid var(--filetto);
+}
+
+/* Un bottone che si comporta da collegamento: apre l'archivio, che è una
+ * finestra e non una rotta. Non deve sembrare un bottone d'azione fra quelli
+ * di lancio poco sopra. */
+.apri-archivio {
+  min-height: 0;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--lampo);
+  text-decoration: underline;
+}
+dialog.azioni .testa {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+dialog.azioni h4 {
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--inchiostro-tenue);
+  margin: 1rem 0 0.4rem;
+  border-bottom: 1px solid var(--filetto);
+  padding-bottom: 0.3rem;
+}
+dialog.azioni .riga {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  padding: 0.3rem 0;
+}
+dialog.azioni .riga > span,
+dialog.azioni label.riga {
+  flex: 1;
+  font-size: 0.92rem;
+}
+dialog.azioni input[type='number'] {
+  width: 4.5rem;
+  min-height: 44px;
+  background: var(--superficie-incassata);
+  color: var(--inchiostro);
+  border: 1px solid var(--filetto);
+  border-radius: var(--raggio);
+  text-align: center;
+  font: inherit;
+}
+
+.identita {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding-top: 0.6rem;
+}
+.identita .avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: 50% 12%;
+  border: 1px solid var(--filetto);
+}
+/* È l'`<h1>` della Scheda (scheda.astro): la rotta è la `start_url` del
+ * manifest, quindi non può saltare dal titolo del documento a `<h2>Attacchi`.
+ * La dimensione e i margini restano quelli che aveva da `<p>` — 1.35rem
+ * invece di 1.4rem, nessun margine — così la testata non si muove di un
+ * pixel: la regola vince sul blocco `h1, h2, h3` per specificità. */
+.identita .nome {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  margin: 0;
+}
+.identita .qualifica {
+  margin: 0;
+  font-size: 0.8rem;
+}
+/* Quattro colonne dalla fase 3: CA, CD, INIZ e l'Ispirazione Eroica.
+ *
+ * L'altezza della fascia non va riservata a parte, a differenza delle altre
+ * isole del sito: le tre colonne statiche la tengono su da sole, e la quarta
+ * — l'unica idratata — è alta quanto loro perché condivide le stesse due
+ * regole `.tenue` e `.valore`. Se in futuro l'indicatore diventasse più alto
+ * del resto, questo smetterebbe di essere vero e servirebbe una `min-height`
+ * come per `.pf-pannello`. */
+.difese {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.25rem;
+  text-align: center;
+  margin: var(--spazio-2) 0;
+  padding: 0.5rem 0;
+  border-block: 1px solid var(--filetto);
+}
+/* Spenta è un contorno, accesa è ambra piena: la differenza si deve cogliere
+ * senza leggere, perché è un sì/no e non un numero. */
+.ispirazione .valore {
+  color: var(--inchiostro-muto);
+}
+.ispirazione.accesa .valore {
+  color: var(--ambra);
+}
+.difese .tenue {
+  display: block;
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+}
+.difese .valore {
+  font-size: 1.5rem;
+}
+.attacco-inc {
+  margin: 0.2rem 0 0;
+  font-size: 0.85rem;
+}
+/* Stesso motivo di .pf-pannello: con client:only="preact" non c'è alcun
+ * render lato server, quindi senza altezza riservata la sezione "salta" alla
+ * prima idratazione — qui in mezzo alla rotta principale.
+ *
+ * ATTENZIONE: questo numero è CALCOLATO dal box model, non misurato con
+ * Chrome headless come gli altri quattro: la sessione che l'ha scritto non
+ * aveva un browser. È il primo valore da confermare nella verifica a 390×844.
+ * Il calcolo: a 390px di larghezza il contenuto di `.pannello` è
+ * 390 − 2×1rem (padding del body, `--spazio-2`) − 2×(1rem + 1px) (padding e
+ * bordo del pannello, `--spazio-2`) = 324px. La striscia porta cinque voci
+ * (2 livelli di slot + 3 risorse), ognuna alta una riga di testo a 0.85rem
+ * con line-height 1.5 → 20.4px, separate da 0.4rem di row-gap → 6.4px. Le due
+ * voci degli slot stanno insieme sulla prima riga (~198px con il column-gap
+ * da 1rem, che ci sta ancora nei 324px); le tre risorse hanno nomi lunghi
+ * ("Tuono della Tempesta") e non ne entrano due per riga nei 324px, quindi
+ * prendono una riga ciascuna. Quattro righe:
+ * 4×20.4 + 3×6.4 = 100.8px → riservati 101px (altezza invariata dalla
+ * larghezza: il numero di righe non cambia fra 340px e 324px).
+ *
+ * Le altre altezze riservate del file (.preparati-isola, .borsa-isola,
+ * .note-isola, sopra) restano calibrate sui 340px di contenuto di prima della
+ * rinomina dei token: vedi BACKLOG.md per la nota di ri-misurazione.
+ *
+ * AGGIORNAMENTO fase 2: la sezione ha perso il riquadro, quindi il contenuto
+ * torna a 390 − 2×1rem = 358px. Più largo significa mai più righe, quindi
+ * 101px resta un tetto valido e non va alzato — ma potrebbe ora riservare più
+ * del necessario se le tre risorse entrano in due righe invece di tre. Da
+ * confermare nella stessa verifica. */
+/* AGGIORNAMENTO fase 2, task 6: l'isola ha perso le tre risorse — i loro
+ * contatori sono dentro le card delle capacità — e le restano le due voci
+ * degli slot, che stavano già insieme sulla prima riga. Delle quattro righe
+ * del calcolo qui sopra ne resta una: 20.4px, riservati 24px. Anche questo è
+ * CALCOLATO. */
+/* AGGIORNAMENTO fase 3: le caselle sono passate da 14px a 20px per contenere
+ * un sigillo. La riga era alta quanto il testo a 0.85rem (20.4px) e adesso è
+ * alta quanto la casella più il suo bordo (22px): riservati 24px, che
+ * bastavano già. Nessun cambio, ma il numero ora ha due ragioni invece di
+ * una. Sempre CALCOLATO, mai misurato. */
+.risorse-isola {
+  min-height: 24px;
+}
+.striscia-risorse {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+}
+.striscia-risorse .risorsa {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+}
+.striscia-risorse .risorsa > span:first-child {
+  flex: 1;
+}
+.altrove {
+  display: flex;
+  gap: 0.6rem;
+  margin: 1.2rem 0 2rem;
+}
+.altrove a {
+  flex: 1;
+  text-align: center;
+  padding: 0.8rem;
+  border: 1px solid var(--filetto);
+  border-radius: var(--raggio);
+  text-decoration: none;
+  background: var(--superficie);
+}
+
+/* Barra di riempimento dei PF: il numero resta la fonte di verità testuale,
+ * la barra è un rinforzo visivo aggiunto in sola lettura dal Task 8 —
+ * `role="progressbar"` con `aria-valuenow`/min/max sul contenitore, così
+ * la tecnologia assistiva annuncia il nuovo valore quando il pannello
+ * applica un danno, invece di dover rileggere un'etichetta intera. La
+ * barra interna resta puramente decorativa. */
+.barra-pf {
+  width: 100%;
+  height: 8px;
+  margin-top: 0.5rem;
+  border-radius: 999px;
+  background: var(--superficie-incassata);
+  border: 1px solid var(--filetto);
+  overflow: hidden;
+}
+.barra-pf .riempimento {
+  height: 100%;
+  background: var(--lampo);
+  border-radius: inherit;
+}
+.barra-pf .riempimento.pericolo {
+  background: var(--allerta);
+}
