@@ -20,8 +20,9 @@
   font-display: swap;
 }
 
-/* Tempesta è anche il ripiego: senza JavaScript, o prima che lo script
- * inline scriva data-tema, la pagina è già scura e leggibile. */
+/* Tempesta è dormiente, non il ripiego: quel ruolo lo ha preso pergamena col
+ * `:root` nudo qui sotto. I token restano per il tema scuro futuro, non per
+ * farlo ripartire — vedi BACKLOG.md. */
 :root[data-tema='tempesta'] {
   --fondo: #0a0c10;
   --superficie: #161c24;
