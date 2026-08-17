@@ -1,0 +1,140 @@
+---
+import type { Incantesimo } from '@/lib/schema';
+import { simbolo } from '@/lib/sigilli';
+import Superficie from '@/components/ui/Superficie.astro';
+import NomeDoppio from '@/components/ui/NomeDoppio.astro';
+
+/** Una card per incantesimo, una per riga: la stessa forma delle armi, perché
+ *  al tavolo si fa la stessa cosa — si guarda cosa costa, si decide, si lancia.
+ *  Il `<details>` di prima chiedeva un tocco in più per vedere se un
+ *  incantesimo era ancora lanciabile, che è esattamente l'informazione per cui
+ *  lo si apriva.
+ *
+ *  Dipendenza: la pagina ospite deve montare `Sprite.astro`, una volta sola e
+ *  prima di queste card. I sigilli sono `<use href="#sig-…">` e senza il foglio
+ *  di simboli restano riquadri vuoti, senza alcun errore che lo dica. */
+interface Props {
+  incantesimi: (Incantesimo & { slug: string; testo: string })[];
+  /** Se presente, ogni card porta `data-slug` e parte nascosta (attributo
+   *  `hidden` scritto qui, a tempo di build) a meno che lo slug non sia in
+   *  questo elenco: così i 32 incantesimi del pool sono tutti presenti in
+   *  HTML statico, ma solo i preparati sono visibili al primo caricamento,
+   *  senza attendere JavaScript. L'isola ControlliLancio corregge poi la
+   *  visibilità se lo stato salvato si è discostato da questo elenco iniziale
+   *  (scambio di preparati dopo un Riposo Lungo). Quando omesso la card è
+   *  sempre visibile. */
+  visibiliDiDefault?: string[];
+}
+const { incantesimi, visibiliDiDefault } = Astro.props;
+---
+
+<div class="carte-incantesimo">
+  {
+    incantesimi.map((m) => (
+      <Superficie
+        class="incantesimo"
+        data-slug={visibiliDiDefault ? m.slug : undefined}
+        hidden={visibiliDiDefault ? !visibiliDiDefault.includes(m.slug) : undefined}
+      >
+        <div class="testa">
+          <svg class="sigillo" viewBox="0 0 24 24" aria-hidden="true">
+            <use href={`#${simbolo(m.slug, m.tag)}`} />
+          </svg>
+          <h4 class="titolo">
+            <NomeDoppio it={m.nome} en={m.nomeEn} />
+          </h4>
+          {m.livello === 0 ? (
+            <span class="a-volonta">
+              a volontà
+              <span class="en">At Will</span>
+            </span>
+          ) : (
+            <span class="livello">
+              {m.livello}°<span class="en">level</span>
+            </span>
+          )}
+        </div>
+
+        <p class="meta tenue">
+          {m.lancio} · {m.gittata} · {m.componenti}
+          {m.concentrazione && ' · concentrazione'}
+          {m.tiro && ` · TS ${m.tiro}`}
+          {m.danno && ` · ${m.danno}`}
+        </p>
+
+        <p class="testo">{m.testo}</p>
+
+        {m.slotSuperiore && <p class="tenue superiore">Slot superiore: {m.slotSuperiore}</p>}
+
+        {/* Solo gli incantesimi di livello: un trucchetto non spende nulla, e
+            un contenitore vuoto qui sarebbe un bottone che non arriva mai. */}
+        {m.livello > 0 && <div class="lancio" data-lancio={m.slug} data-livello={m.livello} />}
+      </Superficie>
+    ))
+  }
+</div>
+
+<style>
+  .carte-incantesimo {
+    display: grid;
+    gap: var(--spazio-2);
+  }
+
+  .testa {
+    display: flex;
+    align-items: center;
+    gap: var(--spazio-2);
+  }
+
+  .sigillo {
+    width: 26px;
+    height: 26px;
+    flex: none;
+    color: var(--ambra);
+  }
+
+  .titolo {
+    margin: 0;
+    flex: 1;
+    font-size: var(--fs-h3);
+  }
+
+  .livello,
+  .a-volonta {
+    flex: none;
+    display: grid;
+    justify-items: end;
+    text-align: right;
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+  }
+
+  .livello .en,
+  .a-volonta .en {
+    font-size: var(--fs-piccolo);
+    color: var(--inchiostro-muto);
+  }
+
+  .a-volonta {
+    font-size: var(--fs-piccolo);
+  }
+
+  .meta {
+    margin: var(--spazio-2) 0 0;
+    font-size: 0.82rem;
+  }
+
+  .testo {
+    margin: var(--spazio-1) 0 0;
+    font-size: 0.92rem;
+  }
+
+  .superiore {
+    margin: var(--spazio-1) 0 0;
+    font-size: 0.85rem;
+  }
+
+  /* `.lancio` non sta qui: i bottoni li inietta `ControlliLancio` via portale,
+     quindi non esistono nel markup di questo componente e uno stile ad ambito
+     non li raggiungerebbe. Vive in `componenti.css`. */
+</style>

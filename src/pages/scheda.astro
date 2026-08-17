@@ -3,7 +3,7 @@ import { getCollection } from 'astro:content';
 import { getImage } from 'astro:assets';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import Attacchi from '@/components/Attacchi.astro';
-import GrigliaIncantesimi from '@/components/GrigliaIncantesimi.astro';
+import CarteIncantesimo from '@/components/CarteIncantesimo.astro';
 import Sprite from '@/components/Sprite.astro';
 import DatiIniziali from '@/components/DatiIniziali.astro';
 import Superficie from '@/components/ui/Superficie.astro';
@@ -78,13 +78,18 @@ const bonusIniziativa = segno(iniziativa(pg));
   <section>
     <TestaSezione kicker="magia">Incantesimi</TestaSezione>
     <p class="tenue attacco-inc">Attacco {bonusIncantesimi} · CD {cd}</p>
-    <GrigliaIncantesimi titolo="Trucchetti" incantesimi={trucchetti} />
-    <GrigliaIncantesimi
-      titolo="Preparati"
-      incantesimi={preparatiPool}
-      visibiliDiDefault={pg.preparatiIniziali}
-    />
-    <GrigliaIncantesimi titolo="Dominio" incantesimi={dominio} />
+
+    {
+      /* Due aree, perché obbediscono a regole diverse: i trucchetti non
+        consumano nulla e non si spengono mai; gli altri sì. */
+    }
+    <TestaSezione as="h3">Trucchetti</TestaSezione>
+    <CarteIncantesimo incantesimi={trucchetti} />
+
+    <TestaSezione as="h3">Incantesimi</TestaSezione>
+    <CarteIncantesimo incantesimi={preparatiPool} visibiliDiDefault={pg.preparatiIniziali} />
+    <CarteIncantesimo incantesimi={dominio} />
+
     <p class="tenue">
       <a href="/preparati/">Cambia i preparati</a>
     </p>

@@ -1,4 +1,6 @@
 ---
+import type { HTMLAttributes } from 'astro/types';
+
 /** Il contenitore non marca l'argomento, marca l'unità ripetibile con cui
  *  interagisci: una carta di attacco, un incantesimo, una capacità. Una
  *  sezione non è mai una Superficie — quello era il riquadro di prima, ed è
@@ -6,14 +8,19 @@
  *
  *  'appoggiata' = unità ripetibile, 'sollevata' = blocco d'azione,
  *  'incassata' = incavo, per ciò che sta *dentro* un'altra superficie. */
-interface Props {
+interface Props extends HTMLAttributes<'div'> {
   livello?: 'appoggiata' | 'sollevata' | 'incassata';
   class?: string;
 }
-const { livello = 'appoggiata', class: classe } = Astro.props;
+
+/* Tutto il resto passa attraverso: `hidden`, `data-slug`, `aria-*`. Un
+ * primitivo che avvolge markup altrui non può ingoiare gli attributi con cui
+ * quel markup viene trovato e commutato — le card degli incantesimi si
+ * nascondono con `hidden` scritto in build e si ritrovano con `data-slug`. */
+const { livello = 'appoggiata', class: classe, ...resto } = Astro.props;
 ---
 
-<div class:list={['superficie', `livello-${livello}`, classe]}>
+<div class:list={['superficie', `livello-${livello}`, classe]} {...resto}>
   <slot />
 </div>
 

@@ -60,7 +60,19 @@ davvero sbagliate.
 24. Le quattro sezioni hanno perso il riquadro: guarda che il filetto sotto la
     testata basti a separarle, e che due sezioni consecutive non sembrino una
     sola. È la stessa scommessa della voce 1, su un confine diverso.
-25. `.preparati-isola` (370px) e `.note-isola` (245px) hanno riserve
+25. **La lunghezza della sezione Incantesimi.** I 32 incantesimi del pool sono
+    tutti in HTML e ora ognuno è una card intera invece di un riquadro da
+    5rem: nascosti pesano lo stesso in DOM, ma se `hidden` fallisse la pagina
+    diventerebbe lunghissima. Guarda che si vedano solo i sei preparati più i
+    quattro del dominio.
+26. **Lo stato spento.** Spendi tutti gli slot dal pannello ⚡ e guarda le card
+    di 1° e 2°: devono attenuarsi a 0.55 di opacità restando leggibili, e i
+    bottoni «Lancia» devono sparire. È il comportamento che hai chiesto alla
+    Q14 e l'unica verifica che nessun test copre — i test provano gli
+    attributi, non che l'attenuazione si veda.
+27. Il sigillo nella testa della card è passato da 30px a 26px accanto a un
+    nome su due righe: controlla che non sembri schiacciato.
+28. `.preparati-isola` (370px) e `.note-isola` (245px) hanno riserve
     **ricalcolate** per l'imbottitura di `Superficie`, mai misurate: stesso
     difetto di `.pf-pannello` alla voce 5.
 

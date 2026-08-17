@@ -230,80 +230,24 @@ button[disabled] {
   font: inherit;
   resize: vertical;
 }
-.titolo-griglia {
-  font-family: var(--font-display);
-  font-size: 0.82rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--inchiostro-tenue);
-  margin: 1rem 0 0.5rem;
-}
-.griglia {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(5.2rem, 1fr));
-  gap: 0.5rem;
-}
-.sigillo {
-  min-width: 0;
-}
-.sigillo > summary {
-  list-style: none;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.2rem;
-  min-height: 76px;
-  padding: 0.5rem 0.25rem;
-  border: 1px solid var(--filetto);
-  border-radius: var(--raggio);
-  background: var(--superficie);
-  position: relative;
-}
-.sigillo > summary::-webkit-details-marker {
-  display: none;
-}
-.sigillo svg {
-  width: 30px;
-  height: 30px;
-  color: var(--ambra);
-}
-.sigillo .nome {
-  font-size: 0.68rem;
-  line-height: 1.15;
-  text-align: center;
-  color: var(--inchiostro);
-  overflow-wrap: anywhere;
-}
-.sigillo .livello {
-  position: absolute;
-  top: 3px;
-  right: 5px;
-  font-family: var(--font-mono);
-  font-size: 0.6rem;
-  color: var(--inchiostro-tenue);
-}
-.sigillo[open] > summary {
-  border-color: var(--ambra);
-}
-/* La carta aperta esce dalla cella e occupa tutta la riga: a 390px una
- * scheda dentro una colonna da 5rem sarebbe illeggibile. */
-.sigillo[open] {
-  grid-column: 1 / -1;
-}
-.carta {
-  border: 1px solid var(--ambra);
-  border-top: none;
-  border-radius: 0 0 var(--raggio) var(--raggio);
-  padding: 0.6rem;
-  background: var(--superficie);
-}
-.carta p {
-  margin: 0.3rem 0;
-  font-size: 0.92rem;
-}
-.carta .meta {
-  font-size: 0.82rem;
+/* La griglia di sigilli — 32 riquadri da 5rem, ognuno un `<details>` da
+ * aprire — è stata sostituita dalle card di `CarteIncantesimo.astro`, che
+ * portano lo stile con sé. Chiedeva un tocco per vedere se un incantesimo era
+ * ancora lanciabile, che è esattamente l'informazione per cui la si apriva.
+ *
+ * `.lancio` resta qui e non nel componente: è il contenitore che l'isola
+ * `ControlliLancio` trova con `[data-lancio]` e riempie di bottoni via
+ * portale. I bottoni non esistono nel markup del componente, quindi uno stile
+ * ad ambito non li raggiungerebbe.
+ *
+ * `.spenta` è l'incantesimo senza più uno slot con cui lanciarlo. Attenua e
+ * toglie l'interazione, ma non nasconde: tempo di lancio, gittata e TS restano
+ * leggibili perché sono i numeri che si guardano per decidere se conviene un
+ * Riposo Breve. La commutazione la fa `ControlliLancio`, per la stessa ragione
+ * di `.lancio`. */
+.incantesimo.spenta {
+  opacity: 0.55;
+  pointer-events: none;
 }
 .lancio {
   display: flex;
