@@ -226,3 +226,24 @@ vale la pena scriverla, ma su un confine che la fase 2 sta per ridisegnare.
 # Note
 
 - https://www.dndbeyond.com/characters/169880275 scheda pg ufficiale D&D
+
+# Lancio rituale
+
+Rimandato di proposito, non dimenticato. L'audit regolamentare
+(`docs/superpowers/specs/2026-08-18-regole-kaelen-chierico.md`, P1) chiede che
+la card di un rituale preparato offra **due azioni distinte**: «Lancia con
+slot» e «Lancia come rituale», la seconda senza slot e con dieci minuti in più.
+
+Oggi la carta _dice_ che la via rituale esiste, e — questo sì fatto — non si
+spegne più quando finiscono gli slot, che era il momento in cui l'opzione
+serviva di più.
+
+Manca l'azione vera, e manca per una ragione precisa: un rituale deve
+verificare e consumare gli eventuali materiali e mantenere la Concentrazione
+per i dieci minuti. Né i materiali né `concentrazioneSu` sono tracciati nello
+stato di sessione. Un bottone «Lancia come rituale» oggi non cambierebbe
+niente e prometterebbe una transazione che il codice non sa eseguire.
+
+Ordine sensato quando si riprende: prima i materiali consumabili (P1), poi la
+Concentrazione, poi il lancio rituale come transazione unica — slot e
+materiali sottratti solo al completamento, come chiede la spec.
