@@ -15,4 +15,5 @@ dominio: true
 ---
 
 Al fallimento 2d8 danni da tuono e spinta di 10 ft; metà danni e nessuna spinta al successo.
-Il boato si sente a 300 ft. Attenzione agli alleati dentro il cubo.
+Spinge di 10 ft anche gli oggetti non fissati che stanno interamente nell'area. Il boato si
+sente a 300 ft. Attenzione agli alleati dentro il cubo.

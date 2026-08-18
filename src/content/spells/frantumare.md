@@ -14,5 +14,6 @@ tag: [danno]
 dominio: true
 ---
 
-3d8 danni da tuono al fallimento, metà al successo. I Costrutti hanno Svantaggio al TS. Con
-Ira Distruttiva: 24 danni a chi fallisce e 12 a chi riesce.
+3d8 danni da tuono al fallimento, metà al successo. I Costrutti hanno Svantaggio al TS.
+Danneggia anche gli oggetti non magici nell'area che nessuno indossa o trasporta. Con Ira
+Distruttiva: 24 danni a chi fallisce e 12 a chi riesce.

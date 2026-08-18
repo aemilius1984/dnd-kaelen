@@ -16,4 +16,5 @@ dominio: false
 
 Produci un piccolo prodigio: voce tonante, occhi alterati, tremori innocui, fiamme che
 cambiano colore, una porta o una finestra che si apre o si chiude, un suono. La voce
-tonante dà Vantaggio alle prove di Intimidire per 1 minuto.
+tonante dà Vantaggio alle prove di Intimidire per 1 minuto. Fino a tre effetti da 1 minuto
+possono restare attivi insieme.

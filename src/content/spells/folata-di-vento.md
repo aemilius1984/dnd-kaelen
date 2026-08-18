@@ -14,6 +14,7 @@ tag: [controllo]
 dominio: true
 ---
 
-Spinge di 15 ft chi fallisce il TS; avvicinarsi a Kaelen lungo la linea costa il doppio del
-movimento. Spegne fiamme e disperde gas o vapori. Nei turni successivi puoi cambiare
+Spinge di 15 ft chi fallisce il TS. Il tiro si fa quando la linea si crea e quando una
+creatura termina il turno dentro la linea, non a ogni attraversamento; avvicinarsi a Kaelen
+lungo la linea costa il doppio del movimento. Spegne fiamme e disperde gas o vapori. Nei turni successivi puoi cambiare
 direzione con un'Azione Bonus.
