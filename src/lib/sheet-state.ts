@@ -162,9 +162,10 @@ export function applicaCura(s: StatoSessione, pg: Personaggio, n: number): Stato
 
 const AZZERA_TS = { tsMorte: { successi: 0, fallimenti: 0 } } as const;
 
-/** Un segno solo sul tabellone dei TS morte. È la primitiva: `tiroMorte` le
- *  passa sopra e traduce un d20 in uno o due segni. Il terzo non si accumula —
- *  cambia stato e azzera i contatori, che è perché ne bastano due per lato. */
+/** Un segno sul tabellone dei TS morte. La modale chiede l'esito, non il
+ *  numero uscito: il confronto con 10 lo fa già chi tira il dado. Il terzo
+ *  segno non si accumula — cambia stato e azzera i contatori, che è perché ne
+ *  bastano due per lato. */
 export function segnaTsMorte(s: StatoSessione, esito: 'successo' | 'fallimento'): StatoSessione {
   if (s.statoVitale !== 'incosciente') return s;
   const tsMorte = { ...s.tsMorte };
@@ -178,18 +179,6 @@ export function segnaTsMorte(s: StatoSessione, esito: 'successo' | 'fallimento')
   }
 
   return aggiorna(s, { tsMorte });
-}
-
-/** Il tiro salvezza contro morte, preso come esce dal dado. Non basta sapere
- *  se ha passato: un 1 naturale vale due fallimenti e un 20 naturale rimette
- *  in piedi, e nessuno dei due si può dedurre da «successo» o «fallimento». */
-export function tiroMorte(s: StatoSessione, d20: number): StatoSessione {
-  if (s.statoVitale !== 'incosciente') return s;
-  const tiro = Math.round(d20);
-  if (tiro < 1 || tiro > 20) return s;
-  if (tiro === 20) return aggiorna(s, { pf: 1, statoVitale: 'cosciente', ...AZZERA_TS });
-  if (tiro === 1) return segnaTsMorte(segnaTsMorte(s, 'fallimento'), 'fallimento');
-  return segnaTsMorte(s, tiro >= 10 ? 'successo' : 'fallimento');
 }
 
 /** Il manuale (PHB 2024, p. 372) fa spendere i dadi vita *durante* il riposo

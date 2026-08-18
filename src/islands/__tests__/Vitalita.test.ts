@@ -2,8 +2,14 @@
 import { afterEach, beforeEach, expect, it } from 'vitest';
 import { h, render } from 'preact';
 import Vitalita from '@/islands/Vitalita';
+import { MASSIMO, MINIMO } from '@/lib/rotella';
 import { caricaPersonaggioDaFile } from '@/lib/carica-personaggio';
-import { applicaDanno, impostaPfTemporanei, statoIniziale } from '@/lib/sheet-state';
+import {
+  applicaDanno,
+  impostaIspirazione,
+  impostaPfTemporanei,
+  statoIniziale,
+} from '@/lib/sheet-state';
 import { muta } from '@/lib/storage';
 
 const pg = caricaPersonaggioDaFile();
@@ -183,13 +189,17 @@ it('i TS contro morte compaiono solo quando si è a terra', async () => {
   expect(radice.querySelector('.riga-ts')).not.toBeNull();
 });
 
-it('a terra la rotella diventa il d20, e il bottone dice con che numero tira', async () => {
+it('a terra si dice com’è andata, senza rifare il conto a dieci', async () => {
+  // Il confronto con 10 lo fa già chi tira il dado. Rifarlo qui costringeva a
+  // portare il d20 dentro la rotella, che così serve una cosa sola.
   await aTerra();
 
+  const esiti = radice.querySelectorAll<HTMLButtonElement>('.riga-ts .riga-esiti button');
+  expect([...esiti].map((b) => b.textContent)).toEqual(['Successo', 'Fallimento']);
+
   const pista = radice.querySelector('.pista')!;
-  expect(pista.getAttribute('aria-valuemin')).toBe('1');
-  expect(pista.getAttribute('aria-valuemax')).toBe('20');
-  expect(comando('ts').textContent).toMatch(/tira/i);
+  expect(pista.getAttribute('aria-valuemin')).toBe(String(MINIMO));
+  expect(pista.getAttribute('aria-valuemax')).toBe(String(MASSIMO));
 });
 
 it('un tiro da 10 in su segna un successo', async () => {
@@ -202,16 +212,34 @@ it('un tiro da 10 in su segna un successo', async () => {
   expect(radice.querySelector('.riga-ts')!.textContent).toContain('1');
 });
 
-it('un 20 naturale rimette Kaelen in piedi e chiude i TS', async () => {
-  // È la ragione per cui il tiro passa il d20 grezzo invece dell’esito.
-  await aTerra();
-  await scegli(20);
+const esito = (quale: 'Successo' | 'Fallimento') =>
+  [...radice.querySelectorAll<HTMLButtonElement>('.riga-ts .riga-esiti button')].find(
+    (b) => b.textContent === quale,
+  )!;
 
-  comando('ts').click();
-  await giro();
+it('tre successi stabilizzano e chiudono i tiri', async () => {
+  await aTerra();
+
+  for (let i = 0; i < 3; i++) {
+    esito('Successo').click();
+    await giro();
+  }
+
+  // Stabile: i tiri non si fanno più, quindi la riga sparisce.
+  expect(radice.querySelector('.riga-ts')).toBeNull();
+  expect(radice.querySelector('.stato-vitale')!.textContent).toContain('stabile');
+});
+
+it('tre fallimenti uccidono', async () => {
+  await aTerra();
+
+  for (let i = 0; i < 3; i++) {
+    esito('Fallimento').click();
+    await giro();
+  }
 
   expect(radice.querySelector('.riga-ts')).toBeNull();
-  expect(scheda().textContent).toContain('1');
+  expect(radice.querySelector('.stato-vitale')!.textContent).toContain('morto');
 });
 
 const dialogo = () => radice.querySelector<HTMLDialogElement>('dialog.vitalita')!;
@@ -266,13 +294,14 @@ it('l’annuncio di un gesto senza quantità non recita uno zero', async () => {
   expect(annuncio.textContent).toMatch(/ispirazione/i);
 });
 
-it('il comando dei dadi vita dice di quanto cura', async () => {
-  // Come «Tira 15» per i TS: il secondo tempo non si fa alla cieca.
+it('il comando dei dadi vita non porta un numero', async () => {
+  // Il dado speso è sempre uno: un numero lì si leggeva come «spendi 5 dadi».
+  // Quanto cura lo dice la rotella, e l'annuncio lo ripete a cosa fatta.
   muta((x) => applicaDanno(x, pg, 6));
   await giro();
   await scegli(5);
 
-  expect(comando('dadi').textContent).toContain('5');
+  expect(comando('dadi').textContent!.trim()).toBe('Spendi');
 });
 
 it('la modale dice in che stato è Kaelen, non solo quanti PF ha', async () => {
@@ -293,14 +322,45 @@ it('la modale dice in che stato è Kaelen, non solo quanti PF ha', async () => {
   expect(stato().textContent).toMatch(/stabile/i);
 });
 
-it('cambiando intervallo la quantità entra nel nuovo intervallo', async () => {
-  // A terra la rotella diventa 1–20. Se `quanto` era 0 restava 0: fuori
-  // scala, nessuna cifra evidenziata, e `aria-valuenow` fuori dai limiti
-  // dichiarati.
+it('la rotella tiene un intervallo solo, anche a terra', async () => {
+  // Prima ne aveva due — quantità e d20 — e passando dall'uno all'altro il
+  // numero scelto poteva restare fuori scala. Tolto il dado, il caso non c'è.
   await scegli(0);
   await aTerra();
 
   const pista = radice.querySelector('.pista')!;
-  expect(Number(pista.getAttribute('aria-valuenow'))).toBeGreaterThanOrEqual(1);
-  expect(comando('ts').textContent).not.toMatch(/\b0\b/);
+  expect(pista.getAttribute('aria-valuenow')).toBe('0');
+  expect(pista.getAttribute('aria-valuemin')).toBe(String(MINIMO));
+});
+
+it('a modale chiusa la stella dice se l’ispirazione c’è', async () => {
+  // Prima il piede della scheda diceva solo «isp», e a cambiare era il colore.
+  // Chi non ricorda quale colore vuol dire sì non legge niente.
+  expect(scheda().querySelector('.isp')!.textContent).toContain('☆');
+
+  muta((x) => impostaIspirazione(x, true));
+  await giro();
+
+  expect(scheda().querySelector('.isp')!.textContent).toContain('★');
+});
+
+it('il metro mostra i temporanei in coda ai punti ferita', async () => {
+  // I temporanei sono uno scudo *sopra* i PF: se il metro li ignora, prenderne
+  // quattro non cambia niente sullo schermo e sembra non aver funzionato.
+  const pezzo = (quale: string) =>
+    parseFloat(scheda().querySelector<HTMLElement>(`.metro .${quale}`)!.style.width);
+
+  expect(pezzo('temporanei')).toBe(0);
+  expect(pezzo('riempimento')).toBe(100);
+
+  muta((x) => impostaPfTemporanei(x, Math.round(pg.pfMax / 2)));
+  await giro();
+
+  // Tutti e due si vedono, e insieme riempiono la barra: la scala comprende i
+  // temporanei finché ci sono. Tarata sul solo massimo, a punti ferita pieni
+  // la coda cadrebbe fuori dalla barra — cioè sarebbe invisibile proprio nel
+  // caso in cui i temporanei si prendono.
+  expect(pezzo('riempimento')).toBeGreaterThan(0);
+  expect(pezzo('temporanei')).toBeGreaterThan(0);
+  expect(pezzo('riempimento') + pezzo('temporanei')).toBeCloseTo(100, 0);
 });

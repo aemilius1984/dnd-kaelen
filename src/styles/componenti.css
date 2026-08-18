@@ -576,18 +576,28 @@ dialog.azioni input[type='number'] {
   display: block;
   visibility: hidden;
 }
+/* Il metro è una fila: i punti ferita, e subito dopo i temporanei. Sono uno
+ * scudo *sopra* i PF, non parte di essi, quindi vanno in coda e di un altro
+ * colore. Quel che esce dal massimo lo taglia `overflow`. */
 .vitalita-scheda .metro {
   height: var(--v-metro);
-  display: block;
+  display: flex;
   border: 1px solid var(--filetto);
   border-radius: 3px;
   background: var(--superficie-incassata);
   overflow: hidden;
 }
-.vitalita-scheda .metro .riempimento {
-  display: block;
+.vitalita-scheda .metro .riempimento,
+dialog.vitalita .stato .metro .riempimento {
+  flex: none;
   height: 100%;
   background: var(--lampo);
+}
+.vitalita-scheda .metro .temporanei,
+dialog.vitalita .stato .metro .temporanei {
+  flex: none;
+  height: 100%;
+  background: var(--ambra);
 }
 /* Due gradienti sovrapposti invece di ventidue nodi: quello fitto disegna le
  * tacche corte ogni 16px, quello rado le lunghe ogni quinta. */
@@ -671,9 +681,13 @@ dialog.vitalita .riga .conto {
 dialog.vitalita .riga .stella.accesa {
   color: var(--ambra);
 }
+/* Tutti larghi uguale: due bottoni che dicono quasi la stessa cosa e finiscono
+ * a due larghezze diverse fanno sembrare storta la colonna. La misura è quella
+ * della rotella, così i due bordi destri della modale si rispondono. */
 dialog.vitalita .riga button {
   margin-left: auto;
   height: 40px;
+  min-width: 108px;
   padding: 0 0.85rem;
   background: transparent;
   border: 1px solid var(--filetto);
@@ -689,6 +703,32 @@ dialog.vitalita .riga-ts .kicker,
 dialog.vitalita .riga-ts .conto {
   color: var(--allerta);
 }
+/* I tiri contro morte non passano più dal dado: si dice com'è andata. Serve
+ * quindi una riga di due bottoni, non uno solo spinto a destra, e i due
+ * devono essere identici — è una scelta fra pari, non un'azione con un
+ * ripensamento. */
+dialog.vitalita .riga-ts {
+  height: auto;
+  display: block;
+  padding-block: 0.7rem;
+}
+dialog.vitalita .riga-ts .riga-testa {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 24px;
+}
+dialog.vitalita .riga-ts .riga-esiti {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+}
+dialog.vitalita .riga-ts .riga-esiti button {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 44px;
+  margin-left: 0;
+}
 /* La zona del pollice: la rotella a sinistra, i tre verbi a destra. Le due
  * colonne devono cominciare e finire sulla stessa riga, e prima non lo
  * facevano — la rotella ne aveva 252 di suo, i verbi 247,2 di somma, e sopra
@@ -698,13 +738,13 @@ dialog.vitalita .riga-ts .conto {
  * fanno la colonna, e la rotella prende quel che avanza fra le due frecce.
  * `src/styles/__tests__/altezze.test.ts` la fa tornare a ogni gate. */
 dialog.vitalita .zona-pollice {
-  --pollice-verbo: 84px;
+  --pollice-rotella: 200px;
   --pollice-stacco: 12px;
   --pollice-freccia: 44px;
-  --pollice-colonna: calc(3 * var(--pollice-verbo) + 2 * var(--pollice-stacco)); /* 276px */
-  --pollice-rotella: calc(
-    var(--pollice-colonna) - 2 * var(--pollice-freccia) - 2 * var(--pollice-stacco)
-  ); /* 164px */
+  --pollice-colonna: calc(
+    var(--pollice-rotella) + 2 * var(--pollice-freccia) + 2 * var(--pollice-stacco)
+  ); /* 312px */
+  --pollice-verbo: calc((var(--pollice-colonna) - 2 * var(--pollice-stacco)) / 3); /* 96px */
   margin-top: auto;
   padding-top: var(--spazio-2);
   display: flex;
@@ -720,13 +760,16 @@ dialog.vitalita .verbi {
 }
 /* Nessuna altezza propria: i tre verbi si dividono la colonna in parti
  * uguali. Scritta a mano, quell'altezza era il termine che si scollava. */
+/* Due colonne, non due righe: a sinistra cosa si sta per fare, a destra cosa
+ * comporta. Impilati, il nome e l'effetto lasciavano vuota tutta la metà
+ * destra della carta. */
 dialog.vitalita .verbi button {
   flex: 1 1 0;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 0.15rem;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
   padding: 0 1rem;
   background: var(--superficie);
   border: 1px solid var(--filetto);
@@ -751,6 +794,8 @@ dialog.vitalita .verbi .nome {
   text-transform: uppercase;
 }
 dialog.vitalita .verbi .effetto {
+  flex: none;
+  text-align: right;
   font-size: 0.74rem;
   color: var(--inchiostro-muto);
 }
@@ -980,18 +1025,13 @@ dialog.vitalita .stato .vitalita-temp[hidden] {
   visibility: hidden;
 }
 dialog.vitalita .stato .metro {
-  display: block;
+  display: flex;
   height: 16px;
   margin-top: 0.8rem;
   border: 1px solid var(--filetto);
   border-radius: 3px;
   background: var(--superficie-incassata);
   overflow: hidden;
-}
-dialog.vitalita .stato .metro .riempimento {
-  display: block;
-  height: 100%;
-  background: var(--lampo);
 }
 dialog.vitalita .stato .tacche {
   display: block;

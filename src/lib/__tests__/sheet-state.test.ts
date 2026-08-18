@@ -15,7 +15,6 @@ import {
   riposoBreve,
   riposoLungo,
   segnaTsMorte,
-  tiroMorte,
   spendiDadoVitaConCura,
   spendiSlot,
   statoIniziale,
@@ -407,46 +406,6 @@ describe('la macchina a stati della vitalità', () => {
     const giu = applicaDanno(vivo(), pg, pg.pfMax);
 
     expect(spendiDadoVitaConCura(giu, pg, 5)).toBe(giu);
-  });
-});
-
-describe('il tiro salvezza contro morte prende il d20 grezzo', () => {
-  const giu = () => applicaDanno(statoIniziale(pg, 'v'), pg, pg.pfMax);
-
-  it('da 10 in su è un successo, sotto è un fallimento', () => {
-    expect(tiroMorte(giu(), 10).tsMorte.successi).toBe(1);
-    expect(tiroMorte(giu(), 19).tsMorte.successi).toBe(1);
-    expect(tiroMorte(giu(), 9).tsMorte.fallimenti).toBe(1);
-    expect(tiroMorte(giu(), 2).tsMorte.fallimenti).toBe(1);
-  });
-
-  it('un 1 naturale vale due fallimenti', () => {
-    // È la ragione per cui questa funzione prende il numero e non l'esito:
-    // «fallimento» non basta a dire cosa è successo.
-    expect(tiroMorte(giu(), 1).tsMorte.fallimenti).toBe(2);
-  });
-
-  it('un 20 naturale rimette in piedi a 1 PF', () => {
-    const s = tiroMorte(giu(), 20);
-
-    expect(s.pf).toBe(1);
-    expect(s.statoVitale).toBe('cosciente');
-    expect(s.tsMorte).toEqual({ successi: 0, fallimenti: 0 });
-  });
-
-  it('non si tira da coscienti, da stabili o da morti', () => {
-    const su = statoIniziale(pg, 'v');
-    expect(tiroMorte(su, 3)).toBe(su);
-
-    let stabile = giu();
-    for (let i = 0; i < 3; i++) stabile = segnaTsMorte(stabile, 'successo');
-    expect(tiroMorte(stabile, 3)).toBe(stabile);
-  });
-
-  it('un numero che non è un d20 non è un tiro', () => {
-    const s = giu();
-    expect(tiroMorte(s, 0)).toBe(s);
-    expect(tiroMorte(s, 21)).toBe(s);
   });
 });
 

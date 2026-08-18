@@ -247,3 +247,21 @@ niente e prometterebbe una transazione che il codice non sa eseguire.
 Ordine sensato quando si riprende: prima i materiali consumabili (P1), poi la
 Concentrazione, poi il lancio rituale come transazione unica — slot e
 materiali sottratti solo al completamento, come chiede la spec.
+
+## Il 20 e l'1 naturali sui tiri contro morte
+
+L'audit (`docs/superpowers/specs/2026-08-18-regole-kaelen-chierico.md`, P1)
+chiede che il tracker dei TS morte gestisca stabilità, morte, 1 naturale e 20
+naturale. I primi due li fa. Gli altri due non hanno più un comando loro: la
+modale chiede **com'è andata** — «Successo» o «Fallimento» — invece del numero
+uscito, perché rifare il confronto con 10 dentro l'app costringeva a portare il
+d20 nella rotella, e la rotella serve la quantità di punti ferita.
+
+Non è una regola persa, è una regola detta in due gesti già presenti: un 1
+naturale sono **due fallimenti**, un 20 naturale è una **cura di uno**, che è
+il verbo lì sotto. Chi tira il dado quei due casi li riconosce da sé.
+
+Se un giorno dovessero tornare come comando proprio, la primitiva
+`segnaTsMorte` basta per il primo; il secondo è `applicaCura(s, pg, 1)`. La
+funzione `tiroMorte`, che prendeva il d20 grezzo, è stata tolta insieme al suo
+unico chiamante: riscriverla è più onesto che tenerla senza nessuno che la usi.

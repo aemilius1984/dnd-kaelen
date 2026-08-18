@@ -98,19 +98,26 @@ it('le due colonne della zona del pollice sono alte uguali', () => {
   // finiscono sulla stessa riga. Due altezze scritte a mano si scollano al
   // primo ritocco; qui c'è una sola aritmetica, e questa guardia è il posto
   // dove si rompe se qualcuno tocca un termine e non gli altri.
-  const verbo = costante('--pollice-verbo');
+  // L'aritmetica parte dalla rotella: è lei che deve essere alta abbastanza
+  // per leggersi, e i tre verbi si dividono la colonna che ne risulta. Prima
+  // comandava il verbo, e la rotella prendeva l'avanzo — che è come si era
+  // ritrovata alta 164.
+  const rotella = costante('--pollice-rotella');
   const stacco = costante('--pollice-stacco');
   const freccia = costante('--pollice-freccia');
 
-  const colonna = 3 * verbo + 2 * stacco;
-  const rotella = colonna - 2 * freccia - 2 * stacco;
+  const colonna = rotella + 2 * freccia + 2 * stacco;
+  const verbo = (colonna - 2 * stacco) / 3;
+
+  // Un verbo alto meno di 44 non è un bersaglio per un dito.
+  expect(verbo).toBeGreaterThanOrEqual(44);
 
   // La colonna della rotella: freccia, rotella, freccia, con due stacchi.
   expect(freccia * 2 + rotella + stacco * 2).toBe(colonna);
   // E la rotella deve restare abbastanza alta da mostrare la cifra scelta con
   // una sopra e una sotto: sotto tre passi non si legge più come una rotella.
   const passo = passoDelModulo();
-  expect(rotella).toBeGreaterThanOrEqual(passo * 3);
+  expect(rotella).toBeGreaterThanOrEqual(passo * 4);
   // La banda di selezione sta esattamente in mezzo, e ci deve stare intera.
   // Il conto è sulla scatola interna: i due bordi della rotella stanno dentro
   // l'altezza ma fuori dalla pista, ed è per averli dimenticati che la banda
@@ -172,4 +179,21 @@ it('la barra del menu ancora la ☰ a destra sull’elemento giusto', () => {
   const regolaMenu = menu.slice(menu.indexOf('  .menu {'), menu.indexOf('  summary {'));
 
   expect(regolaMenu).toContain('justify-self: end');
+});
+
+it('i bottoni delle righe sono tutti larghi uguale', () => {
+  // Due bottoni che dicono quasi la stessa cosa e finiscono a due larghezze
+  // diverse fanno sembrare storta tutta la colonna. Gli esiti dei TS sono
+  // l'eccezione dichiarata: là sono due pari che si dividono la riga.
+  expect(corpo('dialog.vitalita .riga button')).toMatch(/min-width:\s*108px/);
+  expect(corpo('dialog.vitalita .riga-ts .riga-esiti button')).toMatch(/flex:\s*1 1 0/);
+});
+
+it('le carte dei verbi sono su due colonne', () => {
+  // Impilati, il nome e l'effetto lasciavano vuota tutta la metà destra della
+  // carta: a sinistra cosa si sta per fare, a destra cosa comporta.
+  const verbo = corpo('dialog.vitalita .verbi button');
+
+  expect(verbo).toMatch(/flex-direction:\s*row/);
+  expect(verbo).toMatch(/justify-content:\s*space-between/);
 });

@@ -7,8 +7,8 @@ import {
   applicaDanno,
   impostaIspirazione,
   impostaPfTemporanei,
+  segnaTsMorte,
   spendiDadoVitaConCura,
-  tiroMorte,
 } from '@/lib/sheet-state';
 import { assicuraInizializzato, datiIniziali, muta, stato } from '@/lib/storage';
 
@@ -50,15 +50,18 @@ export default function Vitalita() {
 
   const inPericolo = s.pf === 0;
   const aTerra = s.statoVitale === 'incosciente';
-  // La stessa rotella serve due scopi: la quantità di PF, e il d20 del tiro
-  // salvezza quando Kaelen è a terra. Cambiano gli estremi, non il gesto.
-  const minimo = aTerra ? 1 : MINIMO;
-  const massimo = aTerra ? 20 : MASSIMO;
-  // Passando da un intervallo all'altro il numero scelto può restarne fuori:
-  // uno zero portato in un d20 non evidenzia nessuna cifra e mette
-  // `aria-valuenow` fuori dai limiti che la rotella dichiara.
-  const quanto = Math.min(massimo, Math.max(minimo, quantoGrezzo));
-  const percentuale = pg.pfMax > 0 ? Math.min(100, Math.round((s.pf / pg.pfMax) * 100)) : 0;
+  // La rotella serve una cosa sola: la quantità di punti ferita. I tiri contro
+  // morte si dicono com'è andata, e il dado resta sul tavolo dov'è già.
+  const quanto = Math.min(MASSIMO, Math.max(MINIMO, quantoGrezzo));
+  // I temporanei stanno *sopra* i punti ferita, non dentro: vanno in coda al
+  // metro e di un altro colore. Ma se il metro restasse tarato sul massimo, a
+  // punti ferita pieni — che è quando i temporanei si prendono — la coda
+  // cadrebbe tutta fuori dalla barra e non si vedrebbe proprio quando serve.
+  // Quindi finché ci sono, la scala li comprende. A zero il conto torna
+  // esattamente quello di prima.
+  const scala = pg.pfMax + s.pfTemporanei;
+  const percentuale = scala > 0 ? Math.round((s.pf / scala) * 100) : 0;
+  const percentualeTemp = scala > 0 ? Math.round((s.pfTemporanei / scala) * 100) : 0;
 
   return (
     <>
@@ -87,6 +90,7 @@ export default function Vitalita() {
 
         <span class="metro">
           <span class="riempimento" style={{ width: `${percentuale}%` }}></span>
+          <span class="temporanei" style={{ width: `${percentualeTemp}%` }}></span>
         </span>
         <span class="tacche" aria-hidden="true"></span>
 
@@ -94,7 +98,12 @@ export default function Vitalita() {
           <span class="dadi">
             dadi {pg.numeroDadiVita - s.dadiVitaSpesi}/{pg.numeroDadiVita}
           </span>
-          <span class={s.ispirazione ? 'isp accesa' : 'isp'}>isp</span>
+          {/* La stella, non la sola parola: a modale chiusa è l'unico posto dove
+              si vede se l'ispirazione c'è, e un'etichetta che cambia solo
+              colore non lo dice a chi non ricorda quale colore vuol dire sì. */}
+          <span class={s.ispirazione ? 'isp accesa' : 'isp'}>
+            <span aria-hidden="true">{s.ispirazione ? '★' : '☆'}</span> isp
+          </span>
         </span>
       </button>
 
@@ -123,6 +132,7 @@ export default function Vitalita() {
           </span>
           <span class="metro">
             <span class="riempimento" style={{ width: `${percentuale}%` }}></span>
+            <span class="temporanei" style={{ width: `${percentualeTemp}%` }}></span>
           </span>
           <span class="tacche" aria-hidden="true"></span>
         </div>
@@ -143,7 +153,10 @@ export default function Vitalita() {
                 )
               }
             >
-              Spendi {quanto}
+              {/* Il dado speso è sempre uno: metterci un numero faceva leggere
+                  «spendi 15 dadi». Quanto cura lo dice la rotella qui sotto,
+                  e l'annuncio lo ripete a cosa fatta. */}
+              Spendi
             </button>
           </div>
 
@@ -165,23 +178,39 @@ export default function Vitalita() {
             </button>
           </div>
 
+          {/* Com'è andata, non cos'è uscito. Il confronto con 10 lo fa già chi
+              tira, e rifarlo qui voleva dire portare il dado dentro la
+              rotella — che così torna a servire una cosa sola.
+
+              I due tiri speciali restano dicibili senza un bottone loro: un 1
+              naturale sono due fallimenti, e un 20 naturale è una cura di uno,
+              che è il verbo qui sotto. */}
           {aTerra && (
             <div class="riga riga-ts">
-              <span class="kicker">ts contro morte</span>
-              <span class="conto">
-                {s.tsMorte.successi} ✓ · {s.tsMorte.fallimenti} ✗
-              </span>
-              {/* Il bottone dice con che numero tirerà: la rotella qui è il
-                  d20, e leggerlo sul bottone toglie ogni dubbio su cosa
-                  stia per essere applicato. */}
-              <button
-                type="button"
-                onClick={() =>
-                  applica((x) => tiroMorte(x, quanto), `Tiro contro morte: ${quanto}.`)
-                }
-              >
-                Tira {quanto}
-              </button>
+              <div class="riga-testa">
+                <span class="kicker">ts contro morte</span>
+                <span class="conto">
+                  {s.tsMorte.successi} ✓ · {s.tsMorte.fallimenti} ✗
+                </span>
+              </div>
+              <div class="riga-esiti">
+                <button
+                  type="button"
+                  onClick={() =>
+                    applica((x) => segnaTsMorte(x, 'successo'), 'Tiro contro morte riuscito.')
+                  }
+                >
+                  Successo
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    applica((x) => segnaTsMorte(x, 'fallimento'), 'Tiro contro morte fallito.')
+                  }
+                >
+                  Fallimento
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -192,13 +221,7 @@ export default function Vitalita() {
             che spiegava l'ordine — due colonne affiancate lo dicono da sole,
             e quella riga sbilanciava la colonna di sinistra. */}
         <div class="zona-pollice">
-          <Rotella
-            key={aperture}
-            valore={quanto}
-            onCambia={setQuanto}
-            minimo={minimo}
-            massimo={massimo}
-          />
+          <Rotella key={aperture} valore={quanto} onCambia={setQuanto} />
 
           <div class="verbi">
             <button
