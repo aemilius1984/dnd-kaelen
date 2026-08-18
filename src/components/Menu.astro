@@ -1,10 +1,21 @@
 ---
 import AzioniMenu from '@/islands/AzioniMenu';
+import { SCHEMA_VERSION } from '@/lib/sheet-state';
 
 interface Props {
   attiva: 'scheda' | 'personaggio' | 'storia' | 'preparati' | 'note' | null;
 }
 const { attiva } = Astro.props;
+
+/* Le tre che si aprono a un pollice, senza passare dalla tendina. `/` è la
+ * splash e non ha `attiva`: nessuna pagina che mostra questa barra è la home,
+ * quindi quel collegamento non si marca mai come corrente. */
+const scorciatoie = [
+  { id: null, href: '/', testo: 'Home' },
+  { id: 'scheda', href: '/scheda/', testo: 'Scheda' },
+  { id: 'storia', href: '/storia/', testo: 'Storia' },
+] as const;
+
 const voci = [
   { id: 'scheda', href: '/scheda/', testo: 'Scheda' },
   { id: 'personaggio', href: '/personaggio/', testo: 'Personaggio' },
@@ -14,48 +25,177 @@ const voci = [
 ] as const;
 ---
 
-<details class="menu">
-  <summary>
-    <span class="barre" aria-hidden="true"></span>
-    <span class="etichetta apri">Apri il menu</span>
-    <span class="etichetta chiudi">Chiudi il menu</span>
-  </summary>
-  <nav>
-    <ul>
-      {
-        voci.map((v) => (
-          <li>
-            <a href={v.href} aria-current={attiva === v.id ? 'page' : undefined}>
-              {v.testo}
-            </a>
-          </li>
-        ))
-      }
-    </ul>
-    <AzioniMenu client:idle />
+<header class="barra">
+  <nav class="scorciatoie" aria-label="Scorciatoie">
+    {
+      scorciatoie.map((s, i) => (
+        <a
+          href={s.href}
+          style={`--r: ${i}`}
+          aria-current={s.id !== null && attiva === s.id ? 'page' : undefined}
+        >
+          {s.testo}
+        </a>
+      ))
+    }
   </nav>
-</details>
+
+  <details class="menu">
+    <summary>
+      <span class="barre" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span class="etichetta apri">Apri il menu</span>
+      <span class="etichetta chiudi">Chiudi il menu</span>
+    </summary>
+
+    <div class="tendina">
+      <div class="rullo">
+        <nav aria-label="Pagine">
+          <ol>
+            {
+              voci.map((v, i) => (
+                <li style={`--r: ${i}`}>
+                  <a href={v.href} aria-current={attiva === v.id ? 'page' : undefined}>
+                    <span class="parola">{v.testo}</span>
+                  </a>
+                </li>
+              ))
+            }
+          </ol>
+        </nav>
+
+        <div class="filetto" aria-hidden="true"></div>
+
+        <div class="coda">
+          <p class="colofone">Kaelen · schema v{SCHEMA_VERSION}</p>
+          <AzioniMenu client:idle />
+        </div>
+      </div>
+    </div>
+  </details>
+</header>
+
+<div class="velo" aria-hidden="true"></div>
+
+<script>
+  import { creaBarra } from '@/lib/barra-scroll';
+
+  const barra = document.querySelector<HTMLElement>('.barra');
+  const menu = barra?.querySelector<HTMLDetailsElement>('details.menu');
+
+  if (barra && menu) {
+    const comando = creaBarra({
+      leggiY: () => window.scrollY,
+      aperto: () => menu.open,
+      applica: (nascosta) => barra.toggleAttribute('data-nascosta', nascosta),
+      chiudi: () => {
+        menu.open = false;
+      },
+    });
+
+    // Lo scroll arriva molte volte per frame: senza questa riduzione la
+    // decisione girerebbe su ogni evento invece che su ogni disegno.
+    let inAttesa = false;
+    window.addEventListener(
+      'scroll',
+      () => {
+        if (inAttesa) return;
+        inAttesa = true;
+        window.requestAnimationFrame(() => {
+          inAttesa = false;
+          comando.scorri();
+        });
+      },
+      { passive: true },
+    );
+
+    window.addEventListener('keydown', (e) => comando.tasto(e.key));
+    document.addEventListener('pointerdown', (e) =>
+      comando.tocco(barra.contains(e.target as Node)),
+    );
+    menu.addEventListener('toggle', () => {
+      if (menu.open) comando.apertura();
+    });
+  }
+</script>
 
 <style>
-  /* Overlay costruito con details/summary: si apre, si chiude e si raggiunge
-   * da tastiera senza una riga di JavaScript. */
-  .menu {
+  /* La barra è vetro fisso in cima: si toglie di mezzo mentre si legge
+   * scendendo e torna appena si risale. La direzione dello scroll il CSS non
+   * la sa leggere — quel pezzo sta in `src/lib/barra-scroll.ts` e arriva qui
+   * come solo attributo `data-nascosta`. */
+  .barra {
     position: fixed;
-    inset: 0 auto auto 0;
+    inset: 0 0 auto 0;
     z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spazio-2);
+    height: 3.25rem;
+    padding-inline: var(--spazio-2);
+    border-bottom: 1px solid var(--filetto);
+    background: color-mix(in srgb, var(--carta) 55%, transparent);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    backdrop-filter: blur(14px) saturate(140%);
+    transition:
+      transform 0.5s var(--espo),
+      background-color 0.4s var(--espo);
   }
+  /* Dove il vetro non c'è, il fondo quasi pieno: mezzo velo su un testo che
+   * ci scorre sotto sarebbe illeggibile, non trasparente. */
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .barra {
+      background: color-mix(in srgb, var(--carta) 94%, transparent);
+    }
+  }
+  .barra[data-nascosta] {
+    transform: translateY(-100%);
+  }
+  /* A tendina aperta la barra resta, e il vetro diventa carta piena: sotto
+   * ci pende un foglio opaco, e due opacità diverse attaccate si vedono. */
+  .barra:has(.menu[open]) {
+    transform: translateY(0);
+    background: var(--carta);
+  }
+
+  .scorciatoie {
+    display: flex;
+    gap: var(--spazio-3);
+    overflow: hidden;
+  }
+  .scorciatoie a {
+    padding: 0.85rem 0;
+    font-family: var(--font-display);
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--inchiostro-tenue);
+    transition:
+      transform 0.5s var(--espo),
+      opacity 0.5s var(--espo);
+  }
+  .scorciatoie a[aria-current='page'] {
+    color: var(--ambra);
+  }
+  /* Aperta la tendina, la barra mostra solo l'apertura e la chiusura: le
+   * scorciatoie escono dall'alto, sfalsate, e la ☰ resta sola. */
+  .barra:has(.menu[open]) .scorciatoie a {
+    transform: translateY(-140%);
+    opacity: 0;
+    transition-delay: calc(var(--r) * 40ms);
+  }
+
   summary {
     list-style: none;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 48px;
-    height: 48px;
-    margin: 0.35rem;
+    width: 44px;
+    height: 44px;
+    margin-right: -0.35rem;
     cursor: pointer;
     border-radius: var(--raggio);
-    background: color-mix(in srgb, var(--superficie) 78%, transparent);
-    border: 1px solid var(--filetto);
   }
   summary::-webkit-details-marker {
     display: none;
@@ -64,8 +204,7 @@ const voci = [
    * `aria-label` fisso resterebbe «Apri il menu» anche a menu aperto. Le due
    * etichette sono testo vero, nascoste alla vista e non al lettore di
    * schermo; `display: none` toglie dal calcolo del nome quella che non vale
-   * in questo stato, quindi ne resta sempre esattamente una. Fuori dal CSS,
-   * senza una riga di JavaScript. */
+   * in questo stato, quindi ne resta sempre esattamente una. */
   .etichetta {
     position: absolute;
     width: 1px;
@@ -78,59 +217,186 @@ const voci = [
   .menu[open] .apri {
     display: none;
   }
-  .barre,
-  .barre::before,
-  .barre::after {
-    display: block;
+
+  .barre {
+    display: grid;
+    gap: 4px;
     width: 20px;
+  }
+  .barre i {
+    display: block;
     height: 2px;
     background: var(--inchiostro);
-    content: '';
+    transition: transform 1.1s var(--espo);
   }
-  .barre::before {
-    transform: translateY(-6px);
+  /* Le tre righe distano 6px da centro a centro: ±6px le sovrappone, e da lì
+   * ruotano. Quella di mezzo si accorcia a niente invece di sparire, così la
+   * × si scrive invece di apparire. */
+  .menu[open] .barre i:nth-child(1) {
+    transform: translateY(6px) rotate(-45deg) scaleX(0.86);
+    transition-delay: 0.05s;
   }
-  .barre::after {
-    transform: translateY(4px);
+  .menu[open] .barre i:nth-child(2) {
+    transform: scaleX(0);
   }
-  .menu[open] .barre {
-    background: transparent;
+  .menu[open] .barre i:nth-child(3) {
+    transform: translateY(-6px) rotate(45deg) scaleX(0.86);
+    transition-delay: 0.05s;
   }
-  .menu[open] .barre::before {
-    transform: rotate(45deg);
+
+  /* La tendina resta figlia di <details>: è lui a portare stato, tastiera e
+   * annuncio «compresso/espanso» senza una riga di JavaScript. Il browser
+   * però la tiene fuori dal rendering finché è chiusa, e da lì un'animazione
+   * non può partire: `content-visibility: visible` gliela restituisce, e a
+   * nasconderla pensano `visibility` e le righe a 0fr qui sotto. Dove
+   * `::details-content` non esiste la tendina appare secca, senza
+   * scorrimento: degrada, non si rompe. */
+  .menu::details-content {
+    content-visibility: visible;
   }
-  .menu[open] .barre::after {
-    transform: rotate(-45deg) translateY(-1px);
-  }
-  nav {
-    position: fixed;
-    inset: 0;
-    z-index: -1;
+  .tendina {
+    position: absolute;
+    inset: 100% 0 auto 0;
+    display: grid;
+    grid-template-rows: 0fr;
+    visibility: hidden;
     background: var(--carta);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 1.4rem;
-    padding: 4rem var(--spazio-2) 2rem;
+    border-bottom: 1px solid var(--filetto);
+    box-shadow: var(--ombra-2);
+    /* `visibility` cambia di scatto, ma ritardata a fine corsa: toglie le
+     * voci dal giro dei Tab e dal lettore di schermo *dopo* che il foglio si
+     * è richiuso, invece di farle sparire a metà chiusura. */
+    transition:
+      grid-template-rows 0.9s var(--espo),
+      visibility 0s linear 0.9s;
   }
-  ul {
+  .menu[open] .tendina {
+    grid-template-rows: 1fr;
+    visibility: visible;
+    transition:
+      grid-template-rows 0.9s var(--espo),
+      visibility 0s;
+  }
+  .rullo {
+    overflow: hidden;
+  }
+
+  .tendina ol {
+    counter-reset: voce;
     list-style: none;
     margin: 0;
-    padding: 0;
+    padding: 0.4rem 0 0;
+  }
+  .tendina li a {
     display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-  }
-  nav a {
-    display: block;
-    padding: 0.7rem 0;
-    font-family: var(--font-display);
-    font-size: 1.7rem;
-    color: var(--inchiostro);
+    align-items: baseline;
+    gap: 0.7rem;
+    padding: 0.35rem var(--spazio-2);
+    overflow: hidden;
     text-decoration: none;
-    border-bottom: 1px solid var(--filetto);
+    color: var(--inchiostro);
   }
-  nav a[aria-current='page'] {
+  /* I numeri non stanno nel markup: sono un contatore. Rinumerare le voci
+   * vuol dire riordinare l'elenco e nient'altro. */
+  .tendina li a::before {
+    counter-increment: voce;
+    content: '0' counter(voce);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--inchiostro-muto);
+    opacity: 0.5;
+  }
+  .parola {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 1.9rem;
+    line-height: 1.18;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    transform: translateY(120%);
+    transition: transform 0.8s var(--espo);
+  }
+  .menu[open] .parola {
+    transform: translateY(0);
+    transition-delay: calc(var(--r) * 50ms);
+  }
+  .tendina a[aria-current='page'] .parola {
     color: var(--ambra);
+  }
+
+  .filetto {
+    height: 1px;
+    margin: 0.7rem var(--spazio-2) 0;
+    background-image: repeating-linear-gradient(
+      to right,
+      var(--inchiostro) 0 2px,
+      transparent 2px 8px
+    );
+    opacity: 0.35;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 1.1s var(--espo);
+  }
+  .menu[open] .filetto {
+    transform: scaleX(1);
+    transition-delay: 0.15s;
+  }
+
+  .coda {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spazio-2);
+    padding: 0.7rem var(--spazio-2) 1rem;
+    transform: translateX(-300%);
+    transition: transform 1.1s var(--quint);
+  }
+  .menu[open] .coda {
+    transform: translateX(0);
+    transition-delay: 0.2s;
+  }
+  .colofone {
+    margin: 0;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--inchiostro-muto);
+  }
+
+  .velo {
+    position: fixed;
+    inset: 0;
+    z-index: 19;
+    background: rgb(10 12 16 / 0.5);
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity 0.3s ease-in-out,
+      visibility 0s linear 0.3s;
+  }
+  body:has(.menu[open]) .velo {
+    opacity: 1;
+    visibility: visible;
+    transition:
+      opacity 0.3s ease-in-out,
+      visibility 0s;
+  }
+
+  /* Su schermi alti e larghi le voci possono respirare di più: è lo stesso
+   * tendina, non un secondo menu. */
+  @media (min-width: 901px) {
+    .tendina ol {
+      padding-top: 0.8rem;
+    }
+    .parola {
+      font-size: 2.4rem;
+    }
+    .tendina li a,
+    .filetto,
+    .coda {
+      margin-inline: auto;
+      max-width: 46rem;
+      width: 100%;
+    }
   }
 </style>

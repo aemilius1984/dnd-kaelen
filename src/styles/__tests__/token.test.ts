@@ -49,8 +49,15 @@ it('ogni token usato è un token dichiarato', () => {
 
   for (const p of file('src', ['.css', '.astro', '.tsx'])) {
     const testo = readFileSync(p, 'utf8');
+    // Non ogni `--nome` è un token: un componente può dichiararsi una
+    // variabile propria — l'indice di riga che sfalsa un'animazione, per
+    // dire — e passarsela fra il suo markup e il suo CSS. Quella non
+    // appartiene al vocabolario e non deve entrare in `tokens.css`, che il
+    // test qui accanto tiene pulito. Vale la stessa regola dei moduli: è
+    // orfano ciò che nessuno dichiara, non ciò che dichiara chi lo usa.
+    const locali = new Set([...testo.matchAll(/(--[a-z0-9-]+)\s*:/g)].map((m) => m[1]));
     for (const m of testo.matchAll(/var\(\s*(--[a-z0-9-]+)/g)) {
-      if (!dichiarati.has(m[1])) orfani.add(`${m[1]} in ${p}`);
+      if (!dichiarati.has(m[1]) && !locali.has(m[1])) orfani.add(`${m[1]} in ${p}`);
     }
   }
 
