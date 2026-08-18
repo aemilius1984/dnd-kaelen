@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { expect, it } from 'vitest';
 import CapacitaEReazioni from '@/components/CapacitaEReazioni.astro';
@@ -69,4 +70,29 @@ it('porta il nome inglese di ogni capacità', async () => {
   const html = (await rendi()).replaceAll('&#39;', "'").replaceAll('&amp;', '&');
 
   for (const c of fondiCapacita(pg)) expect(html).toContain(c.nomeEn);
+});
+
+it('lascia respirare la testa della card invece di spingerla fuori schermo', () => {
+  // Misurato con Chrome a 390×844: la scheda era larga 498px, e a spingerla
+  // fuori era `.contatore` con dentro «2 · +1 / Riposo Breve · tutti / Riposo
+  // Lungo» — 343px di stringa in una riga larga 358. Quel testo l'ha allungato
+  // `testoRecupero`; finché il recupero si diceva in due parole, `flex: none`
+  // non faceva danni.
+  //
+  // Da lì nasceva anche la modale della Vitalità larga 498 e alta 1078: il
+  // browser allarga il viewport a tutta la pagina, e la modale è `100%` di
+  // quello. Un sintomo solo, letto due volte.
+  //
+  // La guardia è sul CSS perché il gate non ha un browser: se qualcuno
+  // rimette `flex: none` sul contatore, la scheda torna a sbordare.
+  const sorgente = readFileSync('src/components/CapacitaEReazioni.astro', 'utf8');
+  const regola = (selettore: string): string => {
+    const apertura = sorgente.indexOf(`${selettore} {`);
+    if (apertura === -1) throw new Error(`regola non trovata: ${selettore}`);
+    return sorgente.slice(apertura, sorgente.indexOf('}', apertura));
+  };
+
+  expect(regola('.testa')).toMatch(/flex-wrap:\s*wrap/);
+  expect(regola('.contatore')).not.toMatch(/flex:\s*none/);
+  expect(regola('.contatore')).toMatch(/min-width:\s*0/);
 });

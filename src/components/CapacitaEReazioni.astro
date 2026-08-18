@@ -81,8 +81,14 @@ const usiDiIncanalare = pg.capacita
     gap: var(--spazio-2);
   }
 
+  /* La riga va a capo. Il contatore di Incanalare Divinità porta la frase di
+   * recupero per esteso — «2 · +1 / Riposo Breve · tutti / Riposo Lungo» —
+   * che a 390px è più larga della riga intera: tenuta su una riga sola
+   * spingeva la pagina a 498px, e con lei il viewport e la modale della
+   * Vitalità. A capo sta comoda sotto il titolo. */
   .testa {
     display: flex;
+    flex-wrap: wrap;
     align-items: flex-start;
     justify-content: space-between;
     gap: var(--spazio-2);
@@ -93,8 +99,14 @@ const usiDiIncanalare = pg.capacita
     font-size: var(--fs-h3);
   }
 
+  /* `flex: none` gli impediva sia di restringersi sia di andare a capo: la
+   * frase di recupero usciva dallo schermo invece di adattarsi. Ora cede
+   * quando lo spazio manca, e `min-width: 0` glielo permette davvero — senza,
+   * un elemento flex non scende sotto la propria dimensione minima di
+   * contenuto e la stringa lunga lo terrebbe largo lo stesso. */
   .contatore {
-    flex: none;
+    flex: 0 1 auto;
+    min-width: 0;
     display: grid;
     justify-items: end;
     gap: 0.15rem;
