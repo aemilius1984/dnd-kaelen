@@ -79,12 +79,20 @@ it('il chip dei temporanei tiene il suo posto anche a zero', async () => {
 });
 
 const verbo = (nome: string) => radice.querySelector<HTMLButtonElement>(`.verbo-${nome}`)!;
-const digita = () => radice.querySelector<HTMLInputElement>('.digita')!;
+const quantita = () => Number(radice.querySelector('.pista')!.getAttribute('aria-valuenow'));
 
+/** Porta la rotella sul numero voluto. Non c'è più un campo da riempire: si
+ *  arriva a passi, che è anche la strada vera di chi usa la modale. */
 const scegli = async (n: number) => {
-  digita().value = String(n);
-  digita().dispatchEvent(new Event('input', { bubbles: true }));
-  await giro();
+  for (let i = 0; i < 64 && quantita() !== n; i++) {
+    radice
+      .querySelector<HTMLButtonElement>(quantita() < n ? '.freccia-su' : '.freccia-giu')!
+      .click();
+    await giro();
+  }
+  // Se le frecce si fermassero prima, i test qui sotto proverebbero il numero
+  // sbagliato e passerebbero lo stesso.
+  expect(quantita()).toBe(n);
 };
 
 it('il danno toglie esattamente la quantità scelta', async () => {

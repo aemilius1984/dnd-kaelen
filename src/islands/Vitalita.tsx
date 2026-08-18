@@ -32,6 +32,11 @@ export default function Vitalita() {
 
   const [quantoGrezzo, setQuanto] = useState(1);
   const [annuncio, setAnnuncio] = useState('');
+  // Cambia a ogni apertura, e serve solo a rimontare la rotella. Finché la
+  // modale è chiusa la pista sta fuori dal layout, e lì la posizione scritta
+  // non attacca: rimontandola, la scrittura avviene su una pista disposta
+  // invece che aspettare un evento di scorrimento che potrebbe non arrivare.
+  const [aperture, setAperture] = useState(0);
 
   /** Applica un gesto e ne racconta l'esito. L'annuncio non è un extra: chi
    *  non vede il numero cambiare non ha altro modo di sapere che è successo.
@@ -61,7 +66,10 @@ export default function Vitalita() {
         type="button"
         class="vitalita-scheda"
         aria-label="Punti ferita, apri la vitalità"
-        onClick={() => finestra.current?.showModal()}
+        onClick={() => {
+          finestra.current?.showModal();
+          setAperture((n) => n + 1);
+        }}
       >
         <span class="testata">
           <span class="kicker">punti ferita</span>
@@ -178,29 +186,19 @@ export default function Vitalita() {
           )}
         </div>
 
+        {/* La quantità a sinistra, cosa farne a destra. Il campo da digitare
+            non c'è più: la rotella porta le sue frecce, e il verso da
+            tastiera lo dà già lei come `spinbutton`. Via anche l'etichetta
+            che spiegava l'ordine — due colonne affiancate lo dicono da sole,
+            e quella riga sbilanciava la colonna di sinistra. */}
         <div class="zona-pollice">
-          <div class="quanto">
-            <span class="kicker">quanto, e poi cosa</span>
-            <Rotella valore={quanto} onCambia={setQuanto} minimo={minimo} massimo={massimo} />
-            <label class="riga-digita">
-              <span class="kicker">digita</span>
-              <input
-                class="digita"
-                type="number"
-                min={minimo}
-                max={massimo}
-                inputMode="numeric"
-                value={quanto}
-                onInput={(e) => {
-                  const grezzo = e.currentTarget.value;
-                  // Un campo vuoto non è «zero»: è una cifra a metà. Finché
-                  // non arriva un numero, la quantità non si tocca.
-                  if (grezzo === '') return;
-                  setQuanto(Math.max(minimo, Math.min(massimo, Number(grezzo))));
-                }}
-              />
-            </label>
-          </div>
+          <Rotella
+            key={aperture}
+            valore={quanto}
+            onCambia={setQuanto}
+            minimo={minimo}
+            massimo={massimo}
+          />
 
           <div class="verbi">
             <button

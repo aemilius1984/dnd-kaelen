@@ -689,42 +689,39 @@ dialog.vitalita .riga-ts .kicker,
 dialog.vitalita .riga-ts .conto {
   color: var(--allerta);
 }
+/* La zona del pollice: la rotella a sinistra, i tre verbi a destra. Le due
+ * colonne devono cominciare e finire sulla stessa riga, e prima non lo
+ * facevano — la rotella ne aveva 252 di suo, i verbi 247,2 di somma, e sopra
+ * la rotella c'era un campo «digita» che allungava solo quel lato.
+ *
+ * Adesso c'è un'aritmetica sola. Il verbo è l'unità: tre verbi e due stacchi
+ * fanno la colonna, e la rotella prende quel che avanza fra le due frecce.
+ * `src/styles/__tests__/altezze.test.ts` la fa tornare a ogni gate. */
 dialog.vitalita .zona-pollice {
+  --pollice-verbo: 84px;
+  --pollice-stacco: 12px;
+  --pollice-freccia: 44px;
+  --pollice-colonna: calc(3 * var(--pollice-verbo) + 2 * var(--pollice-stacco)); /* 276px */
+  --pollice-rotella: calc(
+    var(--pollice-colonna) - 2 * var(--pollice-freccia) - 2 * var(--pollice-stacco)
+  ); /* 164px */
   margin-top: auto;
   padding-top: var(--spazio-2);
   display: flex;
   gap: var(--spazio-2);
-  align-items: stretch;
-}
-dialog.vitalita .quanto {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-dialog.vitalita .riga-digita {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-dialog.vitalita .digita {
-  height: 44px;
-  width: 108px;
-  padding: 0 0.6rem;
-  font-family: var(--font-mono);
-  font-size: 1rem;
-  border: 1px solid var(--filetto);
-  border-radius: var(--raggio);
-  background: var(--superficie);
-  color: var(--inchiostro);
+  align-items: flex-start;
 }
 dialog.vitalita .verbi {
   flex: 1 1 0;
+  height: var(--pollice-colonna);
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: var(--pollice-stacco);
 }
+/* Nessuna altezza propria: i tre verbi si dividono la colonna in parti
+ * uguali. Scritta a mano, quell'altezza era il termine che si scollava. */
 dialog.vitalita .verbi button {
-  height: 76px;
+  flex: 1 1 0;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -765,14 +762,53 @@ dialog.vitalita .annuncio {
   clip-path: inset(50%);
 }
 
+/* La colonna della rotella: una freccia sopra, una sotto, e in mezzo i numeri
+ * che si girano col dito. Le frecce servono a chi vuole un passo per volta
+ * senza dosare un trascinamento — e sono anche la strada col mouse. */
+.rotella-colonna {
+  flex: none;
+  height: var(--pollice-colonna);
+  display: flex;
+  flex-direction: column;
+  gap: var(--pollice-stacco);
+}
+.rotella-colonna .freccia {
+  flex: none;
+  height: var(--pollice-freccia);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--superficie);
+  border: 1px solid var(--filetto);
+  border-radius: var(--raggio);
+  color: var(--inchiostro-tenue);
+  cursor: pointer;
+}
+.rotella-colonna .freccia:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
 /* La rotella: l'aggancio e l'inerzia li fa il browser, qui c'è solo la forma.
- * `.cifra` è alta quanto `PASSO` in `src/lib/rotella.ts` — se le due divergono
- * la rotella si ferma fra due numeri. */
+ * `--passo` è alto quanto `PASSO` in `src/lib/rotella.ts` — se le due
+ * divergono la rotella si ferma fra due numeri. È dichiarato una volta sola:
+ * cifra, banda e scarto scendono da lì invece di essere quattro numeri
+ * copiati che possono divergere in silenzio.
+ *
+ * L'altezza arriva dalla colonna del pollice. Il ripiego di 164px vale solo
+ * se un giorno la rotella venisse montata fuori da quella modale. */
 .rotella {
+  --passo: 40px;
+  --bordo: 1px;
+  --altezza: var(--pollice-rotella, 164px);
+  /* Lo scarto va contato sulla scatola *interna*: la pista e la banda vivono
+   * dentro il bordo, l'altezza lo comprende. Senza sottrarlo la banda finiva
+   * un pixel sotto la cifra — misurato in Chrome, 63px sopra e 61 sotto. */
+  --scarto: calc((var(--altezza) - 2 * var(--bordo) - var(--passo)) / 2);
   position: relative;
   width: 108px;
-  height: 252px;
-  border: 1px solid var(--filetto);
+  height: var(--altezza);
+  border: var(--bordo) solid var(--filetto);
   border-radius: var(--raggio);
   background: var(--superficie-incassata);
   overflow: hidden;
@@ -782,15 +818,16 @@ dialog.vitalita .annuncio {
   overflow-y: auto;
   scroll-snap-type: y mandatory;
   scrollbar-width: none;
-  /* (252 − 40) / 2: così la prima e l'ultima cifra arrivano sotto la banda. */
-  padding-block: 106px;
+  /* Mezza rotella meno mezza cifra: così la prima e l'ultima arrivano sotto
+   * la banda invece di fermarsi a un bordo. */
+  padding-block: var(--scarto);
 }
 .rotella .pista::-webkit-scrollbar {
   display: none;
 }
 .rotella .cifra {
-  height: 40px;
-  line-height: 40px;
+  height: var(--passo);
+  line-height: var(--passo);
   text-align: center;
   scroll-snap-align: center;
   font-family: var(--font-mono);
@@ -809,8 +846,8 @@ dialog.vitalita .annuncio {
   position: absolute;
   left: 0;
   right: 0;
-  top: 106px;
-  height: 40px;
+  top: var(--scarto);
+  height: var(--passo);
   border-top: 1px solid var(--lampo);
   border-bottom: 1px solid var(--lampo);
   pointer-events: none;

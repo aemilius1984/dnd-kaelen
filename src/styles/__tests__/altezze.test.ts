@@ -78,22 +78,68 @@ it('ogni parte è usata davvero dal layout, non solo dichiarata', () => {
 });
 
 it('i bersagli della modale non scendono sotto i 44px', () => {
-  // Il minimo per un dito. Le righe sono 56 e i verbi 76; i comandi dentro le
-  // righe sono 40, ma il bersaglio vero lì è la riga.
+  // Il minimo per un dito. Le righe sono 56; i comandi dentro le righe sono
+  // 40, ma il bersaglio vero lì è la riga. I verbi non dichiarano più
+  // un'altezza propria — la prendono dalla colonna — e per loro la guardia è
+  // l'aritmetica qui sotto, che li tiene sopra gli 80.
   expect(corpo('dialog.vitalita .riga')).toMatch(/height:\s*56px/);
-  expect(corpo('dialog.vitalita .verbi button')).toMatch(/height:\s*76px/);
-  expect(corpo('dialog.vitalita .digita')).toMatch(/height:\s*44px/);
+  expect(costante('--pollice-freccia')).toBeGreaterThanOrEqual(44);
 });
 
-it('il passo della rotella nel CSS combacia con quello del modulo', () => {
-  // `PASSO` in src/lib/rotella.ts vale 40: se la cifra nel CSS fosse alta
-  // diversamente, la conversione fra posizione e numero indicherebbe la
-  // cifra sbagliata e la rotella sembrerebbe fermarsi in mezzo.
+/** Il valore in px di una costante della zona del pollice. */
+function costante(nome: string): number {
+  const trovato = new RegExp(`${nome}:\\s*(\\d+)px`).exec(corpo('dialog.vitalita .zona-pollice'));
+  if (!trovato) throw new Error(`costante non dichiarata: ${nome}`);
+  return Number(trovato[1]);
+}
+
+it('le due colonne della zona del pollice sono alte uguali', () => {
+  // «Allineato e bilanciato» vuol dire che rotella e verbi cominciano e
+  // finiscono sulla stessa riga. Due altezze scritte a mano si scollano al
+  // primo ritocco; qui c'è una sola aritmetica, e questa guardia è il posto
+  // dove si rompe se qualcuno tocca un termine e non gli altri.
+  const verbo = costante('--pollice-verbo');
+  const stacco = costante('--pollice-stacco');
+  const freccia = costante('--pollice-freccia');
+
+  const colonna = 3 * verbo + 2 * stacco;
+  const rotella = colonna - 2 * freccia - 2 * stacco;
+
+  // La colonna della rotella: freccia, rotella, freccia, con due stacchi.
+  expect(freccia * 2 + rotella + stacco * 2).toBe(colonna);
+  // E la rotella deve restare abbastanza alta da mostrare la cifra scelta con
+  // una sopra e una sotto: sotto tre passi non si legge più come una rotella.
+  const passo = passoDelModulo();
+  expect(rotella).toBeGreaterThanOrEqual(passo * 3);
+  // La banda di selezione sta esattamente in mezzo, e ci deve stare intera.
+  // Il conto è sulla scatola interna: i due bordi della rotella stanno dentro
+  // l'altezza ma fuori dalla pista, ed è per averli dimenticati che la banda
+  // cadeva un pixel sotto la cifra.
+  const bordi = 2;
+  expect((rotella - bordi - passo) % 2).toBe(0);
+  expect(corpo('.rotella')).toMatch(/--scarto:\s*calc\(\(var\(--altezza\) - 2 \* var\(--bordo\)/);
+});
+
+/** `PASSO` in src/lib/rotella.ts, la sola fonte del passo. */
+function passoDelModulo(): number {
   const passo = /export const PASSO = (\d+);/.exec(readFileSync('src/lib/rotella.ts', 'utf8'));
   if (!passo) throw new Error('PASSO non trovato');
+  return Number(passo[1]);
+}
 
-  expect(corpo('.rotella .cifra')).toMatch(new RegExp(`height:\\s*${passo[1]}px`));
-  expect(corpo('.rotella .banda')).toMatch(new RegExp(`height:\\s*${passo[1]}px`));
+it('il passo della rotella nel CSS combacia con quello del modulo', () => {
+  // Se il passo nel CSS fosse diverso, la conversione fra posizione e numero
+  // indicherebbe la cifra sbagliata e la rotella sembrerebbe fermarsi in
+  // mezzo. Nel CSS il passo è dichiarato una volta sola, `--passo`, e da lì
+  // scendono cifra, banda e lo scarto sopra e sotto la pista: prima erano
+  // quattro numeri copiati che potevano divergere in silenzio.
+  expect(corpo('.rotella')).toMatch(new RegExp(`--passo:\\s*${passoDelModulo()}px`));
+
+  for (const regola of ['.rotella .cifra', '.rotella .banda']) {
+    expect(corpo(regola)).toMatch(/height:\s*var\(--passo\)/);
+  }
+  expect(corpo('.rotella .pista')).toMatch(/padding-block:\s*var\(--scarto\)/);
+  expect(corpo('.rotella .banda')).toMatch(/top:\s*var\(--scarto\)/);
 });
 
 it('nessun dialogo dichiara `display` fuori dallo stato aperto', () => {

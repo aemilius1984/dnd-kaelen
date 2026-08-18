@@ -139,3 +139,63 @@ it('non legge la pista prima che il browser l’abbia disposta', async () => {
 
   expect(letto).toHaveLength(prima);
 });
+
+const freccia = (verso: 'su' | 'giu') =>
+  radice.querySelector<HTMLButtonElement>(`.freccia-${verso}`)!;
+
+it('i bottoni con la freccia girano di uno al click', async () => {
+  // La strada col dito, senza dosare un trascinamento — e la sola strada col
+  // mouse ora che il campo da digitare non c'è più.
+  monta(4);
+  await giro();
+
+  freccia('su').click();
+  await giro();
+  expect(letto).toContain(5);
+
+  freccia('giu').click();
+  await giro();
+  expect(letto).toContain(3);
+});
+
+it('spegne la freccia che porterebbe fuori dall’intervallo', async () => {
+  // Un bottone che non fa niente è peggio di un bottone assente: dice che
+  // c'è ancora strada dove non ce n'è.
+  monta(MASSIMO);
+  await giro();
+
+  expect(freccia('su').disabled).toBe(true);
+  expect(freccia('giu').disabled).toBe(false);
+});
+
+it('non prende per scelta una posizione che non ha mai potuto scrivere', async () => {
+  // Il difetto che in pagina si leggeva «SPENDI 0». La modale chiusa tiene la
+  // pista fuori dal layout, e lì `scrollTop` scritto non attacca: quando la
+  // modale si apre la pista è ferma a zero, e quello zero non è la cifra di
+  // nessuno. Preso per buono, azzerava la quantità appena si guardava.
+  //
+  // Qui la pista si finge fuori dal layout — la scrittura non attacca e la
+  // lettura dà sempre zero — e poi le si danno le misure, come all'apertura.
+  // In jsdom `scrollTop` è definito su `Element.prototype`, non su quello di
+  // `HTMLElement`: cercarlo dove non è restituisce `undefined`, e a rimetterlo
+  // a posto il test fallisce per il motivo sbagliato.
+  const vero = Object.getOwnPropertyDescriptor(Element.prototype, 'scrollTop')!;
+  Object.defineProperty(Element.prototype, 'scrollTop', {
+    configurable: true,
+    get: () => 0,
+    set: () => {},
+  });
+
+  try {
+    monta(7);
+    await giro();
+    disponi();
+
+    pista().dispatchEvent(new Event('scroll'));
+    await giro();
+
+    expect(letto).not.toContain(MINIMO);
+  } finally {
+    Object.defineProperty(Element.prototype, 'scrollTop', vero);
+  }
+});
