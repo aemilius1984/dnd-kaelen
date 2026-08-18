@@ -59,7 +59,7 @@ it('toccare il riepilogo apre la modale', async () => {
 });
 
 it('il riepilogo segue lo stato quando cambia da fuori', async () => {
-  muta((x) => applicaDanno(x, 5));
+  muta((x) => applicaDanno(x, pg, 5));
   await giro();
 
   expect(scheda().textContent).toContain(String(pg.pfMax - 5));
@@ -96,7 +96,7 @@ it('il danno toglie esattamente la quantità scelta', async () => {
 });
 
 it('la cura non porta oltre il massimo', async () => {
-  muta((x) => applicaDanno(x, 3));
+  muta((x) => applicaDanno(x, pg, 3));
   await scegli(30);
   verbo('cura').click();
   await giro();

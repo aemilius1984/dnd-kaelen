@@ -30,7 +30,7 @@ describe('store del browser', () => {
   it('persiste le mutazioni', async () => {
     const { assicuraInizializzato, muta, stato, CHIAVE } = await import('@/lib/storage');
     assicuraInizializzato();
-    muta((s) => applicaDanno(s, 4));
+    muta((s) => applicaDanno(s, pg, 4));
     expect(stato.value.pf).toBe(17);
     expect(JSON.parse(localStorage.getItem(CHIAVE)!).pf).toBe(17);
   });
@@ -38,7 +38,7 @@ describe('store del browser', () => {
   it("segnala l'azzeramento quando cambia la versione della scheda", async () => {
     const primo = await import('@/lib/storage');
     primo.assicuraInizializzato();
-    primo.muta((s) => applicaDanno(s, 4));
+    primo.muta((s) => applicaDanno(s, pg, 4));
     vi.resetModules();
     montaDati('v-nuova');
     const secondo = await import('@/lib/storage');

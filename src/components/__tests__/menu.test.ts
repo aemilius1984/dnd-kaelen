@@ -1,5 +1,6 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { SCHEMA_VERSION } from '@/lib/sheet-state';
 
 /** Il markup si guarda sul costruito, per la stessa ragione di
  *  `scheda.test.ts`: sotto vitest le content collection sono vuote e la
@@ -60,7 +61,10 @@ describe('la barra e le sue scorciatoie', () => {
 
   it('il colofone porta la versione dello schema, non un numero copiato', () => {
     expect(MENU).toContain('SCHEMA_VERSION');
-    expect(dist('scheda')).toContain('schema v2');
+    // Agganciato alla costante, non al numero: quando lo schema avanza — ed
+    // è avanzato a 3 col nuovo stato a 0 PF — questa prova segue da sé
+    // invece di diventare rossa per un motivo che non c'entra.
+    expect(dist('scheda')).toContain(`schema v${SCHEMA_VERSION}`);
   });
 });
 

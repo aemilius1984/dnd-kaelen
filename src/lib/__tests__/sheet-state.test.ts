@@ -15,6 +15,7 @@ import {
   riposoBreve,
   riposoLungo,
   segnaTsMorte,
+  tiroMorte,
   spendiDadoVitaConCura,
   spendiSlot,
   statoIniziale,
@@ -54,18 +55,18 @@ describe('stato iniziale', () => {
 describe('punti ferita', () => {
   it('consuma prima i PF temporanei', () => {
     s = impostaPfTemporanei(s, 3);
-    s = applicaDanno(s, 5);
+    s = applicaDanno(s, pg, 5);
     expect(s.pfTemporanei).toBe(0);
     expect(s.pf).toBe(19);
   });
 
   it('non scende sotto zero', () => {
-    s = applicaDanno(s, 50);
+    s = applicaDanno(s, pg, pg.pfMax);
     expect(s.pf).toBe(0);
   });
 
   it('non cura oltre il massimo', () => {
-    s = applicaDanno(s, 5);
+    s = applicaDanno(s, pg, 5);
     s = applicaCura(s, pg, 100);
     expect(s.pf).toBe(21);
   });
@@ -73,29 +74,33 @@ describe('punti ferita', () => {
   it('ignora un danno negativo: non genera PF temporanei dal nulla', () => {
     // Il campo "Quantità" del pannello azioni non impedisce un numero
     // negativo: applicaDanno deve scartarlo, non trasformarlo in cura.
-    s = applicaDanno(s, -5);
+    s = applicaDanno(s, pg, -5);
     expect(s.pfTemporanei).toBe(0);
     expect(s.pf).toBe(21);
   });
 
   it('ignora una cura negativa: non riduce i PF', () => {
-    s = applicaDanno(s, 5);
+    s = applicaDanno(s, pg, 5);
     s = applicaCura(s, pg, -3);
     expect(s.pf).toBe(16);
   });
 
   it('azzera i tiri salvezza contro morte quando risale sopra zero', () => {
-    s = applicaDanno(s, 50);
+    s = applicaDanno(s, pg, pg.pfMax);
     s = segnaTsMorte(s, 'fallimento');
     expect(s.tsMorte.fallimenti).toBe(1);
     s = applicaCura(s, pg, 1);
     expect(s.tsMorte).toEqual({ successi: 0, fallimenti: 0 });
   });
 
-  it('non supera tre tiri salvezza contro morte', () => {
-    s = applicaDanno(s, 50);
+  it('il terzo fallimento non si accumula: uccide', () => {
+    // Prima i contatori si fermavano a tre e lì restavano. Ora il terzo segno
+    // è una transizione — `statoVitale` diventa `morto` e i contatori tornano
+    // a zero — quindi per lato ne bastano due.
+    s = applicaDanno(s, pg, pg.pfMax);
     for (let i = 0; i < 4; i++) s = segnaTsMorte(s, 'fallimento');
-    expect(s.tsMorte.fallimenti).toBe(3);
+    expect(s.statoVitale).toBe('morto');
+    expect(s.tsMorte.fallimenti).toBeLessThanOrEqual(2);
   });
 });
 
@@ -135,7 +140,7 @@ describe('riposi', () => {
     s = usaRisorsa(s, pg, 'incanalare');
     s = usaRisorsa(s, pg, 'ira-tempesta');
     s = spendiSlot(s, pg, 1, 'comando');
-    s = applicaDanno(s, 5);
+    s = applicaDanno(s, pg, 5);
     s = riposoBreve(s, pg);
     expect(s.risorseUsate['incanalare']).toBe(1);
     expect(s.risorseUsate['ira-tempesta']).toBe(1);
@@ -144,7 +149,7 @@ describe('riposi', () => {
   });
 
   it('il riposo lungo ripristina tutto e recupera metà dei dadi vita', () => {
-    s = applicaDanno(s, 10);
+    s = applicaDanno(s, pg, 10);
     s = impostaPfTemporanei(s, 4);
     s = spendiSlot(s, pg, 2, 'frantumare');
     s = usaRisorsa(s, pg, 'ira-tempesta');
@@ -229,21 +234,24 @@ describe('incantesimi preparati', () => {
 
 describe('caricamento e versioning', () => {
   it('conserva lo stato quando la versione della scheda non è cambiata', () => {
-    s = applicaDanno(s, 7);
+    s = applicaDanno(s, pg, 7);
     const { stato, azzerato } = carica(JSON.stringify(s), pg, VERSIONE);
     expect(azzerato).toBe(false);
     expect(stato.pf).toBe(14);
   });
 
   it('azzera lo stato quando la scheda è stata ripubblicata', () => {
-    s = applicaDanno(s, 7);
+    s = applicaDanno(s, pg, 7);
     const { stato, azzerato } = carica(JSON.stringify(s), pg, 'altra-versione');
     expect(azzerato).toBe(true);
     expect(stato.pf).toBe(21);
   });
 
-  it('azzera lo stato quando cambia lo schema', () => {
-    const vecchio = JSON.stringify({ ...s, schemaVersion: SCHEMA_VERSION - 1 });
+  it('azzera lo stato quando lo schema non è migrabile', () => {
+    // Lo schema 2 adesso si migra — la prova sta più sotto. Questa guardia
+    // vale per una versione che non sappiamo leggere: lì azzerare è l'unica
+    // cosa onesta.
+    const vecchio = JSON.stringify({ ...s, schemaVersion: 1 });
     expect(carica(vecchio, pg, VERSIONE).azzerato).toBe(true);
   });
 
@@ -265,7 +273,7 @@ describe('hash dei dati', () => {
 describe('dadi vita spesi durante il riposo breve', () => {
   it('spende un dado e cura del totale tirato al tavolo', () => {
     const pg = caricaPersonaggioDaFile();
-    const s = applicaDanno(statoIniziale(pg, 'v'), 10);
+    const s = applicaDanno(statoIniziale(pg, 'v'), pg, 10);
     const dopo = spendiDadoVitaConCura(s, pg, 6);
     expect(dopo.dadiVitaSpesi).toBe(1);
     expect(dopo.pf).toBe(s.pf + 6);
@@ -273,20 +281,20 @@ describe('dadi vita spesi durante il riposo breve', () => {
 
   it('cura almeno 1 PF anche con un totale minore', () => {
     const pg = caricaPersonaggioDaFile();
-    const s = applicaDanno(statoIniziale(pg, 'v'), 10);
+    const s = applicaDanno(statoIniziale(pg, 'v'), pg, 10);
     expect(spendiDadoVitaConCura(s, pg, 0).pf).toBe(s.pf + 1);
     expect(spendiDadoVitaConCura(s, pg, -3).pf).toBe(s.pf + 1);
   });
 
   it('non supera i punti ferita massimi', () => {
     const pg = caricaPersonaggioDaFile();
-    const s = applicaDanno(statoIniziale(pg, 'v'), 2);
+    const s = applicaDanno(statoIniziale(pg, 'v'), pg, 2);
     expect(spendiDadoVitaConCura(s, pg, 9).pf).toBe(pg.pfMax);
   });
 
   it('non fa nulla se non restano dadi vita', () => {
     const pg = caricaPersonaggioDaFile();
-    let s = applicaDanno(statoIniziale(pg, 'v'), 10);
+    let s = applicaDanno(statoIniziale(pg, 'v'), pg, 10);
     for (let i = 0; i < pg.numeroDadiVita; i++) s = spendiDadoVitaConCura(s, pg, 4);
     // Convenzione del file per i mutatori bloccati: stesso riferimento in
     // uscita, non solo lo stesso valore — vedi la riga 108-109 sopra.
@@ -342,5 +350,162 @@ describe('Ispirazione Eroica', () => {
 
   it('nemmeno il riposo breve', () => {
     expect(riposoBreve(impostaIspirazione(s, true), pg).ispirazione).toBe(true);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────
+// Lo stato a 0 PF, secondo docs/superpowers/specs/2026-08-18-regole-kaelen-chierico.md
+// ─────────────────────────────────────────────────────────────────────────
+
+describe('la macchina a stati della vitalità', () => {
+  const vivo = () => statoIniziale(pg, 'v');
+
+  it('si comincia coscienti', () => {
+    expect(vivo().statoVitale).toBe('cosciente');
+  });
+
+  it('il danno che porta a zero rende incoscienti e apre i TS', () => {
+    const s = applicaDanno(vivo(), pg, pg.pfMax);
+
+    expect(s.pf).toBe(0);
+    expect(s.statoVitale).toBe('incosciente');
+    expect(s.tsMorte).toEqual({ successi: 0, fallimenti: 0 });
+  });
+
+  it('un colpo il cui residuo oltre lo zero arriva ai PF massimi uccide sul posto', () => {
+    // Morte istantanea: non si passa dai tiri salvezza.
+    const s = applicaDanno(vivo(), pg, pg.pfMax * 2);
+
+    expect(s.statoVitale).toBe('morto');
+  });
+
+  it('e un colpo che arriva a zero senza quel residuo no', () => {
+    const s = applicaDanno(vivo(), pg, pg.pfMax + (pg.pfMax - 1));
+
+    expect(s.statoVitale).toBe('incosciente');
+  });
+
+  it('il danno subito a terra vale un fallimento, il critico due', () => {
+    const giu = applicaDanno(vivo(), pg, pg.pfMax);
+
+    expect(applicaDanno(giu, pg, 3).tsMorte.fallimenti).toBe(1);
+    expect(applicaDanno(giu, pg, 3, true).tsMorte.fallimenti).toBe(2);
+  });
+
+  it('chi è stabile e viene colpito torna incosciente con un fallimento', () => {
+    let s = applicaDanno(vivo(), pg, pg.pfMax);
+    for (let i = 0; i < 3; i++) s = segnaTsMorte(s, 'successo');
+    expect(s.statoVitale).toBe('stabile');
+
+    s = applicaDanno(s, pg, 2);
+
+    expect(s.statoVitale).toBe('incosciente');
+    expect(s.tsMorte.fallimenti).toBe(1);
+  });
+
+  it('tre successi rendono stabili e azzerano i contatori', () => {
+    let s = applicaDanno(vivo(), pg, pg.pfMax);
+    for (let i = 0; i < 3; i++) s = segnaTsMorte(s, 'successo');
+
+    expect(s.statoVitale).toBe('stabile');
+    expect(s.tsMorte).toEqual({ successi: 0, fallimenti: 0 });
+  });
+
+  it('tre fallimenti uccidono', () => {
+    let s = applicaDanno(vivo(), pg, pg.pfMax);
+    for (let i = 0; i < 3; i++) s = segnaTsMorte(s, 'fallimento');
+
+    expect(s.statoVitale).toBe('morto');
+  });
+
+  it('una cura che riporta sopra zero rimette coscienti e azzera i contatori', () => {
+    let s = applicaDanno(vivo(), pg, pg.pfMax);
+    s = segnaTsMorte(s, 'fallimento');
+
+    s = applicaCura(s, pg, 4);
+
+    expect(s.statoVitale).toBe('cosciente');
+    expect(s.tsMorte).toEqual({ successi: 0, fallimenti: 0 });
+  });
+
+  it('a zero PF non si spendono dadi vita', () => {
+    // Il Riposo Breve richiede almeno 1 PF: da terra non ci si cura da soli.
+    const giu = applicaDanno(vivo(), pg, pg.pfMax);
+
+    expect(spendiDadoVitaConCura(giu, pg, 5)).toBe(giu);
+  });
+});
+
+describe('il tiro salvezza contro morte prende il d20 grezzo', () => {
+  const giu = () => applicaDanno(statoIniziale(pg, 'v'), pg, pg.pfMax);
+
+  it('da 10 in su è un successo, sotto è un fallimento', () => {
+    expect(tiroMorte(giu(), 10).tsMorte.successi).toBe(1);
+    expect(tiroMorte(giu(), 19).tsMorte.successi).toBe(1);
+    expect(tiroMorte(giu(), 9).tsMorte.fallimenti).toBe(1);
+    expect(tiroMorte(giu(), 2).tsMorte.fallimenti).toBe(1);
+  });
+
+  it('un 1 naturale vale due fallimenti', () => {
+    // È la ragione per cui questa funzione prende il numero e non l'esito:
+    // «fallimento» non basta a dire cosa è successo.
+    expect(tiroMorte(giu(), 1).tsMorte.fallimenti).toBe(2);
+  });
+
+  it('un 20 naturale rimette in piedi a 1 PF', () => {
+    const s = tiroMorte(giu(), 20);
+
+    expect(s.pf).toBe(1);
+    expect(s.statoVitale).toBe('cosciente');
+    expect(s.tsMorte).toEqual({ successi: 0, fallimenti: 0 });
+  });
+
+  it('non si tira da coscienti, da stabili o da morti', () => {
+    const su = statoIniziale(pg, 'v');
+    expect(tiroMorte(su, 3)).toBe(su);
+
+    let stabile = giu();
+    for (let i = 0; i < 3; i++) stabile = segnaTsMorte(stabile, 'successo');
+    expect(tiroMorte(stabile, 3)).toBe(stabile);
+  });
+
+  it('un numero che non è un d20 non è un tiro', () => {
+    const s = giu();
+    expect(tiroMorte(s, 0)).toBe(s);
+    expect(tiroMorte(s, 21)).toBe(s);
+  });
+});
+
+describe('la migrazione dallo schema 2', () => {
+  const v2 = (extra: Record<string, unknown>) =>
+    JSON.stringify({ ...statoIniziale(pg, 'v'), schemaVersion: 2, ...extra });
+
+  it('una sessione sana non si perde: si migra', () => {
+    // «Migrare ciò che è inequivocabile e azzerare soltanto quando la
+    // migrazione non è sicura» — se aggiungere un campo cancellasse la
+    // sessione, a metà campagna si perderebbero PF, slot e note.
+    const { stato, azzerato } = carica(v2({ pf: 12, note: 'la nave' }), pg, 'v');
+
+    expect(azzerato).toBe(false);
+    expect(stato.pf).toBe(12);
+    expect(stato.note).toBe('la nave');
+    expect(stato.schemaVersion).toBe(SCHEMA_VERSION);
+    expect(stato.statoVitale).toBe('cosciente');
+  });
+
+  it('a zero PF deduce lo stato dai contatori vecchi', () => {
+    expect(carica(v2({ pf: 0 }), pg, 'v').stato.statoVitale).toBe('incosciente');
+    expect(
+      carica(v2({ pf: 0, tsMorte: { successi: 3, fallimenti: 0 } }), pg, 'v').stato.statoVitale,
+    ).toBe('stabile');
+    expect(
+      carica(v2({ pf: 0, tsMorte: { successi: 0, fallimenti: 3 } }), pg, 'v').stato.statoVitale,
+    ).toBe('morto');
+  });
+
+  it('ma una scheda cambiata azzera lo stesso', () => {
+    // La migrazione riguarda la forma dello stato, non i dati del personaggio:
+    // se cambia `sheetVersion` i numeri salvati non valgono più.
+    expect(carica(v2({ pf: 12 }), pg, 'altra').azzerato).toBe(true);
   });
 });

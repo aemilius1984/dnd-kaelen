@@ -1,6 +1,11 @@
 import type { Personaggio } from './schema';
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
+
+/** Dove sta Kaelen rispetto alla morte. È un campo suo e non una deduzione dai
+ *  PF, perché a 0 PF ci sono tre situazioni diverse — si tira, si è stabili, si
+ *  è morti — e i punti ferita sono zero in tutte e tre. */
+export type StatoVitale = 'cosciente' | 'incosciente' | 'stabile' | 'morto';
 
 /** Lo slot speso a mano dal pannello azioni non ha un incantesimo dietro, ma
  *  occupa comunque una casella. Il carattere `:` non può comparire in uno
@@ -14,6 +19,9 @@ export interface StatoSessione {
   pf: number;
   pfTemporanei: number;
   dadiVitaSpesi: number;
+  statoVitale: StatoVitale;
+  /** Solo 0..2 per contatore: il terzo segno non si accumula, cambia
+   *  `statoVitale` e azzera entrambi. */
   tsMorte: { successi: number; fallimenti: number };
   /** Per ogni livello, gli slug degli incantesimi che ne hanno bruciato uno
    *  slot, in ordine cronologico. Un elenco e non un conteggio perché la
@@ -40,6 +48,7 @@ export function statoIniziale(pg: Personaggio, sheetVersion: string): StatoSessi
     pf: pg.pfMax,
     pfTemporanei: 0,
     dadiVitaSpesi: 0,
+    statoVitale: 'cosciente',
     tsMorte: { successi: 0, fallimenti: 0 },
     slotSpesi: Object.fromEntries(pg.slot.map((s) => [s.livello, []])),
     risorseUsate: Object.fromEntries(pg.risorse.map((r) => [r.id, 0])),
@@ -56,6 +65,26 @@ function aggiorna(s: StatoSessione, patch: Partial<StatoSessione>): StatoSession
   return { ...s, ...patch, aggiornatoIl: adesso() };
 }
 
+/** Dallo schema 2 al 3: l'unica novità è `statoVitale`, e a 0 PF si deduce dai
+ *  contatori vecchi senza ambiguità — tre fallimenti erano la morte, tre
+ *  successi la stabilità, il resto è un tiro ancora aperto. */
+function migraDa2(v2: StatoSessione): StatoSessione {
+  const ts = v2.tsMorte ?? { successi: 0, fallimenti: 0 };
+  let statoVitale: StatoVitale = 'cosciente';
+  let tsMorte = { successi: 0, fallimenti: 0 };
+
+  if (v2.pf <= 0) {
+    if (ts.fallimenti >= 3) statoVitale = 'morto';
+    else if (ts.successi >= 3) statoVitale = 'stabile';
+    else {
+      statoVitale = 'incosciente';
+      tsMorte = { successi: Math.min(2, ts.successi), fallimenti: Math.min(2, ts.fallimenti) };
+    }
+  }
+
+  return { ...v2, schemaVersion: SCHEMA_VERSION, statoVitale, tsMorte, aggiornatoIl: adesso() };
+}
+
 export function carica(
   raw: string | null,
   pg: Personaggio,
@@ -64,10 +93,17 @@ export function carica(
   if (!raw) return { stato: statoIniziale(pg, sheetVersion), azzerato: false };
   try {
     const salvato = JSON.parse(raw) as StatoSessione;
-    const compatibile =
-      salvato?.schemaVersion === SCHEMA_VERSION && salvato?.sheetVersion === sheetVersion;
-    if (!compatibile) return { stato: statoIniziale(pg, sheetVersion), azzerato: true };
-    return { stato: salvato, azzerato: false };
+    // I dati del personaggio sono cambiati: i numeri salvati non valgono più,
+    // e nessuna migrazione può indovinarli.
+    if (salvato?.sheetVersion !== sheetVersion) {
+      return { stato: statoIniziale(pg, sheetVersion), azzerato: true };
+    }
+    if (salvato.schemaVersion === SCHEMA_VERSION) return { stato: salvato, azzerato: false };
+    // La forma dello stato è cambiata, i dati no: si migra ciò che è
+    // inequivocabile e si azzera solo dove non lo è. Aggiungere un campo non
+    // deve costare PF, slot e note a metà campagna.
+    if (salvato.schemaVersion === 2) return { stato: migraDa2(salvato), azzerato: false };
+    return { stato: statoIniziale(pg, sheetVersion), azzerato: true };
   } catch {
     return { stato: statoIniziale(pg, sheetVersion), azzerato: true };
   }
@@ -77,14 +113,39 @@ export function impostaPfTemporanei(s: StatoSessione, n: number): StatoSessione 
   return aggiorna(s, { pfTemporanei: Math.max(0, n) });
 }
 
-export function applicaDanno(s: StatoSessione, n: number): StatoSessione {
+export function applicaDanno(
+  s: StatoSessione,
+  pg: Personaggio,
+  n: number,
+  critico = false,
+): StatoSessione {
   // `n` viene anche da un campo libero nel pannello azioni: un valore
   // negativo non è "cura mascherata da danno", è un input da scartare.
   const danno = Math.max(0, n);
+  if (danno === 0 || s.statoVitale === 'morto') return s;
+
+  // Già a terra: il danno non toglie punti ferita che non ci sono, segna
+  // fallimenti. Un critico ne segna due, e un colpo abbastanza grosso uccide
+  // comunque sul posto.
+  if (s.pf === 0) {
+    if (danno >= pg.pfMax) return aggiorna(s, { statoVitale: 'morto', ...AZZERA_TS });
+    let out = s.statoVitale === 'stabile' ? aggiorna(s, { statoVitale: 'incosciente' }) : s;
+    for (let i = 0; i < (critico ? 2 : 1); i++) out = segnaTsMorte(out, 'fallimento');
+    return out;
+  }
+
   const assorbito = Math.min(s.pfTemporanei, danno);
+  const aiPf = danno - assorbito;
+  const pfTemporanei = s.pfTemporanei - assorbito;
+  if (aiPf < s.pf) return aggiorna(s, { pfTemporanei, pf: s.pf - aiPf });
+
+  // Morte istantanea: conta il danno che avanza *dopo* aver azzerato i PF.
+  const residuo = aiPf - s.pf;
   return aggiorna(s, {
-    pfTemporanei: s.pfTemporanei - assorbito,
-    pf: Math.max(0, s.pf - (danno - assorbito)),
+    pfTemporanei,
+    pf: 0,
+    statoVitale: residuo >= pg.pfMax ? 'morto' : 'incosciente',
+    ...AZZERA_TS,
   });
 }
 
@@ -92,15 +153,43 @@ export function applicaCura(s: StatoSessione, pg: Personaggio, n: number): Stato
   // Stessa guardia di applicaDanno: un input negativo non deve poter
   // sottrarre PF da qui.
   const pf = Math.min(pg.pfMax, s.pf + Math.max(0, n));
-  const tsMorte = pf > 0 ? { successi: 0, fallimenti: 0 } : s.tsMorte;
-  return aggiorna(s, { pf, tsMorte });
+  if (pf === 0) return aggiorna(s, { pf });
+  // Vale anche da `morto`. È una deviazione consapevole dal manuale: questo è
+  // un tabellone da tavolo, e un «morto» segnato per sbaglio senza altra via
+  // d'uscita che azzerare la sessione farebbe più danni della regola.
+  return aggiorna(s, { pf, statoVitale: 'cosciente', ...AZZERA_TS });
 }
 
+const AZZERA_TS = { tsMorte: { successi: 0, fallimenti: 0 } } as const;
+
+/** Un segno solo sul tabellone dei TS morte. È la primitiva: `tiroMorte` le
+ *  passa sopra e traduce un d20 in uno o due segni. Il terzo non si accumula —
+ *  cambia stato e azzera i contatori, che è perché ne bastano due per lato. */
 export function segnaTsMorte(s: StatoSessione, esito: 'successo' | 'fallimento'): StatoSessione {
+  if (s.statoVitale !== 'incosciente') return s;
   const tsMorte = { ...s.tsMorte };
-  if (esito === 'successo') tsMorte.successi = Math.min(3, tsMorte.successi + 1);
-  else tsMorte.fallimenti = Math.min(3, tsMorte.fallimenti + 1);
+
+  if (esito === 'successo') {
+    tsMorte.successi += 1;
+    if (tsMorte.successi >= 3) return aggiorna(s, { statoVitale: 'stabile', ...AZZERA_TS });
+  } else {
+    tsMorte.fallimenti += 1;
+    if (tsMorte.fallimenti >= 3) return aggiorna(s, { statoVitale: 'morto', ...AZZERA_TS });
+  }
+
   return aggiorna(s, { tsMorte });
+}
+
+/** Il tiro salvezza contro morte, preso come esce dal dado. Non basta sapere
+ *  se ha passato: un 1 naturale vale due fallimenti e un 20 naturale rimette
+ *  in piedi, e nessuno dei due si può dedurre da «successo» o «fallimento». */
+export function tiroMorte(s: StatoSessione, d20: number): StatoSessione {
+  if (s.statoVitale !== 'incosciente') return s;
+  const tiro = Math.round(d20);
+  if (tiro < 1 || tiro > 20) return s;
+  if (tiro === 20) return aggiorna(s, { pf: 1, statoVitale: 'cosciente', ...AZZERA_TS });
+  if (tiro === 1) return segnaTsMorte(segnaTsMorte(s, 'fallimento'), 'fallimento');
+  return segnaTsMorte(s, tiro >= 10 ? 'successo' : 'fallimento');
 }
 
 /** Il manuale (PHB 2024, p. 372) fa spendere i dadi vita *durante* il riposo
@@ -111,7 +200,8 @@ export function spendiDadoVitaConCura(
   pg: Personaggio,
   pf: number,
 ): StatoSessione {
-  if (s.dadiVitaSpesi >= pg.numeroDadiVita) return s;
+  // Il Riposo Breve richiede almeno 1 PF: da terra non ci si cura da soli.
+  if (s.pf === 0 || s.dadiVitaSpesi >= pg.numeroDadiVita) return s;
   return aggiorna(s, {
     dadiVitaSpesi: s.dadiVitaSpesi + 1,
     pf: Math.min(pg.pfMax, s.pf + Math.max(1, pf)),

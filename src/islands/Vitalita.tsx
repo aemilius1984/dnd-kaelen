@@ -103,7 +103,7 @@ export default function Vitalita() {
             <button
               type="button"
               class="verbo-danno"
-              onClick={() => applica((x) => applicaDanno(x, quanto), quanto, 'Danno')}
+              onClick={() => applica((x) => applicaDanno(x, pg, quanto), quanto, 'Danno')}
             >
               <span class="nome">Danno</span>
               <span class="effetto">toglie {quanto} PF</span>

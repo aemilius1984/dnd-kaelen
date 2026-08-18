@@ -59,10 +59,10 @@ export default function PannelloAzioni() {
 
         <h4>In combattimento</h4>
         <div class="riga">
-          <button type="button" onClick={() => muta((x) => applicaDanno(x, 1))}>
+          <button type="button" onClick={() => muta((x) => applicaDanno(x, pg, 1))}>
             −1
           </button>
-          <button type="button" onClick={() => muta((x) => applicaDanno(x, 5))}>
+          <button type="button" onClick={() => muta((x) => applicaDanno(x, pg, 5))}>
             −5
           </button>
           <input
@@ -72,7 +72,7 @@ export default function PannelloAzioni() {
             value={quanto}
             onInput={(e) => setQuanto(Number(e.currentTarget.value))}
           />
-          <button type="button" onClick={() => muta((x) => applicaDanno(x, quanto))}>
+          <button type="button" onClick={() => muta((x) => applicaDanno(x, pg, quanto))}>
             Danno
           </button>
           <button type="button" onClick={() => muta((x) => applicaCura(x, pg, quanto))}>
