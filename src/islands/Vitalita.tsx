@@ -1,6 +1,6 @@
 import { useRef, useState } from 'preact/hooks';
 import Rotella from '@/islands/Rotella';
-import { MINIMO } from '@/lib/rotella';
+import { MASSIMO, MINIMO } from '@/lib/rotella';
 import type { StatoSessione } from '@/lib/sheet-state';
 import {
   applicaCura,
@@ -16,6 +16,13 @@ import { assicuraInizializzato, datiIniziali, muta, stato } from '@/lib/storage'
  *  Un'isola sola per entrambi, così c'è un solo posto che legge i PF — prima
  *  della riscrittura il tracker e il pannello ⚡ ne avevano due, già
  *  divergenti. */
+const NOME_STATO: Record<StatoSessione['statoVitale'], string> = {
+  cosciente: 'cosciente',
+  incosciente: 'incosciente · tira i TS',
+  stabile: 'stabile · non tira più',
+  morto: 'morto',
+};
+
 export default function Vitalita() {
   // `client:only="preact"`: nessun pre-render lato server.
   assicuraInizializzato();
@@ -23,25 +30,29 @@ export default function Vitalita() {
   const s = stato.value;
   const finestra = useRef<HTMLDialogElement>(null);
 
-  const [quanto, setQuanto] = useState(1);
+  const [quantoGrezzo, setQuanto] = useState(1);
   const [annuncio, setAnnuncio] = useState('');
 
   /** Applica un gesto e ne racconta l'esito. L'annuncio non è un extra: chi
-   *  non vede il numero cambiare non ha altro modo di sapere che è successo. */
-  const applica = (
-    fn: (x: StatoSessione) => StatoSessione,
-    quanti: number,
-    verbo: string,
-  ): void => {
+   *  non vede il numero cambiare non ha altro modo di sapere che è successo.
+   *  La frase arriva già fatta da chi chiama, perché i gesti non hanno tutti
+   *  la stessa forma — l'Ispirazione non ha una quantità, e un modello unico
+   *  le faceva recitare «Ispirazione presa 0». */
+  const applica = (fn: (x: StatoSessione) => StatoSessione, detto: string): void => {
     muta(fn);
-    setAnnuncio(`${verbo} ${quanti}. ${stato.value.pf} punti ferita.`);
+    setAnnuncio(`${detto} ${stato.value.pf} punti ferita.`);
   };
 
   const inPericolo = s.pf === 0;
   const aTerra = s.statoVitale === 'incosciente';
   // La stessa rotella serve due scopi: la quantità di PF, e il d20 del tiro
   // salvezza quando Kaelen è a terra. Cambiano gli estremi, non il gesto.
-  const estremi = aTerra ? { minimo: 1, massimo: 20 } : {};
+  const minimo = aTerra ? 1 : MINIMO;
+  const massimo = aTerra ? 20 : MASSIMO;
+  // Passando da un intervallo all'altro il numero scelto può restarne fuori:
+  // uno zero portato in un d20 non evidenzia nessuna cifra e mette
+  // `aria-valuenow` fuori dai limiti che la rotella dichiara.
+  const quanto = Math.min(massimo, Math.max(minimo, quantoGrezzo));
   const percentuale = pg.pfMax > 0 ? Math.min(100, Math.round((s.pf / pg.pfMax) * 100)) : 0;
 
   return (
@@ -91,6 +102,10 @@ export default function Vitalita() {
             pagina: senza questo blocco si applica un danno e il numero che è
             cambiato non è visibile da nessuna parte. */}
         <div class="stato">
+          {/* Tre dei quattro stati vitali hanno zero punti ferita: senza
+              questa riga «stabile» e «morto» sono indistinguibili da «sta
+              tirando i tiri salvezza». */}
+          <span class={`stato-vitale ${s.statoVitale}`}>{NOME_STATO[s.statoVitale]}</span>
           <span class="numero">
             <span class={inPericolo ? 'pf pericolo' : 'pf'}>{s.pf}</span>
             <span class="su">/ {pg.pfMax}</span>
@@ -114,10 +129,13 @@ export default function Vitalita() {
               type="button"
               disabled={s.pf === 0 || s.dadiVitaSpesi >= pg.numeroDadiVita}
               onClick={() =>
-                applica((x) => spendiDadoVitaConCura(x, pg, quanto), quanto, 'Dado vita')
+                applica(
+                  (x) => spendiDadoVitaConCura(x, pg, quanto),
+                  `Dado vita speso, cura ${quanto}.`,
+                )
               }
             >
-              Spendi
+              Spendi {quanto}
             </button>
           </div>
 
@@ -131,8 +149,7 @@ export default function Vitalita() {
               onClick={() =>
                 applica(
                   (x) => impostaIspirazione(x, !s.ispirazione),
-                  0,
-                  s.ispirazione ? 'Ispirazione spesa' : 'Ispirazione presa',
+                  s.ispirazione ? 'Ispirazione spesa.' : 'Ispirazione presa.',
                 )
               }
             >
@@ -151,7 +168,9 @@ export default function Vitalita() {
                   stia per essere applicato. */}
               <button
                 type="button"
-                onClick={() => applica((x) => tiroMorte(x, quanto), quanto, 'Tiro contro morte')}
+                onClick={() =>
+                  applica((x) => tiroMorte(x, quanto), `Tiro contro morte: ${quanto}.`)
+                }
               >
                 Tira {quanto}
               </button>
@@ -162,13 +181,14 @@ export default function Vitalita() {
         <div class="zona-pollice">
           <div class="quanto">
             <span class="kicker">quanto, e poi cosa</span>
-            <Rotella valore={quanto} onCambia={setQuanto} {...estremi} />
+            <Rotella valore={quanto} onCambia={setQuanto} minimo={minimo} massimo={massimo} />
             <label class="riga-digita">
               <span class="kicker">digita</span>
               <input
                 class="digita"
                 type="number"
-                min={MINIMO}
+                min={minimo}
+                max={massimo}
                 inputMode="numeric"
                 value={quanto}
                 onInput={(e) => {
@@ -176,7 +196,7 @@ export default function Vitalita() {
                   // Un campo vuoto non è «zero»: è una cifra a metà. Finché
                   // non arriva un numero, la quantità non si tocca.
                   if (grezzo === '') return;
-                  setQuanto(Math.max(MINIMO, Number(grezzo)));
+                  setQuanto(Math.max(minimo, Math.min(massimo, Number(grezzo))));
                 }}
               />
             </label>
@@ -186,7 +206,7 @@ export default function Vitalita() {
             <button
               type="button"
               class="verbo-danno"
-              onClick={() => applica((x) => applicaDanno(x, pg, quanto), quanto, 'Danno')}
+              onClick={() => applica((x) => applicaDanno(x, pg, quanto), `Danno di ${quanto}.`)}
             >
               <span class="nome">Danno</span>
               <span class="effetto">toglie {quanto} PF</span>
@@ -194,7 +214,7 @@ export default function Vitalita() {
             <button
               type="button"
               class="verbo-cura"
-              onClick={() => applica((x) => applicaCura(x, pg, quanto), quanto, 'Cura')}
+              onClick={() => applica((x) => applicaCura(x, pg, quanto), `Cura di ${quanto}.`)}
             >
               <span class="nome">Cura</span>
               <span class="effetto">rimette {quanto} PF</span>
@@ -202,7 +222,9 @@ export default function Vitalita() {
             <button
               type="button"
               class="verbo-temp"
-              onClick={() => applica((x) => impostaPfTemporanei(x, quanto), quanto, 'Temporanei')}
+              onClick={() =>
+                applica((x) => impostaPfTemporanei(x, quanto), `Temporanei a ${quanto}.`)
+              }
             >
               <span class="nome">Temporanei</span>
               <span class="effetto">imposta a {quanto}</span>

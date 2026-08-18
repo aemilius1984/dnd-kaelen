@@ -30,20 +30,43 @@ it('l’altezza riservata sta su markup statico, non sull’isola', () => {
 });
 
 it('l’altezza riservata della vitalità è la somma delle sue parti', () => {
-  // Le altre altezze riservate di questo progetto sono numeri *misurati* con
-  // Chrome headless, e una è già segnalata come incerta perché nessuna
-  // sessione recente ha avuto un browser. Questa no: è una somma di costanti
-  // dichiarate, e questo test la fa tornare. Se qualcuno cambia una riga senza
-  // aggiornare il totale, fallisce il gate invece di far saltare la pagina
-  // alla prima idratazione.
+  // Le altre riserve di questo progetto sono numeri *misurati* con Chrome
+  // headless, e una è già segnalata come incerta perché nessuna sessione
+  // recente ha avuto un browser. Questa no: è aritmetica dichiarata.
+  //
+  // La somma conta anche gli interstizi. Prima le righe si staccavano con dei
+  // margini, che stanno *fuori* dall'altezza dichiarata: il totale tornava
+  // sulla carta e sbagliava di diciotto pixel nella scatola vera. Con `gap` lo
+  // stacco è una costante come le altre, contata quattro volte.
   const blocco = corpo('.vitalita-isola');
+  const px = (nome: string): number => {
+    const m = new RegExp(`--v-${nome}:\\s*(\\d+)px`).exec(blocco);
+    if (!m) throw new Error(`costante mancante: --v-${nome}`);
+    return Number(m[1]);
+  };
 
-  const parti = [...blocco.matchAll(/--v-[a-z]+:\s*(\d+)px/g)].map((m) => Number(m[1]));
+  const righe = ['testata', 'numero', 'metro', 'tacche', 'piede'];
   const totale = /height:\s*(\d+)px/.exec(blocco);
-
-  expect(parti).toHaveLength(7);
   if (!totale) throw new Error('altezza fissa non dichiarata');
-  expect(parti.reduce((a, b) => a + b, 0)).toBe(Number(totale[1]));
+
+  const somma =
+    righe.reduce((a, nome) => a + px(nome), 0) +
+    (righe.length - 1) * px('stacco') +
+    px('imbottitura') +
+    px('bordi');
+
+  expect(somma).toBe(Number(totale[1]));
+});
+
+it('le righe della scheda non hanno margini, o la somma mentirebbe', () => {
+  // Un margine su una riga sfuggirebbe al conto qui sopra senza far fallire
+  // niente: il totale resterebbe giusto e la scatola vera sarebbe più alta.
+  const scheda = CSS.slice(CSS.indexOf('.vitalita-scheda {'), CSS.indexOf('dialog.vitalita {'));
+  const righe = scheda.split('.vitalita-scheda ').slice(1);
+
+  for (const regola of righe) {
+    expect(regola).not.toMatch(/^\s*[^}]*\bmargin-(top|bottom):/m);
+  }
 });
 
 it('ogni parte è usata davvero dal layout, non solo dichiarata', () => {

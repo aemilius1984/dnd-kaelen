@@ -245,3 +245,54 @@ it('i PF temporanei si vedono nella modale, non solo nel riepilogo', async () =>
 
   expect(dialogo().querySelector('.stato')!.textContent).toContain('5');
 });
+
+it('l’annuncio di un gesto senza quantità non recita uno zero', async () => {
+  // «Ispirazione presa 0. 21 punti ferita.» Lo zero era il parametro della
+  // quantità, che per l'Ispirazione non esiste: il modello era una frase sola
+  // per gesti che non hanno la stessa forma.
+  comando('isp').click();
+  await giro();
+
+  const annuncio = radice.querySelector('[aria-live]')!;
+  expect(annuncio.textContent).not.toMatch(/\s0\./);
+  expect(annuncio.textContent).toMatch(/ispirazione/i);
+});
+
+it('il comando dei dadi vita dice di quanto cura', async () => {
+  // Come «Tira 15» per i TS: il secondo tempo non si fa alla cieca.
+  muta((x) => applicaDanno(x, pg, 6));
+  await giro();
+  await scegli(5);
+
+  expect(comando('dadi').textContent).toContain('5');
+});
+
+it('la modale dice in che stato è Kaelen, non solo quanti PF ha', async () => {
+  // La macchina a stati ne ha quattro e a zero PF i punti ferita valgono zero
+  // in tre di essi: senza una riga che lo dica, «stabile» e «morto» sono
+  // indistinguibili da «sta tirando».
+  const stato = () => dialogo().querySelector('.stato-vitale')!;
+  expect(stato().textContent).toMatch(/cosciente/i);
+
+  await aTerra();
+  expect(stato().textContent).toMatch(/incosciente/i);
+
+  for (let i = 0; i < 3; i++) {
+    await scegli(15);
+    comando('ts').click();
+    await giro();
+  }
+  expect(stato().textContent).toMatch(/stabile/i);
+});
+
+it('cambiando intervallo la quantità entra nel nuovo intervallo', async () => {
+  // A terra la rotella diventa 1–20. Se `quanto` era 0 restava 0: fuori
+  // scala, nessuna cifra evidenziata, e `aria-valuenow` fuori dai limiti
+  // dichiarati.
+  await scegli(0);
+  await aTerra();
+
+  const pista = radice.querySelector('.pista')!;
+  expect(Number(pista.getAttribute('aria-valuenow'))).toBeGreaterThanOrEqual(1);
+  expect(comando('ts').textContent).not.toMatch(/\b0\b/);
+});
