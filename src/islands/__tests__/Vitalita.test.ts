@@ -133,3 +133,75 @@ it('l’esito finisce in una regione annunciata', async () => {
   const annuncio = radice.querySelector('[aria-live]')!;
   expect(annuncio.textContent).toContain(String(pg.pfMax - 4));
 });
+
+const comando = (riga: string) => radice.querySelector<HTMLButtonElement>(`.riga-${riga} button`)!;
+
+const aTerra = async () => {
+  muta((x) => applicaDanno(x, pg, pg.pfMax));
+  await giro();
+};
+
+it('spendere un dado vita lo scala e cura del totale scelto', async () => {
+  muta((x) => applicaDanno(x, pg, 6));
+  await giro();
+  await scegli(4);
+
+  comando('dadi').click();
+  await giro();
+
+  expect(scheda().textContent).toContain(`${pg.numeroDadiVita - 1}/${pg.numeroDadiVita}`);
+  expect(scheda().textContent).toContain(String(pg.pfMax - 2));
+});
+
+it('l’Ispirazione si prende quando è spenta e si spende quando è accesa', async () => {
+  // Era una stella da guardare: in una modale che serve ad agire, una riga
+  // di sola lettura è un buco.
+  expect(comando('isp').textContent).toMatch(/prendi/i);
+
+  comando('isp').click();
+  await giro();
+  expect(comando('isp').textContent).toMatch(/spendi/i);
+
+  comando('isp').click();
+  await giro();
+  expect(comando('isp').textContent).toMatch(/prendi/i);
+});
+
+it('i TS contro morte compaiono solo quando si è a terra', async () => {
+  expect(radice.querySelector('.riga-ts')).toBeNull();
+
+  await aTerra();
+
+  expect(radice.querySelector('.riga-ts')).not.toBeNull();
+});
+
+it('a terra la rotella diventa il d20, e il bottone dice con che numero tira', async () => {
+  await aTerra();
+
+  const pista = radice.querySelector('.pista')!;
+  expect(pista.getAttribute('aria-valuemin')).toBe('1');
+  expect(pista.getAttribute('aria-valuemax')).toBe('20');
+  expect(comando('ts').textContent).toMatch(/tira/i);
+});
+
+it('un tiro da 10 in su segna un successo', async () => {
+  await aTerra();
+  await scegli(15);
+
+  comando('ts').click();
+  await giro();
+
+  expect(radice.querySelector('.riga-ts')!.textContent).toContain('1');
+});
+
+it('un 20 naturale rimette Kaelen in piedi e chiude i TS', async () => {
+  // È la ragione per cui il tiro passa il d20 grezzo invece dell’esito.
+  await aTerra();
+  await scegli(20);
+
+  comando('ts').click();
+  await giro();
+
+  expect(radice.querySelector('.riga-ts')).toBeNull();
+  expect(scheda().textContent).toContain('1');
+});

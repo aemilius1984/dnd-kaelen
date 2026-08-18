@@ -6,15 +6,13 @@ import Attacchi from '@/components/Attacchi.astro';
 import CarteIncantesimo from '@/components/CarteIncantesimo.astro';
 import Sprite from '@/components/Sprite.astro';
 import DatiIniziali from '@/components/DatiIniziali.astro';
-import Superficie from '@/components/ui/Superficie.astro';
 import TestaSezione from '@/components/ui/TestaSezione.astro';
 import CapacitaEReazioni from '@/components/CapacitaEReazioni.astro';
 import ElencoArchivio from '@/components/ElencoArchivio.astro';
-import PfTracker from '@/islands/PfTracker';
+import Vitalita from '@/islands/Vitalita';
 import SlotIncantesimi from '@/islands/SlotIncantesimi';
 import Contatori from '@/islands/Contatori';
 import ControlliLancio from '@/islands/ControlliLancio';
-import Ispirazione from '@/islands/Ispirazione';
 import Archivio from '@/islands/Archivio';
 import PannelloAzioni from '@/islands/PannelloAzioni';
 import { attaccoIncantesimi, cdIncantesimi, classeArmatura, iniziativa, segno } from '@/lib/derive';
@@ -71,20 +69,23 @@ const bonusIniziativa = segno(iniziativa(pg));
     </div>
   </header>
 
-  <Superficie livello="sollevata" class="pf-pannello">
-    <PfTracker client:only="preact" />
-  </Superficie>
+  {
+    /* Non avvolta in `Superficie`: la scheda porta da sé fondo, filetto, raggio
+    e ombra, perché la sua altezza dev'essere una somma di costanti dichiarate
+    e l'imbottitura di `Superficie` non sarebbe contata. */
+  }
+  <Vitalita client:only="preact" />
 
+  {
+    /* Tre colonne, non quattro: l'Ispirazione è passata nella Vitalità, dove la
+    si accende. Qui era l'unico valore che dipendeva dallo stato di sessione, e
+    l'unico interruttore in mezzo a tre numeri. Adesso la fascia è tutta
+    statica: niente più da riservare. */
+  }
   <div class="difese">
     <div><span class="tenue">CA</span><span class="valore">{ca}</span></div>
     <div><span class="tenue">CD</span><span class="valore">{cd}</span></div>
     <div><span class="tenue">INIZ</span><span class="valore">{bonusIniziativa}</span></div>
-    {
-      /* L'unico valore della fascia che dipende dallo stato di sessione, quindi
-        l'unico che arriva dopo l'idratazione: l'altezza è riservata dal CSS
-        della fascia, che è la stessa per tutte e quattro le colonne. */
-    }
-    <Ispirazione client:only="preact" />
   </div>
 
   <section>

@@ -93,3 +93,22 @@ it('non richiama onCambia se il numero non è cambiato', async () => {
 
   expect(letto).toHaveLength(prima);
 });
+
+it('accetta un intervallo diverso, per il d20 del tiro contro morte', async () => {
+  // Una rotella sola per due scopi: la quantità di PF e il dado. Un controllo
+  // nuovo sarebbe un gesto in più da imparare proprio nel momento peggiore.
+  letto = [];
+  render(
+    h(Rotella, { valore: 10, minimo: 1, massimo: 20, onCambia: (n: number) => letto.push(n) }),
+    radice,
+  );
+  await giro();
+
+  expect(radice.querySelectorAll('.cifra')).toHaveLength(20);
+  expect(pista().getAttribute('aria-valuemin')).toBe('1');
+  expect(pista().getAttribute('aria-valuemax')).toBe('20');
+
+  pista().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+  await giro();
+  expect(letto).toContain(11);
+});

@@ -4,13 +4,18 @@ import { MASSIMO, MINIMO, PASSO, scorrimentoDaValore, valoreDaScorrimento } from
 interface Props {
   valore: number;
   onCambia: (n: number) => void;
+  /** Gli estremi sono regolabili perché la stessa rotella serve due scopi: una
+   *  quantità di PF da 0 a 30, e — quando Kaelen è a terra — il d20 del tiro
+   *  salvezza contro morte, che va da 1 a 20. Una rotella sola, due intervalli:
+   *  è un gesto già imparato invece di un controllo nuovo. */
+  minimo?: number;
+  massimo?: number;
 }
 
-const CIFRE = Array.from({ length: MASSIMO - MINIMO + 1 }, (_, i) => MINIMO + i);
-
 /** La colonna di numeri che si gira col dito. Non sa cosa sia un punto ferita:
- *  produce una quantità e la consegna a chi l'ha montata. */
-export default function Rotella({ valore, onCambia }: Props) {
+ *  produce un numero e lo consegna a chi l'ha montata. */
+export default function Rotella({ valore, onCambia, minimo = MINIMO, massimo = MASSIMO }: Props) {
+  const cifre = Array.from({ length: massimo - minimo + 1 }, (_, i) => minimo + i);
   const pista = useRef<HTMLDivElement>(null);
   // Chi ha scritto per ultimo la posizione. Scrivere `scrollTop` fa scattare
   // un evento `scroll`, che senza questa memoria rimbalzerebbe indietro come
@@ -21,13 +26,13 @@ export default function Rotella({ valore, onCambia }: Props) {
     const nodo = pista.current;
     if (!nodo) return;
     atteso.current = valore;
-    nodo.scrollTop = scorrimentoDaValore(valore, PASSO, MINIMO, MASSIMO);
-  }, [valore]);
+    nodo.scrollTop = scorrimentoDaValore(valore, PASSO, minimo, massimo);
+  }, [valore, minimo, massimo]);
 
   const leggi = () => {
     const nodo = pista.current;
     if (!nodo) return;
-    const n = valoreDaScorrimento(nodo.scrollTop, PASSO, MINIMO, MASSIMO);
+    const n = valoreDaScorrimento(nodo.scrollTop, PASSO, minimo, massimo);
     if (n === atteso.current) return;
     atteso.current = n;
     onCambia(n);
@@ -38,7 +43,7 @@ export default function Rotella({ valore, onCambia }: Props) {
     const verso = passi[e.key];
     if (verso === undefined) return;
     e.preventDefault();
-    const n = Math.min(MASSIMO, Math.max(MINIMO, valore + verso));
+    const n = Math.min(massimo, Math.max(minimo, valore + verso));
     if (n === valore) return;
     atteso.current = n;
     onCambia(n);
@@ -53,12 +58,12 @@ export default function Rotella({ valore, onCambia }: Props) {
         tabIndex={0}
         aria-label="Quantità"
         aria-valuenow={valore}
-        aria-valuemin={MINIMO}
-        aria-valuemax={MASSIMO}
+        aria-valuemin={minimo}
+        aria-valuemax={massimo}
         onScroll={leggi}
         onKeyDown={tasto}
       >
-        {CIFRE.map((n) => (
+        {cifre.map((n) => (
           <div class={n === valore ? 'cifra scelta' : 'cifra'} key={n}>
             {n}
           </div>

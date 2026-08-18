@@ -2,7 +2,14 @@ import { useRef, useState } from 'preact/hooks';
 import Rotella from '@/islands/Rotella';
 import { MINIMO } from '@/lib/rotella';
 import type { StatoSessione } from '@/lib/sheet-state';
-import { applicaCura, applicaDanno, impostaPfTemporanei } from '@/lib/sheet-state';
+import {
+  applicaCura,
+  applicaDanno,
+  impostaIspirazione,
+  impostaPfTemporanei,
+  spendiDadoVitaConCura,
+  tiroMorte,
+} from '@/lib/sheet-state';
 import { assicuraInizializzato, datiIniziali, muta, stato } from '@/lib/storage';
 
 /** La vitalità di Kaelen: il riepilogo che sta in pagina e la modale che apre.
@@ -31,6 +38,10 @@ export default function Vitalita() {
   };
 
   const inPericolo = s.pf === 0;
+  const aTerra = s.statoVitale === 'incosciente';
+  // La stessa rotella serve due scopi: la quantità di PF, e il d20 del tiro
+  // salvezza quando Kaelen è a terra. Cambiano gli estremi, non il gesto.
+  const estremi = aTerra ? { minimo: 1, massimo: 20 } : {};
   const percentuale = pg.pfMax > 0 ? Math.min(100, Math.round((s.pf / pg.pfMax) * 100)) : 0;
 
   return (
@@ -76,10 +87,65 @@ export default function Vitalita() {
           </button>
         </div>
 
+        <div class="righe">
+          <div class="riga riga-dadi">
+            <span class="kicker">dadi vita</span>
+            <span class="conto">
+              {pg.numeroDadiVita - s.dadiVitaSpesi}/{pg.numeroDadiVita} ({pg.dadoVita})
+            </span>
+            <button
+              type="button"
+              disabled={s.pf === 0 || s.dadiVitaSpesi >= pg.numeroDadiVita}
+              onClick={() =>
+                applica((x) => spendiDadoVitaConCura(x, pg, quanto), quanto, 'Dado vita')
+              }
+            >
+              Spendi
+            </button>
+          </div>
+
+          <div class="riga riga-isp">
+            <span class="kicker">ispirazione eroica</span>
+            <span class={s.ispirazione ? 'stella accesa' : 'stella'} aria-hidden="true">
+              {s.ispirazione ? '★' : '☆'}
+            </span>
+            <button
+              type="button"
+              onClick={() =>
+                applica(
+                  (x) => impostaIspirazione(x, !s.ispirazione),
+                  0,
+                  s.ispirazione ? 'Ispirazione spesa' : 'Ispirazione presa',
+                )
+              }
+            >
+              {s.ispirazione ? 'Spendi' : 'Prendi'}
+            </button>
+          </div>
+
+          {aTerra && (
+            <div class="riga riga-ts">
+              <span class="kicker">ts contro morte</span>
+              <span class="conto">
+                {s.tsMorte.successi} ✓ · {s.tsMorte.fallimenti} ✗
+              </span>
+              {/* Il bottone dice con che numero tirerà: la rotella qui è il
+                  d20, e leggerlo sul bottone toglie ogni dubbio su cosa
+                  stia per essere applicato. */}
+              <button
+                type="button"
+                onClick={() => applica((x) => tiroMorte(x, quanto), quanto, 'Tiro contro morte')}
+              >
+                Tira {quanto}
+              </button>
+            </div>
+          )}
+        </div>
+
         <div class="zona-pollice">
           <div class="quanto">
             <span class="kicker">quanto, e poi cosa</span>
-            <Rotella valore={quanto} onCambia={setQuanto} />
+            <Rotella valore={quanto} onCambia={setQuanto} {...estremi} />
             <label class="riga-digita">
               <span class="kicker">digita</span>
               <input
