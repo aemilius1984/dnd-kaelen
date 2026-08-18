@@ -10,6 +10,15 @@ let letto: number[];
 const giro = () => new Promise((r) => setTimeout(r, 50));
 const pista = () => radice.querySelector<HTMLElement>('.pista')!;
 
+/** jsdom non calcola il layout: `scrollHeight` e `clientHeight` valgono zero,
+ *  quindi la pista risulta non scorribile e il componente si rifiuta — a
+ *  ragione — di leggerla. Qui le si danno le misure che avrebbe in un browser:
+ *  31 cifre da 40px più 212 di imbottitura, in una finestra da 252. */
+const disponi = () => {
+  Object.defineProperty(pista(), 'scrollHeight', { value: 1452, configurable: true });
+  Object.defineProperty(pista(), 'clientHeight', { value: 252, configurable: true });
+};
+
 const monta = (valore: number) => {
   letto = [];
   render(h(Rotella, { valore, onCambia: (n: number) => letto.push(n) }), radice);
@@ -47,6 +56,7 @@ it('si annuncia come selettore di numero, non come lista', async () => {
 it('scorrere la pista riporta il numero sotto la banda', async () => {
   monta(4);
   await giro();
+  disponi();
 
   pista().scrollTop = PASSO * 9;
   pista().dispatchEvent(new Event('scroll'));
@@ -85,6 +95,7 @@ it('non richiama onCambia se il numero non è cambiato', async () => {
   // guardia il componente si richiama da solo a ogni riposizionamento.
   monta(4);
   await giro();
+  disponi();
   const prima = letto.length;
 
   pista().scrollTop = PASSO * 4;
@@ -111,4 +122,20 @@ it('accetta un intervallo diverso, per il d20 del tiro contro morte', async () =
   pista().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
   await giro();
   expect(letto).toContain(11);
+});
+
+it('non legge la pista prima che il browser l’abbia disposta', async () => {
+  // Senza layout la pista non può scorrere, e uno zero letto lì non è una
+  // scelta dell'utente: è il vuoto di un elemento non ancora disposto. Preso
+  // per buono azzerava la quantità appena scelta — «Spendi 0» al posto di
+  // «Spendi 1» appena aperta la modale.
+  monta(4);
+  await giro();
+  const prima = letto.length;
+
+  pista().scrollTop = 0;
+  pista().dispatchEvent(new Event('scroll'));
+  await giro();
+
+  expect(letto).toHaveLength(prima);
 });

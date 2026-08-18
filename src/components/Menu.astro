@@ -225,8 +225,13 @@ const voci = [
     transition-delay: calc(var(--r) * 40ms);
   }
 
-  summary {
+  /* `justify-self` vale per gli elementi della griglia, e l'elemento è
+   * questo — non `summary`, che ci sta dentro. Messo là non spostava niente e
+   * lasciava la ☰ appiccicata a «Storia» invece che al bordo. */
+  .menu {
     justify-self: end;
+  }
+  summary {
     list-style: none;
     display: flex;
     align-items: center;

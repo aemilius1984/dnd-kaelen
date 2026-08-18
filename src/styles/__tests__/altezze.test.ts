@@ -95,3 +95,35 @@ it('il passo della rotella nel CSS combacia con quello del modulo', () => {
   expect(corpo('.rotella .cifra')).toMatch(new RegExp(`height:\\s*${passo[1]}px`));
   expect(corpo('.rotella .banda')).toMatch(new RegExp(`height:\\s*${passo[1]}px`));
 });
+
+it('nessun dialogo dichiara `display` fuori dallo stato aperto', () => {
+  // Il difetto che ha fatto sembrare rotta tutta la sezione. Il browser tiene
+  // chiuso un <dialog> con `display: none` nel proprio foglio di stile:
+  // dichiarare `display: flex` sulla regola base lo scavalca, e il contenuto
+  // della modale finisce dentro la pagina, sempre visibile, sotto la scheda.
+  //
+  // `dialog.archivio`, che funziona da sempre, non dichiara `display`: era lì
+  // l'esempio giusto da copiare.
+  const regole = [...CSS.matchAll(/(^|\})([^{}]*dialog[^{}]*)\{([^}]*)\}/g)];
+  expect(regole.length).toBeGreaterThan(0);
+
+  for (const [, , selettore, corpoRegola] of regole) {
+    if (!/display\s*:/.test(corpoRegola)) continue;
+    // Concesso solo dove lo stato aperto è nel selettore, o su un discendente
+    // che non è il dialogo stesso.
+    const suDialogoChiuso = /dialog[a-z.-]*\s*(,|\{|$)/.test(selettore.trim() + '{');
+    if (suDialogoChiuso) {
+      expect(selettore).toMatch(/\[open\]/);
+    }
+  }
+});
+
+it('la barra del menu ancora la ☰ a destra sull’elemento giusto', () => {
+  // `justify-self` vale per gli elementi della griglia. La griglia è `.barra`,
+  // e il suo terzo elemento è `details.menu`: metterlo su `summary`, che è
+  // dentro, non sposta niente e lascia la ☰ appiccicata a «Storia».
+  const menu = readFileSync('src/components/Menu.astro', 'utf8');
+  const regolaMenu = menu.slice(menu.indexOf('  .menu {'), menu.indexOf('  summary {'));
+
+  expect(regolaMenu).toContain('justify-self: end');
+});

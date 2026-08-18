@@ -32,6 +32,11 @@ export default function Rotella({ valore, onCambia, minimo = MINIMO, massimo = M
   const leggi = () => {
     const nodo = pista.current;
     if (!nodo) return;
+    // Finché il browser non ha disposto la pista non c'è niente da leggere:
+    // una pista che non può scorrere sta ferma a zero, e quello zero non è la
+    // cifra scelta da nessuno. Preso per buono, sovrascriveva la quantità con
+    // il minimo appena la modale si apriva.
+    if (nodo.scrollHeight <= nodo.clientHeight) return;
     const n = valoreDaScorrimento(nodo.scrollTop, PASSO, minimo, massimo);
     if (n === atteso.current) return;
     atteso.current = n;

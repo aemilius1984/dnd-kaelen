@@ -637,6 +637,13 @@ dialog.vitalita {
   border: none;
   background: var(--carta);
   color: var(--inchiostro);
+}
+/* `display` **solo** da aperto. Il browser tiene chiuso un <dialog> con
+ * `display: none` nel proprio foglio: dichiararlo sulla regola base lo
+ * scavalca, e tutta la modale finisce dentro la pagina, sempre visibile,
+ * sotto la scheda. È esattamente quel che è successo. `dialog.archivio`, che
+ * funziona da sempre, non dichiara `display` affatto. */
+dialog.vitalita[open] {
   display: flex;
   flex-direction: column;
 }
