@@ -70,11 +70,16 @@ const bonusIniziativa = segno(iniziativa(pg));
   </header>
 
   {
-    /* Non avvolta in `Superficie`: la scheda porta da sé fondo, filetto, raggio
-    e ombra, perché la sua altezza dev'essere una somma di costanti dichiarate
-    e l'imbottitura di `Superficie` non sarebbe contata. */
+    /* Il contenitore è statico e porta lui l'altezza riservata. Con
+    `client:only` l'isola non rende nulla lato server: una riserva dichiarata
+    sul bottone che disegna Preact varrebbe per un elemento che a quel punto
+    non esiste, e la pagina salterebbe lo stesso. Non è avvolta in
+    `Superficie` perché fondo, filetto, raggio e ombra li porta la scheda, e
+    l'imbottitura di `Superficie` non entrerebbe nella somma. */
   }
-  <Vitalita client:only="preact" />
+  <div class="vitalita-isola">
+    <Vitalita client:only="preact" />
+  </div>
 
   {
     /* Tre colonne, non quattro: l'Ispirazione è passata nella Vitalità, dove la

@@ -205,3 +205,43 @@ it('un 20 naturale rimette Kaelen in piedi e chiude i TS', async () => {
   expect(radice.querySelector('.riga-ts')).toBeNull();
   expect(scheda().textContent).toContain('1');
 });
+
+const dialogo = () => radice.querySelector<HTMLDialogElement>('dialog.vitalita')!;
+
+it('la modale mostra i PF: è a tutto schermo e copre il riepilogo', async () => {
+  // Il difetto per cui questa modale «non funzionava»: si apriva sopra la
+  // scheda, quindi il numero che stavi cambiando non era più visibile da
+  // nessuna parte. Un pannello di comando senza quadrante.
+  muta((x) => applicaDanno(x, pg, 6));
+  await giro();
+
+  expect(dialogo().querySelector('.stato')).not.toBeNull();
+  expect(dialogo().querySelector('.stato')!.textContent).toContain(String(pg.pfMax - 6));
+  expect(dialogo().querySelector('.stato')!.textContent).toContain(String(pg.pfMax));
+});
+
+it('e il metro dentro la modale segue i PF', async () => {
+  muta((x) => applicaDanno(x, pg, pg.pfMax));
+  await giro();
+
+  const riempimento = dialogo().querySelector<HTMLElement>('.stato .riempimento')!;
+  expect(riempimento.style.width).toBe('0%');
+});
+
+it('applicare un danno dalla modale si vede nella modale', async () => {
+  // La prova che lega le due cose: prima i verbi cambiavano uno stato che
+  // solo la pagina dietro sapeva mostrare.
+  await scegli(4);
+  verbo('danno').click();
+  await giro();
+
+  expect(dialogo().querySelector('.stato')!.textContent).toContain(String(pg.pfMax - 4));
+});
+
+it('i PF temporanei si vedono nella modale, non solo nel riepilogo', async () => {
+  await scegli(5);
+  verbo('temp').click();
+  await giro();
+
+  expect(dialogo().querySelector('.stato')!.textContent).toContain('5');
+});

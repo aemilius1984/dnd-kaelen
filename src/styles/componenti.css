@@ -487,7 +487,7 @@ dialog.azioni input[type='number'] {
  *
  * È anche il motivo per cui il chip dei temporanei tiene il suo posto anche a
  * zero: se sparisse dal flusso, la riga si accorcerebbe. */
-.vitalita-scheda {
+.vitalita-isola {
   --v-testata: 20px;
   --v-numero: 48px;
   --v-metro: 25px;
@@ -496,9 +496,12 @@ dialog.azioni input[type='number'] {
   --v-imbottitura: 48px; /* 2 × var(--spazio-3) */
   --v-bordi: 2px;
   height: 210px;
+  margin: var(--spazio-2) 0;
+}
+.vitalita-scheda {
+  height: 100%;
   display: block;
   width: 100%;
-  margin: var(--spazio-2) 0;
   padding: var(--spazio-3);
   text-align: left;
   cursor: pointer;
@@ -872,4 +875,71 @@ dialog.vitalita .annuncio {
   width: 100%;
   margin-top: 0.4rem;
   font-size: 0.78rem;
+}
+
+/* Il quadrante dentro la modale. Stessi pezzi della scheda in pagina ma più
+ * grandi: qui il numero è la cosa che si guarda mentre si agisce, non un
+ * riassunto da colpire col pollice. */
+dialog.vitalita .stato {
+  padding: 0.6rem 0 1rem;
+}
+dialog.vitalita .stato .numero {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+dialog.vitalita .stato .pf {
+  font-family: var(--font-mono);
+  font-size: 4.2rem;
+  line-height: 0.92;
+  color: var(--lampo);
+}
+dialog.vitalita .stato .pf.pericolo {
+  color: var(--allerta);
+}
+dialog.vitalita .stato .su {
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  line-height: 2.2;
+  color: var(--inchiostro-tenue);
+}
+dialog.vitalita .stato .vitalita-temp {
+  margin-left: auto;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid var(--ambra);
+  border-radius: 999px;
+  color: var(--ambra);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+}
+dialog.vitalita .stato .vitalita-temp[hidden] {
+  display: block;
+  visibility: hidden;
+}
+dialog.vitalita .stato .metro {
+  display: block;
+  height: 16px;
+  margin-top: 0.8rem;
+  border: 1px solid var(--filetto);
+  border-radius: 3px;
+  background: var(--superficie-incassata);
+  overflow: hidden;
+}
+dialog.vitalita .stato .metro .riempimento {
+  display: block;
+  height: 100%;
+  background: var(--lampo);
+}
+dialog.vitalita .stato .tacche {
+  display: block;
+  height: 15px;
+  margin-top: 5px;
+  background-repeat: repeat-x;
+  background-size:
+    16px 9px,
+    80px 15px;
+  background-image:
+    repeating-linear-gradient(to right, var(--inchiostro) 0 1px, transparent 1px 16px),
+    repeating-linear-gradient(to right, var(--inchiostro) 0 1px, transparent 1px 80px);
+  opacity: 0.3;
 }

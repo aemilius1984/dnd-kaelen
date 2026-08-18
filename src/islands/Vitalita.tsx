@@ -87,6 +87,23 @@ export default function Vitalita() {
           </button>
         </div>
 
+        {/* Il quadrante. La modale è a tutto schermo e copre la scheda in
+            pagina: senza questo blocco si applica un danno e il numero che è
+            cambiato non è visibile da nessuna parte. */}
+        <div class="stato">
+          <span class="numero">
+            <span class={inPericolo ? 'pf pericolo' : 'pf'}>{s.pf}</span>
+            <span class="su">/ {pg.pfMax}</span>
+            <span class="vitalita-temp" hidden={s.pfTemporanei === 0}>
+              +{s.pfTemporanei} temp
+            </span>
+          </span>
+          <span class="metro">
+            <span class="riempimento" style={{ width: `${percentuale}%` }}></span>
+          </span>
+          <span class="tacche" aria-hidden="true"></span>
+        </div>
+
         <div class="righe">
           <div class="riga riga-dadi">
             <span class="kicker">dadi vita</span>
