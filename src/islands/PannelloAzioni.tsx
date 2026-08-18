@@ -16,6 +16,7 @@ import {
   SLOT_MANUALE,
   usaRisorsa,
 } from '@/lib/sheet-state';
+import { apri as apriPreparazione } from '@/lib/preparazione';
 import { assicuraInizializzato, datiIniziali, muta, stato } from '@/lib/storage';
 
 export default function PannelloAzioni() {
@@ -210,6 +211,10 @@ export default function PannelloAzioni() {
                 return;
               }
               muta((x) => riposoLungo(x, pg));
+              // Questo è l'unico momento in cui il manuale concede di cambiare
+              // i sei preparati: il riposo apre la sessione, e fuori di qui le
+              // spunte restano in sola lettura.
+              apriPreparazione(stato.value.preparati);
               // Cambiare i preparati è dovuto proprio adesso: il pannello si
               // toglie di mezzo e apre l'archivio. Cerca il dialogo per id e
               // basta — non sa cosa ci sia dentro, e su /personaggio/ non c'è

@@ -251,21 +251,23 @@ export function recuperaRisorsa(s: StatoSessione, id: string): StatoSessione {
   });
 }
 
-export function puoPreparare(s: StatoSessione, pg: Personaggio): boolean {
-  return s.preparati.length < pg.limitePreparati;
-}
-
-export function togglePreparato(s: StatoSessione, pg: Personaggio, slug: string): StatoSessione {
-  if (s.preparati.includes(slug)) {
-    return aggiorna(s, { preparati: s.preparati.filter((x) => x !== slug) });
+/** L'ultima guardia prima di localStorage: nello stato canonico entra solo una
+ *  lista completa e legittima. Non esiste più un «commuta un preparato» che
+ *  scriva diretto — cambiare i sei è un atto che si conferma, e fuori dalla
+ *  sessione di preparazione non si fa affatto. Vedi `src/lib/preparazione.ts`. */
+export function impostaPreparati(
+  s: StatoSessione,
+  pg: Personaggio,
+  lista: string[],
+): StatoSessione {
+  if (lista.length !== pg.limitePreparati) return s;
+  if (new Set(lista).size !== lista.length) return s;
+  // Dominio e trucchetti sono sempre preparati e stanno fuori dal conto: se
+  // entrassero qui ruberebbero un posto a un incantesimo da scegliere.
+  for (const slug of lista) {
+    if (pg.dominio.includes(slug) || pg.trucchetti.includes(slug)) return s;
   }
-  // Gli incantesimi di dominio sono sempre preparati e i trucchetti non si
-  // "preparano": non devono mai entrare in questa lista, né occupare uno
-  // slot del limite, indipendentemente da come è arrivato qui lo slug (uno
-  // stato salvato in precedenza incluso).
-  if (pg.dominio.includes(slug) || pg.trucchetti.includes(slug)) return s;
-  if (!puoPreparare(s, pg)) return s;
-  return aggiorna(s, { preparati: [...s.preparati, slug] });
+  return aggiorna(s, { preparati: [...lista] });
 }
 
 export function impostaMonete(s: StatoSessione, monete: StatoSessione['monete']): StatoSessione {

@@ -8,7 +8,7 @@ import {
   carica,
   impostaIspirazione,
   impostaPfTemporanei,
-  puoPreparare,
+  impostaPreparati,
   puoSpendereSlot,
   puoUsareRisorsa,
   recuperaSlot,
@@ -19,7 +19,6 @@ import {
   spendiDadoVitaConCura,
   spendiSlot,
   statoIniziale,
-  togglePreparato,
   usaRisorsa,
   type StatoSessione,
 } from '@/lib/sheet-state';
@@ -178,69 +177,32 @@ describe('riposi', () => {
   });
 });
 
-describe('incantesimi preparati', () => {
-  it('non supera il limite di sei', () => {
-    // Slug arbitrario, né in pg.dominio né in pg.trucchetti: a bloccarlo deve
-    // essere il limite di lunghezza, non la guardia su dominio/trucchetti.
-    s = togglePreparato(s, pg, 'incantesimo-di-prova');
-    expect(s.preparati).toHaveLength(6);
-    expect(s.preparati).not.toContain('incantesimo-di-prova');
+describe('i preparati entrano nello stato solo completi e legittimi', () => {
+  const sei = () => [...pg.preparatiIniziali];
+
+  it('accetta una lista di sei validi', () => {
+    const altra = [...sei().slice(1), 'incantesimo-di-prova'];
+
+    expect(impostaPreparati(s, pg, altra).preparati).toEqual(altra);
   });
 
-  it('aggiunge uno slug qualunque una volta liberato uno slot', () => {
-    // Dimostra che il test sopra colpisce davvero il ramo del limite: con la
-    // lista a 5 lo stesso slug arbitrario viene accettato.
-    s = togglePreparato(s, pg, 'comando');
-    s = togglePreparato(s, pg, 'incantesimo-di-prova');
-    expect(s.preparati).toContain('incantesimo-di-prova');
-    expect(s.preparati).toHaveLength(6);
+  it('rifiuta una lista che non è esattamente di sei', () => {
+    // Cinque o sette non sono stati che le regole ammettono: se una sessione
+    // di preparazione interrotta riuscisse a salvarli, il personaggio
+    // resterebbe fuori regola senza che nulla lo segnali.
+    expect(impostaPreparati(s, pg, sei().slice(1))).toBe(s);
+    expect(impostaPreparati(s, pg, [...sei(), 'incantesimo-di-prova'])).toBe(s);
   });
 
-  it('toglie e rimette un preparato', () => {
-    s = togglePreparato(s, pg, 'comando');
-    expect(s.preparati).not.toContain('comando');
-    s = togglePreparato(s, pg, 'comando');
-    expect(s.preparati).toContain('comando');
-    expect(s.preparati).toHaveLength(6);
+  it('rifiuta i duplicati', () => {
+    const doppio = [...sei().slice(1), sei()[1]];
+
+    expect(impostaPreparati(s, pg, doppio)).toBe(s);
   });
 
-  it('non aggiunge uno slug del dominio anche con la lista non piena', () => {
-    s = togglePreparato(s, pg, 'comando');
-    const attesi = s.preparati;
-    s = togglePreparato(s, pg, 'frantumare');
-    expect(s.preparati).toEqual(attesi);
-    expect(s.preparati).toHaveLength(5);
-  });
-
-  it('non aggiunge un trucchetto anche con la lista non piena', () => {
-    s = togglePreparato(s, pg, 'comando');
-    const attesi = s.preparati;
-    s = togglePreparato(s, pg, 'guida');
-    expect(s.preparati).toEqual(attesi);
-    expect(s.preparati).toHaveLength(5);
-  });
-
-  it('rimuove uno slug del dominio se già presente in uno stato salvato in precedenza', () => {
-    // Simula uno stato salvato prima del fix della guardia, dove uno slug di
-    // dominio era finito in `preparati`: la rimozione deve restare possibile
-    // per permettere all'utente di ripulirlo.
-    const statoVecchio = { ...s, preparati: [...s.preparati.slice(0, 5), 'frantumare'] };
-    const risultato = togglePreparato(statoVecchio, pg, 'frantumare');
-    expect(risultato.preparati).not.toContain('frantumare');
-    expect(risultato.preparati).toHaveLength(5);
-  });
-
-  it('puoPreparare è vero lontano dal confine e falso al confine, in accordo con togglePreparato', () => {
-    s = togglePreparato(s, pg, 'comando');
-    expect(s.preparati).toHaveLength(5);
-    expect(puoPreparare(s, pg)).toBe(true);
-    s = togglePreparato(s, pg, 'comando');
-    expect(s.preparati).toHaveLength(6);
-    expect(puoPreparare(s, pg)).toBe(false);
-    // Il predicato falso deve coincidere con un mutatore che non aggiunge
-    // nulla: stesso riferimento in uscita per uno slug nuovo, non solo lo
-    // stesso valore.
-    expect(togglePreparato(s, pg, 'incantesimo-di-prova')).toBe(s);
+  it('rifiuta dominio e trucchetti, che sono già preparati', () => {
+    expect(impostaPreparati(s, pg, [...sei().slice(1), pg.dominio[0]])).toBe(s);
+    expect(impostaPreparati(s, pg, [...sei().slice(1), pg.trucchetti[0]])).toBe(s);
   });
 });
 
