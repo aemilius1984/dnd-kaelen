@@ -1,10 +1,10 @@
 import { createPortal } from 'preact/compat';
 import { useEffect, useState } from 'preact/hooks';
 import { recuperaSlot, spendiSlot } from '@/lib/sheet-state';
-import { livelliLanciabili } from '@/lib/lancio';
+import { cartaSpenta, livelliLanciabili } from '@/lib/lancio';
 import { assicuraInizializzato, datiIniziali, muta, stato } from '@/lib/storage';
 
-type Bersaglio = { nodo: HTMLElement; slug: string; livello: number };
+type Bersaglio = { nodo: HTMLElement; slug: string; livello: number; rituale: boolean };
 
 export default function ControlliLancio() {
   // `client:only="preact"`: nessun pre-render lato server, come le altre isole.
@@ -22,6 +22,7 @@ export default function ControlliLancio() {
       nodo,
       slug: nodo.dataset.lancio ?? '',
       livello: Number(nodo.dataset.livello ?? '0'),
+      rituale: nodo.dataset.rituale !== undefined,
     }));
     setBersagli(trovati);
   }, []);
@@ -48,7 +49,7 @@ export default function ControlliLancio() {
     for (const b of bersagli) {
       const carta = b.nodo.closest<HTMLElement>('.incantesimo');
       if (!carta) continue;
-      const spenta = livelliLanciabili(s, pg, b.livello).length === 0;
+      const spenta = cartaSpenta(s, pg, b.livello, b.rituale);
       carta.classList.toggle('spenta', spenta);
       if (spenta) carta.setAttribute('aria-disabled', 'true');
       else carta.removeAttribute('aria-disabled');
@@ -82,17 +83,25 @@ export default function ControlliLancio() {
         const livelli = livelliLanciabili(s, pg, b.livello);
         if (b.livello === 0) return null;
         return createPortal(
-          livelli.length === 0 ? (
-            <span class="tenue">Nessuno slot disponibile.</span>
-          ) : (
-            <>
-              {livelli.map((l) => (
+          <>
+            {livelli.length === 0 ? (
+              <span class="tenue">Nessuno slot disponibile.</span>
+            ) : (
+              livelli.map((l) => (
                 <button key={l} type="button" onClick={() => lancia(l, b.slug)}>
                   Lancia {l}°
                 </button>
-              ))}
-            </>
-          ),
+              ))
+            )}
+            {/* Il rituale non spende niente, quindi non c'è un bottone da
+                premere: non esiste stato da cambiare finché materiali e
+                Concentrazione non sono tracciati. Quel che serve al tavolo,
+                e che mancava, è sapere che l'opzione c'è — soprattutto a
+                slot finiti, dove prima la carta si spegneva. */}
+            {b.rituale && (
+              <span class="via-rituale tenue">Oppure come rituale: senza slot, +10 minuti.</span>
+            )}
+          </>,
           b.nodo,
         );
       })}

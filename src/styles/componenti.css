@@ -863,3 +863,13 @@ dialog.vitalita .annuncio {
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
+
+/* La via rituale non è un bottone: non c'è niente da consumare finché
+ * materiali e Concentrazione non sono tracciati. È l'informazione che al
+ * tavolo mancava — che l'incantesimo si può lanciare anche senza slot. */
+.via-rituale {
+  display: block;
+  width: 100%;
+  margin-top: 0.4rem;
+  font-size: 0.78rem;
+}
