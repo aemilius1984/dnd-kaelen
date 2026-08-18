@@ -1,5 +1,9 @@
-import { useRef } from 'preact/hooks';
-import { assicuraInizializzato, datiIniziali, stato } from '@/lib/storage';
+import { useRef, useState } from 'preact/hooks';
+import Rotella from '@/islands/Rotella';
+import { MINIMO } from '@/lib/rotella';
+import type { StatoSessione } from '@/lib/sheet-state';
+import { applicaCura, applicaDanno, impostaPfTemporanei } from '@/lib/sheet-state';
+import { assicuraInizializzato, datiIniziali, muta, stato } from '@/lib/storage';
 
 /** La vitalità di Kaelen: il riepilogo che sta in pagina e la modale che apre.
  *  Un'isola sola per entrambi, così c'è un solo posto che legge i PF — prima
@@ -11,6 +15,20 @@ export default function Vitalita() {
   const { pg } = datiIniziali();
   const s = stato.value;
   const finestra = useRef<HTMLDialogElement>(null);
+
+  const [quanto, setQuanto] = useState(1);
+  const [annuncio, setAnnuncio] = useState('');
+
+  /** Applica un gesto e ne racconta l'esito. L'annuncio non è un extra: chi
+   *  non vede il numero cambiare non ha altro modo di sapere che è successo. */
+  const applica = (
+    fn: (x: StatoSessione) => StatoSessione,
+    quanti: number,
+    verbo: string,
+  ): void => {
+    muta(fn);
+    setAnnuncio(`${verbo} ${quanti}. ${stato.value.pf} punti ferita.`);
+  };
 
   const inPericolo = s.pf === 0;
   const percentuale = pg.pfMax > 0 ? Math.min(100, Math.round((s.pf / pg.pfMax) * 100)) : 0;
@@ -57,6 +75,61 @@ export default function Vitalita() {
             ×
           </button>
         </div>
+
+        <div class="zona-pollice">
+          <div class="quanto">
+            <span class="kicker">quanto, e poi cosa</span>
+            <Rotella valore={quanto} onCambia={setQuanto} />
+            <label class="riga-digita">
+              <span class="kicker">digita</span>
+              <input
+                class="digita"
+                type="number"
+                min={MINIMO}
+                inputMode="numeric"
+                value={quanto}
+                onInput={(e) => {
+                  const grezzo = e.currentTarget.value;
+                  // Un campo vuoto non è «zero»: è una cifra a metà. Finché
+                  // non arriva un numero, la quantità non si tocca.
+                  if (grezzo === '') return;
+                  setQuanto(Math.max(MINIMO, Number(grezzo)));
+                }}
+              />
+            </label>
+          </div>
+
+          <div class="verbi">
+            <button
+              type="button"
+              class="verbo-danno"
+              onClick={() => applica((x) => applicaDanno(x, quanto), quanto, 'Danno')}
+            >
+              <span class="nome">Danno</span>
+              <span class="effetto">toglie {quanto} PF</span>
+            </button>
+            <button
+              type="button"
+              class="verbo-cura"
+              onClick={() => applica((x) => applicaCura(x, pg, quanto), quanto, 'Cura')}
+            >
+              <span class="nome">Cura</span>
+              <span class="effetto">rimette {quanto} PF</span>
+            </button>
+            <button
+              type="button"
+              class="verbo-temp"
+              onClick={() => applica((x) => impostaPfTemporanei(x, quanto), quanto, 'Temporanei')}
+            >
+              <span class="nome">Temporanei</span>
+              <span class="effetto">imposta a {quanto}</span>
+            </button>
+          </div>
+        </div>
+
+        <p class="annuncio" aria-live="polite">
+          {annuncio}
+        </p>
       </dialog>
     </>
   );

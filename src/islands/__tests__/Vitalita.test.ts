@@ -77,3 +77,59 @@ it('il chip dei temporanei tiene il suo posto anche a zero', async () => {
 
   expect(radice.querySelector('.vitalita-temp')!.textContent).toContain('4');
 });
+
+const verbo = (nome: string) => radice.querySelector<HTMLButtonElement>(`.verbo-${nome}`)!;
+const digita = () => radice.querySelector<HTMLInputElement>('.digita')!;
+
+const scegli = async (n: number) => {
+  digita().value = String(n);
+  digita().dispatchEvent(new Event('input', { bubbles: true }));
+  await giro();
+};
+
+it('il danno toglie esattamente la quantità scelta', async () => {
+  await scegli(5);
+  verbo('danno').click();
+  await giro();
+
+  expect(scheda().textContent).toContain(String(pg.pfMax - 5));
+});
+
+it('la cura non porta oltre il massimo', async () => {
+  muta((x) => applicaDanno(x, 3));
+  await scegli(30);
+  verbo('cura').click();
+  await giro();
+
+  expect(scheda().textContent).toContain(String(pg.pfMax));
+});
+
+it('i temporanei si impostano, non si sommano', async () => {
+  await scegli(7);
+  verbo('temp').click();
+  await giro();
+  await scegli(2);
+  verbo('temp').click();
+  await giro();
+
+  expect(radice.querySelector('.vitalita-temp')!.textContent).toContain('2');
+});
+
+it('ogni verbo dice cosa farà con la quantità corrente', async () => {
+  // Due tempi: prima il numero, poi il verbo. Se il verbo non ripete il
+  // numero, il secondo tempo si fa alla cieca.
+  await scegli(6);
+
+  expect(verbo('danno').textContent).toContain('6');
+  expect(verbo('cura').textContent).toContain('6');
+});
+
+it('l’esito finisce in una regione annunciata', async () => {
+  // Chi non vede il numero cambiare deve sentire che è successo qualcosa.
+  await scegli(4);
+  verbo('danno').click();
+  await giro();
+
+  const annuncio = radice.querySelector('[aria-live]')!;
+  expect(annuncio.textContent).toContain(String(pg.pfMax - 4));
+});
