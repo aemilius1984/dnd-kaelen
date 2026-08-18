@@ -64,6 +64,44 @@ describe('la barra e le sue scorciatoie', () => {
   });
 });
 
+describe('la disposizione della barra', () => {
+  it('la casa è un’icona, e ha comunque un nome da leggere', () => {
+    // Un collegamento il cui unico contenuto è un disegno non ha nome
+    // accessibile: al lettore di schermo arriverebbe «link» e basta.
+    const html = dist('scheda');
+    expect(html).toContain('aria-label="Home"');
+    expect(html).not.toMatch(/>Home<\/a>/);
+  });
+
+  it('tre colonne: casa a sinistra, le due parole al centro, ☰ a destra', () => {
+    // Con `space-between` le parole si appoggerebbero ai lati e il centro
+    // dipenderebbe dalla larghezza dell'icona: le colonne lo fissano.
+    const barra = MENU.slice(MENU.indexOf('.barra {'), MENU.indexOf('@supports'));
+    expect(barra).toMatch(/grid-template-columns:\s*1fr auto 1fr/);
+    expect(MENU).toMatch(/\.scorciatoie \{[^}]*justify-self:\s*center/);
+  });
+});
+
+describe('lo spazio verticale delle voci', () => {
+  it('le voci respirano sulla scala del sito, non su numeri inventati', () => {
+    // Il respiro serve al pollice: una riga di 47px si sbaglia a colpirla.
+    // I valori vengono dai token di spazio, come ovunque nel sito.
+    const voce = MENU.slice(MENU.indexOf('.tendina li a {'), MENU.indexOf('.tendina li a::before'));
+    const padding = /padding:\s*([^;]+);/.exec(voce);
+    if (!padding) throw new Error('padding della voce non trovato');
+    expect(padding[1]).toMatch(/^var\(--spazio-\d\)( var\(--spazio-\d\))?$/);
+  });
+
+  it('e il respiro non fa sbucare la parola dalla sua finestra', () => {
+    // La parola sale da sotto dentro una finestra che la ritaglia. Se il
+    // ritaglio stesse sul collegamento, crescerne il padding scoprirebbe la
+    // parola da ferma: la finestra deve fasciare la riga di testo e nient'altro.
+    expect(MENU).toMatch(/\.finestra \{[^}]*overflow:\s*hidden/);
+    const voce = MENU.slice(MENU.indexOf('.tendina li a {'), MENU.indexOf('.tendina li a::before'));
+    expect(voce).not.toContain('overflow: hidden');
+  });
+});
+
 describe('si toglie di mezzo scendendo e torna salendo', () => {
   it('lo stato nascosto è un attributo che porta la barra fuori schermo', () => {
     expect(MENU).toMatch(/\.barra\[data-nascosta\]\s*\{\s*transform:\s*translateY\(-100%\)/);

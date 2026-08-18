@@ -7,11 +7,11 @@ interface Props {
 }
 const { attiva } = Astro.props;
 
-/* Le tre che si aprono a un pollice, senza passare dalla tendina. `/` è la
- * splash e non ha `attiva`: nessuna pagina che mostra questa barra è la home,
- * quindi quel collegamento non si marca mai come corrente. */
+/* Le due che si aprono a un pollice senza passare dalla tendina. La casa sta
+ * fuori da questo elenco perché è un disegno, non una parola: vive da sé, a
+ * sinistra. `/` è la splash e non ha `attiva`, quindi la casa non si marca mai
+ * come corrente — nessuna pagina che mostra questa barra è la home. */
 const scorciatoie = [
-  { id: null, href: '/', testo: 'Home' },
   { id: 'scheda', href: '/scheda/', testo: 'Scheda' },
   { id: 'storia', href: '/storia/', testo: 'Storia' },
 ] as const;
@@ -26,13 +26,25 @@ const voci = [
 ---
 
 <header class="barra">
+  <a class="casa" href="/" aria-label="Home">
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        d="M3.5 10.6 12 4l8.5 6.6M6 9.4V19h12V9.4M10 19v-5h4v5"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.4"
+        stroke-linecap="round"
+        stroke-linejoin="round"></path>
+    </svg>
+  </a>
+
   <nav class="scorciatoie" aria-label="Scorciatoie">
     {
       scorciatoie.map((s, i) => (
         <a
           href={s.href}
-          style={`--r: ${i}`}
-          aria-current={s.id !== null && attiva === s.id ? 'page' : undefined}
+          style={`--r: ${i + 1}`}
+          aria-current={attiva === s.id ? 'page' : undefined}
         >
           {s.testo}
         </a>
@@ -55,7 +67,9 @@ const voci = [
               voci.map((v, i) => (
                 <li style={`--r: ${i}`}>
                   <a href={v.href} aria-current={attiva === v.id ? 'page' : undefined}>
-                    <span class="parola">{v.testo}</span>
+                    <span class="finestra">
+                      <span class="parola">{v.testo}</span>
+                    </span>
                   </a>
                 </li>
               ))
@@ -127,9 +141,13 @@ const voci = [
     position: fixed;
     inset: 0 0 auto 0;
     z-index: 20;
-    display: flex;
+    /* Tre colonne invece di `space-between`: le due parole devono stare al
+     * centro dello schermo, non a metà dello spazio che avanza fra la casa e
+     * la ☰ — che sono larghe diverse, quindi le sposterebbero fuori asse. Le
+     * due colonne laterali a `1fr` si equilibrano da sole. */
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    justify-content: space-between;
     gap: var(--spazio-2);
     height: 3.25rem;
     padding-inline: var(--spazio-2);
@@ -158,8 +176,28 @@ const voci = [
     background: var(--carta);
   }
 
+  .casa {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    justify-self: start;
+    width: 44px;
+    height: 44px;
+    margin-left: -0.6rem;
+    overflow: hidden;
+    color: var(--inchiostro-tenue);
+  }
+  .casa svg {
+    width: 22px;
+    height: 22px;
+    transition:
+      transform 0.5s var(--espo),
+      opacity 0.5s var(--espo);
+  }
+
   .scorciatoie {
     display: flex;
+    justify-self: center;
     gap: var(--spazio-3);
     overflow: hidden;
   }
@@ -180,6 +218,7 @@ const voci = [
   }
   /* Aperta la tendina, la barra mostra solo l'apertura e la chiusura: le
    * scorciatoie escono dall'alto, sfalsate, e la ☰ resta sola. */
+  .barra:has(.menu[open]) .casa svg,
   .barra:has(.menu[open]) .scorciatoie a {
     transform: translateY(-140%);
     opacity: 0;
@@ -187,6 +226,7 @@ const voci = [
   }
 
   summary {
+    justify-self: end;
     list-style: none;
     display: flex;
     align-items: center;
@@ -281,18 +321,23 @@ const voci = [
     overflow: hidden;
   }
 
+  /* Il respiro verticale sta sulla scala del sito: 1rem sopra e sotto ogni
+   * voce, gli stessi che il body tiene ai lati. Una riga arriva così sui
+   * 68px — un bersaglio che il pollice non sbaglia — e la tendina è più alta,
+   * che è quello che deve essere: è l'unica cosa sullo schermo mentre la
+   * guardi. Sopra e sotto l'elenco mezzo passo, così il primo e l'ultimo
+   * bersaglio non finiscono incollati ai bordi. */
   .tendina ol {
     counter-reset: voce;
     list-style: none;
     margin: 0;
-    padding: 0.4rem 0 0;
+    padding: var(--spazio-1) 0;
   }
   .tendina li a {
     display: flex;
     align-items: baseline;
     gap: 0.7rem;
-    padding: 0.35rem var(--spazio-2);
-    overflow: hidden;
+    padding: var(--spazio-2);
     text-decoration: none;
     color: var(--inchiostro);
   }
@@ -305,6 +350,14 @@ const voci = [
     font-size: 0.72rem;
     color: var(--inchiostro-muto);
     opacity: 0.5;
+  }
+  /* Il ritaglio fascia la riga di testo, non il collegamento. Sul
+   * collegamento seguirebbe il padding: crescere il respiro scoprirebbe la
+   * parola da ferma, che è come nasceva questo cambio. Così la parola parte
+   * appena sotto il proprio bordo, qualunque respiro le si dia intorno. */
+  .finestra {
+    display: block;
+    overflow: hidden;
   }
   .parola {
     display: block;
@@ -326,7 +379,7 @@ const voci = [
 
   .filetto {
     height: 1px;
-    margin: 0.7rem var(--spazio-2) 0;
+    margin: var(--spazio-1) var(--spazio-2);
     background-image: repeating-linear-gradient(
       to right,
       var(--inchiostro) 0 2px,
@@ -347,7 +400,7 @@ const voci = [
     align-items: center;
     justify-content: space-between;
     gap: var(--spazio-2);
-    padding: 0.7rem var(--spazio-2) 1rem;
+    padding: var(--spazio-2);
     transform: translateX(-300%);
     transition: transform 1.1s var(--quint);
   }
@@ -386,7 +439,7 @@ const voci = [
    * tendina, non un secondo menu. */
   @media (min-width: 901px) {
     .tendina ol {
-      padding-top: 0.8rem;
+      padding-block: var(--spazio-2);
     }
     .parola {
       font-size: 2.4rem;
