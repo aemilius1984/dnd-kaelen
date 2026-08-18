@@ -829,17 +829,14 @@ dialog.vitalita .annuncio {
 .barra-preparazione button {
   min-height: 44px;
 }
-.barra-preparazione .conferma {
-  margin-left: auto;
-  border-color: var(--lampo);
-  color: var(--lampo);
-}
+/* `auto` sul primo dei due comandi spinge la coppia a destra; il secondo la
+ * segue. Metterlo su entrambi richiedeva poi due regole per disfarlo. */
 .barra-preparazione .annulla {
   margin-left: auto;
 }
-.barra-preparazione .conferma + .annulla,
-.barra-preparazione .annulla + .conferma {
-  margin-left: 0;
+.barra-preparazione .conferma {
+  border-color: var(--lampo);
+  color: var(--lampo);
 }
 
 /* Fuori dalla sessione le spunte restano visibili ma spente: si continua a
