@@ -202,8 +202,13 @@ reazioni:
     risorsa: tuono-tempesta
   - nome: Attacco di Opportunità
     nomeEn: Opportunity Attack
-    innesco: Un nemico visibile lascia volontariamente la tua portata.
-    effetto: Un attacco di maglio.
+    innesco: >-
+      Una creatura che vedi lascia la tua portata di 5 ft usando movimento, Azione,
+      Azione Bonus o Reazione.
+    effetto: >-
+      Un attacco di maglio, prima che esca dalla portata. Non si innesca con
+      Disimpegno, teletrasporto, o movimento che non spende nessuna di quelle quattro
+      cose.
 interpretazione:
   tratto: Attaccabrighe gioviale e rumoroso, ripara reti e vestiti quando deve riflettere.
   ideale: La forza serve a proteggere la libertà altrui.

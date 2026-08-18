@@ -54,3 +54,15 @@ export function fondiCapacita(pg: Personaggio): Capacita[] {
 
   return [...conContatore, ...senzaContatore];
 }
+
+/** Come si recupera una risorsa, detto per intero.
+ *
+ *  «Riposo Breve» da solo era una mezza verità che si leggeva come una bugia:
+ *  accanto a «2» sembrava promettere che entrambe le cariche di Incanalare
+ *  Divinità tornassero con un riposo breve, mentre ne torna una — e tutte solo
+ *  con il lungo. La meccanica era già giusta in `riposoBreve`, che ne rimette
+ *  esattamente una: sbagliava l'etichetta. Vedi la tabella P1 dell'audit. */
+export function testoRecupero(recupero: 'breve' | 'lungo'): string {
+  if (recupero === 'lungo') return 'tutti / Riposo Lungo';
+  return '+1 / Riposo Breve · tutti / Riposo Lungo';
+}

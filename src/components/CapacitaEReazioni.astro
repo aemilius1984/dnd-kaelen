@@ -1,6 +1,6 @@
 ---
 import type { Personaggio } from '@/lib/schema';
-import { fondiCapacita } from '@/lib/capacita';
+import { fondiCapacita, testoRecupero } from '@/lib/capacita';
 import Superficie from '@/components/ui/Superficie.astro';
 import NomeDoppio from '@/components/ui/NomeDoppio.astro';
 
@@ -24,8 +24,6 @@ const PREFISSO_INCANALARE = 'Incanalare Divinità: ';
 const usiDiIncanalare = pg.capacita
   .filter((c) => c.titolo.startsWith(PREFISSO_INCANALARE))
   .map((c) => ({ titolo: c.titolo.slice(PREFISSO_INCANALARE.length), paragrafi: c.paragrafi }));
-
-const recuperoTesto = { breve: 'Riposo Breve', lungo: 'Riposo Lungo' } as const;
 ---
 
 <div class="capacita-reazioni">
@@ -43,7 +41,7 @@ const recuperoTesto = { breve: 'Riposo Breve', lungo: 'Riposo Lungo' } as const;
                   senza JavaScript. */}
               <div data-caselle={c.id} />
               <span class="recupero tenue">
-                {c.max} · {c.recupero && recuperoTesto[c.recupero]}
+                {c.max} · {c.recupero && testoRecupero(c.recupero)}
               </span>
             </div>
           )}
