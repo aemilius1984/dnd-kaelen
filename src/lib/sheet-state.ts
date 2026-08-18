@@ -286,7 +286,14 @@ export function impostaIspirazione(s: StatoSessione, valore: boolean): StatoSess
 
 /** Riposo Breve: recupera un uso delle risorse a recupero breve. Non tocca PF,
  *  slot né dadi vita: la spesa dei dadi vita resta una scelta manuale. */
+/** Precondizione di entrambi i riposi: almeno 1 PF. A zero si è incoscienti, e
+ *  da incoscienti non si riposa — ci si stabilizza. */
+function puoRiposare(s: StatoSessione): boolean {
+  return s.pf > 0;
+}
+
 export function riposoBreve(s: StatoSessione, pg: Personaggio): StatoSessione {
+  if (!puoRiposare(s)) return s;
   const risorseUsate = { ...s.risorseUsate };
   for (const r of pg.risorse) {
     if (r.recupero === 'breve') risorseUsate[r.id] = Math.max(0, (risorseUsate[r.id] ?? 0) - 1);
@@ -295,12 +302,18 @@ export function riposoBreve(s: StatoSessione, pg: Personaggio): StatoSessione {
 }
 
 export function riposoLungo(s: StatoSessione, pg: Personaggio): StatoSessione {
-  const recuperati = Math.max(1, Math.floor(pg.numeroDadiVita / 2));
+  if (!puoRiposare(s)) return s;
+  // Tutti i dadi vita, qualunque fosse il numero speso. Qui c'era
+  // `Math.floor(numeroDadiVita / 2)`, che è la regola con cui si *recuperano i
+  // livelli* di dado vita in altre edizioni: applicata al Chierico 2024
+  // restituiva un dado su tre e lasciava Kaelen più fragile del dovuto a ogni
+  // giornata di gioco. Vedi la tabella P0 dell'audit regolamentare.
   return aggiorna(s, {
     pf: pg.pfMax,
     pfTemporanei: 0,
+    statoVitale: 'cosciente',
     tsMorte: { successi: 0, fallimenti: 0 },
-    dadiVitaSpesi: Math.max(0, s.dadiVitaSpesi - recuperati),
+    dadiVitaSpesi: 0,
     slotSpesi: Object.fromEntries(pg.slot.map((x) => [x.livello, []])),
     risorseUsate: Object.fromEntries(pg.risorse.map((r) => [r.id, 0])),
   });

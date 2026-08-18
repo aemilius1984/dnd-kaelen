@@ -202,7 +202,10 @@ export default function PannelloAzioni() {
             class="pericoloso"
             onClick={() => {
               if (
-                !confirm('Riposo lungo: PF al massimo, slot e risorse ripristinati. Procedere?')
+                !confirm(
+                  'Riposo lungo: PF al massimo, tutti i dadi vita recuperati, slot e risorse ' +
+                    'ripristinati. Procedere?',
+                )
               ) {
                 return;
               }

@@ -148,7 +148,7 @@ describe('riposi', () => {
     expect(s.pf).toBe(16);
   });
 
-  it('il riposo lungo ripristina tutto e recupera metà dei dadi vita', () => {
+  it('il riposo lungo ripristina tutto e recupera tutti i dadi vita', () => {
     s = applicaDanno(s, pg, 10);
     s = impostaPfTemporanei(s, 4);
     s = spendiSlot(s, pg, 2, 'frantumare');
@@ -161,8 +161,20 @@ describe('riposi', () => {
     expect(s.pfTemporanei).toBe(0);
     expect(s.slotSpesi).toEqual({ 1: [], 2: [] });
     expect(s.risorseUsate['ira-tempesta']).toBe(0);
-    expect(s.dadiVitaSpesi).toBe(2);
+    // Erano tre spesi e ne tornava uno solo: `Math.floor(3 / 2)` è la regola
+    // dei *livelli*, non dei dadi vita. Il Riposo Lungo li rimette tutti.
+    expect(s.dadiVitaSpesi).toBe(0);
     expect(s.tsMorte).toEqual({ successi: 0, fallimenti: 0 });
+    expect(s.statoVitale).toBe('cosciente');
+  });
+
+  it('nessuno dei due riposi parte da terra', () => {
+    // Precondizione del manuale: un riposo valido richiede almeno 1 PF. A 0
+    // PF si è incoscienti, e da incoscienti non si riposa — ci si stabilizza.
+    const giu = applicaDanno(statoIniziale(pg, VERSIONE), pg, pg.pfMax);
+
+    expect(riposoBreve(giu, pg)).toBe(giu);
+    expect(riposoLungo(giu, pg)).toBe(giu);
   });
 });
 
