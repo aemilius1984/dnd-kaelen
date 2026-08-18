@@ -34,6 +34,15 @@ export function cdIncantesimi(pg: Personaggio): number {
   return 8 + pg.competenza + mod(pg, pg.caratteristicaIncantesimi);
 }
 
+/** La CD di afferrare e spingere col Colpo senz'armi. Stessa forma della CD
+ *  degli incantesimi ma sulla Forza, non sulla caratteristica da incantatore:
+ *  che per Kaelen diano lo stesso numero è una coincidenza di questo livello,
+ *  non una regola — scriverne una sola e riusarla le farebbe divergere in
+ *  silenzio al primo aumento di punteggio. */
+export function cdContrasto(pg: Personaggio): number {
+  return 8 + pg.competenza + mod(pg, 'for');
+}
+
 export function attaccoIncantesimi(pg: Personaggio): number {
   return pg.competenza + mod(pg, pg.caratteristicaIncantesimi);
 }

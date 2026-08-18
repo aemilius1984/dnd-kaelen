@@ -35,6 +35,9 @@ attacchi:
   - id: maglio-una-mano
     nome: Maglio da guerra, una mano
     nomeEn: Warhammer
+    gruppo: maglio
+    modo: una mano
+    scudo: true
     caratteristica: for
     competente: true
     gittata: 5 ft
@@ -49,6 +52,9 @@ attacchi:
   - id: maglio-due-mani
     nome: Maglio da guerra, due mani
     nomeEn: Warhammer
+    gruppo: maglio
+    modo: due mani
+    scudo: false
     caratteristica: for
     competente: true
     gittata: 5 ft
@@ -59,10 +65,19 @@ attacchi:
       Lo stesso maglio stretto a due mani. È quello che concede la proprietà
       Versatile: il dado di danno sale da 1d8 a 1d10, e in cambio nessuna mano
       resta libera.
-    note: Devi rinunciare allo scudo, la CA scende a 16.
+    note: Devi rinunciare allo scudo.
+    avvertenze:
+      - >-
+        Con maglio e scudo impugnati, un incantesimo con componente Somatica
+        chiede di liberare prima la mano del maglio. Comando e Parola Guaritrice
+        sono solo verbali: restano lanciabili a mani occupate.
+      - >-
+        Protettore dà la competenza nell'arma, non la Maestria: la proprietà
+        Push del Warhammer non si applica.
   - id: colpo-senzarmi
     nome: Colpo senz'armi
     nomeEn: Unarmed Strike
+    modo: colpisci
     caratteristica: for
     competente: true
     gittata: 5 ft
@@ -71,9 +86,21 @@ attacchi:
     tipoDanno: contundenti
     descrizione: >-
       Pugno, calcio o testata contro un bersaglio entro 5 ft. Non è un'arma e non
-      ha un dado: infligge 1 danno più il modificatore di Forza. Le sue altre due
-      opzioni, afferrare e spingere, non tirano per colpire.
-    note: In alternativa puoi afferrare o spingere, CD 13.
+      ha un dado: infligge 1 danno più il modificatore di Forza.
+    alternative:
+      - nome: Afferra
+        nomeEn: Grapple
+        ts: Forza o Destrezza, sceglie il bersaglio
+        effetto: >-
+          Il bersaglio diventa Afferrato. Non tiri per colpire: è lui a tirare
+          per liberarsi.
+        limite: Serve una mano libera, e il bersaglio non può essere più che Grande.
+      - nome: Spingi
+        nomeEn: Shove
+        ts: Forza o Destrezza, sceglie il bersaglio
+        effetto: >-
+          Lo sposti di 5 ft oppure lo rendi Prono: scegli tu quale dei due.
+        limite: Il bersaglio non può essere più che Grande.
 risorse:
   - id: incanalare
     nome: Incanalare Divinità

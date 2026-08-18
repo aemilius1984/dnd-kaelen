@@ -49,6 +49,13 @@ export const personaggioSchema = z.object({
       id: z.string(),
       nome: z.string(),
       nomeEn: z.string(),
+      /** L'arma che raccoglie più modi in una carta sola. Assente: carta a sé. */
+      gruppo: z.string().optional(),
+      /** L'etichetta del modo nel selettore: «una mano», «colpisci». */
+      modo: z.string().optional(),
+      /** Se questo modo lascia lo scudo impugnato. La CA non si scrive qui: da
+       *  questo booleano la deriva `classeArmatura`. */
+      scudo: z.boolean().optional(),
       caratteristica: caratteristicaEnum,
       competente: z.boolean(),
       gittata: z.string(),
@@ -57,6 +64,22 @@ export const personaggioSchema = z.object({
       tipoDanno: z.string(),
       descrizione: z.string(),
       note: z.string().optional(),
+      /** I «da sapere» dell'arma. Stanno solo nella modale: sono la cosa che si
+       *  legge una volta e poi si ricorda, non quella che serve mentre tiri. */
+      avvertenze: z.array(z.string()).default([]),
+      /** Le opzioni che NON tirano per colpire — afferrare, spingere. La CD non
+       *  si scrive: la deriva `cdContrasto`. */
+      alternative: z
+        .array(
+          z.object({
+            nome: z.string(),
+            nomeEn: z.string(),
+            ts: z.string(),
+            effetto: z.string(),
+            limite: z.string().optional(),
+          }),
+        )
+        .default([]),
     }),
   ),
   risorse: z.array(

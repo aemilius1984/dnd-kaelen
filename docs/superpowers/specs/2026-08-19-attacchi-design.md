@@ -1,7 +1,7 @@
 # Attacchi — la carta sintetica e la modale dell'arma
 
 Scelto dagli sketch pubblicati il 2026-08-18: **forma sintetica C** (una carta
-per *arma*, non per attacco) e **modale 2** (organizzata su cosa puoi fare, non
+per _arma_, non per attacco) e **modale 2** (organizzata su cosa puoi fare, non
 su com'è fatta l'arma).
 
 ## Il problema
@@ -23,22 +23,22 @@ In più tre cose che l'audit regolamentare chiede e che oggi non ci sono:
 ## Cosa resta sulla carta
 
 Nome, `+5` e il danno del modo scelto. Più il selettore dei modi, che è la sola
-cosa nuova: è quello che rende la carta *dell'arma* invece che dell'attacco.
+cosa nuova: è quello che rende la carta _dell'arma_ invece che dell'attacco.
 
 Tutto il resto — scomposizione del tiro, gittata, proprietà, prosa, note,
 avvertenze — passa nella modale.
 
 ## Il modello dei dati
 
-`attacchi[]` resta l'unica lista, e resta una voce per *modo*. Si aggiungono
+`attacchi[]` resta l'unica lista, e resta una voce per _modo_. Si aggiungono
 quattro campi facoltativi:
 
-| campo         | tipo       | a cosa serve                                                        |
-| ------------- | ---------- | ------------------------------------------------------------------- |
-| `gruppo`      | `string`   | l'arma che raccoglie i modi in una carta sola. Assente = carta a sé |
-| `modo`        | `string`   | l'etichetta del modo nel selettore («una mano», «colpisci»)          |
-| `scudo`       | `boolean`  | se questo modo lascia lo scudo impugnato — da cui si *deriva* la CA  |
-| `avvertenze`  | `string[]` | i «da sapere» dell'arma, mostrati solo nella modale                  |
+| campo        | tipo       | a cosa serve                                                        |
+| ------------ | ---------- | ------------------------------------------------------------------- |
+| `gruppo`     | `string`   | l'arma che raccoglie i modi in una carta sola. Assente = carta a sé |
+| `modo`       | `string`   | l'etichetta del modo nel selettore («una mano», «colpisci»)         |
+| `scudo`      | `boolean`  | se questo modo lascia lo scudo impugnato — da cui si _deriva_ la CA |
+| `avvertenze` | `string[]` | i «da sapere» dell'arma, mostrati solo nella modale                 |
 
 E una lista facoltativa `alternative[]` per le opzioni che **non tirano per
 colpire**: afferrare e spingere. Ogni alternativa porta `nome`, `nomeEn`, il
@@ -62,7 +62,7 @@ scudo)`, che esiste già; la CD del contrasto da una funzione nuova,
 Il selettore è un gruppo di `input[type="radio"]` nascosti; la riga di sintesi
 cambia con `:has()`. Nessun JavaScript, e la scelta non è stato di sessione: al
 ricaricamento torna al primo modo. È deliberato — l'audit dice che la UI non
-deve *dedurre* cosa Kaelen stia impugnando, solo dirlo.
+deve _dedurre_ cosa Kaelen stia impugnando, solo dirlo.
 
 **Deviazione dallo sketch:** nello sketch il chevron sta sulla riga di sintesi.
 Qui il bottone è la riga del titolo: un `<button>` non può contenere il
