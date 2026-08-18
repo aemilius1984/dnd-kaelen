@@ -1,0 +1,17 @@
+# Copia questo file in `.dev.vars` e riempilo. `.dev.vars` è in .gitignore.
+#
+# Questo è il file che il runtime di Cloudflare legge davvero quando le Pages
+# Functions girano in locale — stesse due variabili di `.env.example`, ma sotto
+# il nome che `wrangler` si aspetta. Formato identico: `CHIAVE=valore`.
+#
+# Per vedere l'autenticazione funzionare:
+#
+#   npm run build
+#   npx wrangler pages dev ./dist
+#
+# Il browser deve chiedere utente e password. Se si apre senza chiedere niente
+# stai guardando `astro dev` o `astro preview`, che le Functions non le
+# eseguono.
+
+SITE_USER=ciurma
+SITE_PASS=cambiami

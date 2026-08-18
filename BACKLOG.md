@@ -222,3 +222,7 @@ impedisce che se ne accumulino altre. Quando la fase 2 cancella
 aspetta di trovare lì. Una guardia che limiti `base.css` a selettori di
 elemento, `@font-face`, `@media` e un piccolo elenco nominato di eccezioni
 vale la pena scriverla, ma su un confine che la fase 2 sta per ridisegnare.
+
+# Note
+
+- https://www.dndbeyond.com/characters/169880275 scheda pg ufficiale D&D
