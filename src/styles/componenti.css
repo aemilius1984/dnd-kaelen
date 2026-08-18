@@ -501,15 +501,14 @@ dialog.azioni input[type='number'] {
    * carta e sbagliava di diciotto pixel nella scatola vera. Lo stacco è un
    * `gap`, dichiarato e contato quattro volte, una per ogni interstizio fra
    * le cinque righe. */
-  --v-testata: 20px;
   --v-numero: 48px;
   --v-metro: 16px;
   --v-tacche: 12px;
   --v-piede: 48px;
-  --v-stacco: 8px; /* × 4 interstizi */
+  --v-stacco: 8px; /* × 3 interstizi */
   --v-imbottitura: 32px; /* 2 × var(--spazio-2) */
   --v-bordi: 2px;
-  height: 210px;
+  height: 182px;
   margin: var(--spazio-2) 0;
 }
 .vitalita-scheda {
@@ -527,20 +526,24 @@ dialog.azioni input[type='number'] {
   box-shadow: var(--ombra-2);
   color: var(--inchiostro);
 }
-.vitalita-scheda .testata {
-  height: var(--v-testata);
+/* La croce a sinistra, il contatore a destra, sulla stessa riga. La testata
+ * con scritto «punti ferita» non c'è più: era una riga intera per una parola
+ * che l'icona dice meglio, e la sua altezza è tornata alla scheda. */
+.vitalita-scheda .numero {
+  height: var(--v-numero);
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
-.vitalita-scheda .apri {
-  font-size: 0.66rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--inchiostro-muto);
+.vitalita-scheda .simbolo {
+  display: flex;
+  align-items: center;
+  color: var(--lampo);
 }
-.vitalita-scheda .numero {
-  height: var(--v-numero);
+.vitalita-scheda .simbolo.pericolo {
+  color: var(--allerta);
+}
+.vitalita-scheda .conto {
   display: flex;
   align-items: flex-end;
   gap: 0.5rem;
@@ -561,7 +564,6 @@ dialog.azioni input[type='number'] {
   color: var(--inchiostro-tenue);
 }
 .vitalita-scheda .vitalita-temp {
-  margin-left: auto;
   align-self: center;
   padding: 0.25rem 0.5rem;
   border: 1px solid var(--ambra);
@@ -629,6 +631,12 @@ dialog.vitalita .stato .metro .temporanei {
 }
 .vitalita-scheda .isp.accesa {
   color: var(--ambra);
+}
+/* Sull'ultima riga e spinto a destra. Sopra rubava il posto al numero, che è
+ * la sola cosa che questa scheda deve far leggere in un colpo d'occhio. */
+.vitalita-scheda .apri {
+  margin-left: auto;
+  color: var(--inchiostro-tenue);
 }
 
 /* La modale: a tutto schermo come l'archivio, non una tendina dal basso. Si

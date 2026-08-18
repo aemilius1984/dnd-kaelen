@@ -45,7 +45,7 @@ it('l’altezza riservata della vitalità è la somma delle sue parti', () => {
     return Number(m[1]);
   };
 
-  const righe = ['testata', 'numero', 'metro', 'tacche', 'piede'];
+  const righe = ['numero', 'metro', 'tacche', 'piede'];
   const totale = /height:\s*(\d+)px/.exec(blocco);
   if (!totale) throw new Error('altezza fissa non dichiarata');
 
@@ -72,7 +72,7 @@ it('le righe della scheda non hanno margini, o la somma mentirebbe', () => {
 it('ogni parte è usata davvero dal layout, non solo dichiarata', () => {
   // Una variabile che nessuno consuma è un numero che mente: la somma
   // tornerebbe mentre il layout fa altro.
-  for (const nome of ['testata', 'numero', 'metro', 'tacche', 'piede']) {
+  for (const nome of ['numero', 'metro', 'tacche', 'piede']) {
     expect(CSS).toContain(`var(--v-${nome})`);
   }
 });

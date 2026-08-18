@@ -74,17 +74,20 @@ export default function Vitalita() {
           setAperture((n) => n + 1);
         }}
       >
-        <span class="testata">
-          <span class="kicker">punti ferita</span>
-          <span class="apri">apri</span>
-        </span>
-
+        {/* La croce al posto della parola «punti ferita»: il nome della cosa lo
+            porta già `aria-label` sul bottone, e a occhio una croce si
+            riconosce da più lontano di due parole in maiuscoletto. */}
         <span class="numero">
-          <span class={inPericolo ? 'pf pericolo' : 'pf'}>{s.pf}</span>
-          <span class="su">/ {pg.pfMax}</span>
-          {/* Occupa il suo posto anche a zero: l'altezza è fissa e riservata. */}
-          <span class="vitalita-temp" hidden={s.pfTemporanei === 0}>
-            +{s.pfTemporanei} temp
+          <span class={inPericolo ? 'simbolo pericolo' : 'simbolo'}>
+            <Croce />
+          </span>
+          <span class="conto">
+            {/* Occupa il suo posto anche a zero: l'altezza è fissa e riservata. */}
+            <span class="vitalita-temp" hidden={s.pfTemporanei === 0}>
+              +{s.pfTemporanei} temp
+            </span>
+            <span class={inPericolo ? 'pf pericolo' : 'pf'}>{s.pf}</span>
+            <span class="su">/ {pg.pfMax}</span>
           </span>
         </span>
 
@@ -104,6 +107,9 @@ export default function Vitalita() {
           <span class={s.ispirazione ? 'isp accesa' : 'isp'}>
             <span aria-hidden="true">{s.ispirazione ? '★' : '☆'}</span> isp
           </span>
+          {/* Spinto a destra sull'ultima riga: in cima rubava il posto al
+              numero, che è la sola cosa da leggere in un colpo d'occhio. */}
+          <span class="apri">apri</span>
         </span>
       </button>
 
@@ -258,5 +264,16 @@ export default function Vitalita() {
         </p>
       </dialog>
     </>
+  );
+}
+
+/** La croce dei punti ferita. Piena e con gli angoli smussati: sottile si
+ *  perde accanto a un numero da 3rem, ed è l'unica cosa che dice di cosa parla
+ *  questa scheda ora che la parola non c'è più. */
+function Croce() {
+  return (
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true">
+      <path d="M9.4 2h5.2a1.4 1.4 0 0 1 1.4 1.4V8h4.6A1.4 1.4 0 0 1 22 9.4v5.2a1.4 1.4 0 0 1-1.4 1.4H16v4.6a1.4 1.4 0 0 1-1.4 1.4H9.4A1.4 1.4 0 0 1 8 20.6V16H3.4A1.4 1.4 0 0 1 2 14.6V9.4A1.4 1.4 0 0 1 3.4 8H8V3.4A1.4 1.4 0 0 1 9.4 2Z" />
+    </svg>
   );
 }
