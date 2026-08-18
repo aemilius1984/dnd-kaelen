@@ -33,7 +33,7 @@ armatura:
   note: Svantaggio alle prove di Destrezza (Furtività). Forza minima 13.
 attacchi:
   - id: maglio-una-mano
-    nome: Maglio da guerra, una mano
+    nome: Maglio da guerra
     nomeEn: Warhammer
     gruppo: maglio
     modo: una mano
@@ -50,7 +50,7 @@ attacchi:
       Versatile calcola il proprio aumento.
     note: Permette di usare lo scudo. Scelta normale.
   - id: maglio-due-mani
-    nome: Maglio da guerra, due mani
+    nome: Maglio da guerra
     nomeEn: Warhammer
     gruppo: maglio
     modo: due mani

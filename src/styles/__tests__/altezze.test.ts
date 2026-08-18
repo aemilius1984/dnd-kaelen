@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { expect, it } from 'vitest';
 
 const CSS = readFileSync('src/styles/componenti.css', 'utf8');
@@ -150,25 +150,74 @@ it('il passo della rotella nel CSS combacia con quello del modulo', () => {
 });
 
 it('nessun dialogo dichiara `display` fuori dallo stato aperto', () => {
-  // Il difetto che ha fatto sembrare rotta tutta la sezione. Il browser tiene
+  // Il difetto che ha fatto sembrare rotta tutta la Vitalità. Il browser tiene
   // chiuso un <dialog> con `display: none` nel proprio foglio di stile:
   // dichiarare `display: flex` sulla regola base lo scavalca, e il contenuto
-  // della modale finisce dentro la pagina, sempre visibile, sotto la scheda.
+  // della modale finisce dentro la pagina, sempre visibile.
   //
-  // `dialog.archivio`, che funziona da sempre, non dichiara `display`: era lì
-  // l'esempio giusto da copiare.
-  const regole = [...CSS.matchAll(/(^|\})([^{}]*dialog[^{}]*)\{([^}]*)\}/g)];
-  expect(regole.length).toBeGreaterThan(0);
+  // La prima versione di questa guardia cercava `dialog` nel *selettore*. Una
+  // modale con una regola scritta per sola classe — `.arma-piena`, non
+  // `dialog.arma-piena` — le passava sotto il naso senza un fallimento, e la
+  // seconda modale del progetto è nata esattamente così. Quindi si parte dal
+  // markup: quali classi stanno davvero su un <dialog>.
+  const sorgenti = [
+    ...readdirSync('src/components')
+      .filter((f) => f.endsWith('.astro'))
+      .map((f) => `src/components/${f}`),
+    ...readdirSync('src/islands')
+      .filter((f) => f.endsWith('.tsx'))
+      .map((f) => `src/islands/${f}`),
+  ].map((f) => readFileSync(f, 'utf8'));
 
-  for (const [, , selettore, corpoRegola] of regole) {
-    if (!/display\s*:/.test(corpoRegola)) continue;
-    // Concesso solo dove lo stato aperto è nel selettore, o su un discendente
-    // che non è il dialogo stesso.
-    const suDialogoChiuso = /dialog[a-z.-]*\s*(,|\{|$)/.test(selettore.trim() + '{');
-    if (suDialogoChiuso) {
-      expect(selettore).toMatch(/\[open\]/);
+  const classi = new Set<string>();
+  for (const sorgente of sorgenti) {
+    for (const [, valore] of sorgente.matchAll(/<dialog[^>]*\sclass(?:Name)?="([^"]+)"/g)) {
+      for (const c of valore.split(/\s+/)) if (c) classi.add(c);
     }
   }
+  expect(classi.size).toBeGreaterThan(0);
+
+  // Solo i blocchi `<style>`, non i file interi: le graffe di JSX e del
+  // frontmatter sfasano l'accoppiamento selettore/corpo e la scansione finisce
+  // a guardare pezzi di template. È la seconda cecità di questa guardia.
+  const fogli = [
+    CSS,
+    ...sorgenti.flatMap((testo) =>
+      [...testo.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1]),
+    ),
+  ]
+    .join('\n')
+    // Via i commenti. Quel che sta fra una graffa chiusa e la successiva aperta
+    // comprende il commento della regola, e questa guardia ci cerca dentro
+    // `[open]`: il commento che *spiega* la regola contiene quelle parole, e la
+    // guardia si assolveva leggendo la propria spiegazione. Presa così una
+    // volta, su questa stessa modale.
+    .replace(/\/\*[\s\S]*?\*\//g, ' ');
+  let controllate = 0;
+  const violazioni: string[] = [];
+
+  // Niente `(^|\})` davanti: quel `}` veniva consumato dalla regola
+  // precedente, e siccome due match non si sovrappongono la scansione ne
+  // saltava una sì e una no. Il selettore è già `[^{}]*`, che comincia da solo
+  // dopo la graffa di chiusura di prima.
+  for (const [, selettore, corpoRegola] of fogli.matchAll(/([^{}]*)\{([^}]*)\}/g)) {
+    // Solo le regole che vestono il dialogo stesso, non i suoi discendenti:
+    // `.arma-piena .testa` può dichiarare quel che vuole.
+    const vesteIlDialogo = [...classi].some((c) =>
+      new RegExp(`\\.${c}(\\[[^\\]]*\\])*\\s*(,|$)`).test(selettore.trim()),
+    );
+    if (!vesteIlDialogo) continue;
+    controllate += 1;
+    if (!/display\s*:/.test(corpoRegola)) continue;
+    if (!/\[open\]/.test(selettore)) violazioni.push(selettore.trim().split('\n').pop()!.trim());
+  }
+
+  // Tutte insieme: lanciare dentro il ciclo ferma alla prima e nasconde le altre.
+  expect(violazioni).toEqual([]);
+
+  // Se il riconoscimento delle regole smettesse di funzionare, il ciclo qui
+  // sopra non ne guarderebbe nessuna e il test passerebbe dicendo niente.
+  expect(controllate).toBeGreaterThanOrEqual(classi.size);
 });
 
 it('la barra del menu ancora la ☰ a destra sull’elemento giusto', () => {
