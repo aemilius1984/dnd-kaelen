@@ -263,8 +263,26 @@ it('la barra degli slot si appiccica al contenitore, non alla radice dell’isol
   // — che è anche l'unico che il build scrive, e che quindi può riservare
   // l'altezza prima dell'idratazione.
   expect(corpo('.barra-slot-isola')).toMatch(/position:\s*sticky/);
-  expect(corpo('.barra-slot-isola')).toMatch(/min-height:\s*\d+px/);
-  expect(() => corpo('.barra-slot')).toThrow();
+  // 49px: 48 di area premibile del riassunto più il filetto di sotto. Non è
+  // ricavato a mente, è letto in Chrome a 390x844 — e riletto dopo che
+  // attacco e CD sono entrati nella riga, che l'altezza non l'ha cambiata.
+  expect(corpo('.barra-slot-isola')).toMatch(/min-height:\s*49px/);
+  // La barra dell'isola una regola adesso ce l'ha (`display: contents`, che
+  // le fa attraversare la griglia del cappello), ma non è lei ad appiccicarsi.
+  expect(corpo('.barra-slot')).not.toMatch(/position:\s*sticky/);
+});
+
+it('la riga del cappello tiene i due numeri e il conto senza accavallarli', () => {
+  // Misurato in Chrome a 390x844: «Attacco +5 · CD 13» arriva a 135px, il
+  // riassunto parte da 151. Sedici pixel di margine non sono molti, ed è per
+  // questo che i due numeri non vanno a capo — spezzarli raddoppierebbe
+  // l'altezza del cappello proprio a metà scorrimento.
+  expect(corpo('.barra-slot-isola')).toMatch(/grid-template-columns:\s*auto 1fr/);
+  expect(corpo('.attacco-inc')).toMatch(/white-space:\s*nowrap/);
+  // Le file aperte scavalcano la colonna di destra e si prendono i 358px
+  // pieni: dentro ci vanno le caselle grandi, che a metà larghezza non
+  // starebbero.
+  expect(corpo('.barra-slot .file')).toMatch(/grid-area:\s*2 \/ 1 \/ auto \/ -1/);
 });
 
 it('il cappello dell’archivio si appiccica come la barra degli slot', () => {
@@ -290,7 +308,7 @@ it('le file della barra degli slot partono tutte dalla stessa colonna', () => {
 });
 
 it('i due numeri del conto sono della stessa misura', () => {
-  // «6 slot su 6» sono la stessa cosa detta due volte: a due corpi diversi
+  // «6/6» sono la stessa cosa detta due volte: a due corpi diversi
   // litigano. A distinguerli bastano colore e peso.
   expect(corpo('.barra-slot .conto strong')).not.toMatch(/font-size:/);
 });

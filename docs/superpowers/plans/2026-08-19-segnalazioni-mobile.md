@@ -126,11 +126,11 @@ Indipendente da tutti gli altri: si può eseguire in qualunque momento.
 - Modify: `src/pages/scheda.astro`, `src/islands/BarraSlot.tsx`, `src/styles/componenti.css`
 - Test: `src/styles/__tests__/altezze.test.ts`
 
-- [ ] **Step 1:** togliere `<p class="tenue attacco-inc">` da `scheda.astro:102` e portare i due valori **dentro `.barra-slot-isola`**, come markup statico accanto all'isola. Non dentro `BarraSlot.tsx`: è `client:only`, e un'isola non contiene mai contenuto statico. Rimuovere anche la regola `.attacco-inc` da `componenti.css`, che resta senza markup.
-- [ ] **Step 2:** in `BarraSlot.tsx` il riassunto passa da «4 slot su 6» a `4/6`. La parola «slot» cade: dentro la sezione Incantesimi, accanto a `Attacco +5 · CD 13`, non può voler dire altro.
-- [ ] **Step 3:** disporre la riga: `Attacco +5 · CD 13` a sinistra, `4/6` e «dettaglio» a destra, dentro i 390px. Se stringe, la prima cosa che cade è «dettaglio».
-- [ ] **Step 4: rimisurare la riserva.** `.barra-slot-isola` dichiara `min-height: 49px`, un numero preso col browser: il contenuto della riga è cambiato, quindi va **misurato di nuovo** con CDP, non ricalcolato a mente. Aggiornare il test delle altezze.
-- [ ] **Step 5:** `npm run gate`, poi commit.
+- [x] **Step 1:** togliere `<p class="tenue attacco-inc">` da `scheda.astro:102` e portare i due valori **dentro `.barra-slot-isola`**, come markup statico accanto all'isola. Non dentro `BarraSlot.tsx`: è `client:only`, e un'isola non contiene mai contenuto statico. Rimuovere anche la regola `.attacco-inc` da `componenti.css`, che resta senza markup. **Scostamento:** la classe aveva un secondo uso (la nota sulle reazioni, `scheda.astro:167`), quindi non è rimasta senza markup: la regola è stata rinominata `.nota-sezione` per quell'uso, e `.attacco-inc` riscritta per il cappello.
+- [x] **Step 2:** in `BarraSlot.tsx` il riassunto passa da «4 slot su 6» a `4/6`. La parola «slot» cade: dentro la sezione Incantesimi, accanto a `Attacco +5 · CD 13`, non può voler dire altro.
+- [x] **Step 3:** disporre la riga: `Attacco +5 · CD 13` a sinistra, `4/6` e «dettaglio» a destra, dentro i 390px. Se stringe, la prima cosa che cade è «dettaglio».
+- [x] **Step 4: rimisurare la riserva.** `.barra-slot-isola` dichiara `min-height: 49px`, un numero preso col browser: il contenuto della riga è cambiato, quindi va **misurato di nuovo** con CDP, non ricalcolato a mente. Aggiornare il test delle altezze. **Esito:** rimisurata in Chrome a 390x844, la riga chiusa è ancora 49px esatti — il numero resta, ma adesso il test lo dichiara invece di accettare qualunque cifra.
+- [x] **Step 5:** `npm run gate`, poi commit.
 
 ---
 

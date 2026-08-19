@@ -4,7 +4,7 @@ import FilaSlot from '@/islands/FilaSlot';
 
 /** La barra degli slot, appiccicata in cima alla sezione degli incantesimi.
  *
- *  Chiusa è una riga sola — «4 slot su 6» — e resta una riga a qualunque
+ *  Chiusa è una riga sola — «4/6» — e resta una riga a qualunque
  *  livello: è la ragione per cui questa forma ha vinto sulle altre due negli
  *  sketch. A livello 20 gli slot sono ventidue su nove livelli, e né i pallini
  *  né le coppie «rimasti/totale» ci stanno in 390px.
@@ -34,7 +34,7 @@ export default function BarraSlot() {
         onClick={() => setAperta(!aperta)}
       >
         <span class="conto">
-          <strong class={restano === 0 ? 'a-secco' : undefined}>{restano}</strong> slot su {totale}
+          <strong class={restano === 0 ? 'a-secco' : undefined}>{restano}</strong>/{totale}
         </span>
         <span class="comando">
           dettaglio

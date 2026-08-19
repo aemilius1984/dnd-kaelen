@@ -55,6 +55,19 @@ describe('le sezioni non stanno più dentro un riquadro', () => {
     expect(html).not.toContain('quel che si consuma');
     expect(html).toContain('class="barra-slot-isola"');
   });
+
+  it('attacco e CD degli incantesimi restano davanti mentre si scorre', () => {
+    // Stavano in una riga sotto la testata, cioè sparivano al primo scroll
+    // proprio mentre si sceglie l'incantesimo da lanciare. Adesso viaggiano
+    // dentro il cappello appiccicato.
+    const html = dist('scheda');
+    const isola = html.slice(html.indexOf('class="barra-slot-isola"'));
+
+    expect(isola.slice(0, 400)).toMatch(/Attacco \+\d+ · CD \d+/);
+    // Dentro il cappello ma fuori dall'isola: `BarraSlot` è `client:only`, e
+    // due numeri che il build conosce già non aspettano il JavaScript.
+    expect(isola.indexOf('Attacco')).toBeLessThan(isola.indexOf('astro-island'));
+  });
 });
 
 // Un `nomeEn` nei dati che nessuna pagina rende è lavoro sprecato che sembra

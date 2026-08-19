@@ -99,14 +99,20 @@ const bonusIniziativa = segno(iniziativa(pg));
 
   <section>
     <TestaSezione kicker="magia">Incantesimi</TestaSezione>
-    <p class="tenue attacco-inc">Attacco {bonusIncantesimi} · CD {cd}</p>
-
     {
       /* Gli slot stavano in fondo alla pagina, cioè lontano dal punto in cui
         si decide di spenderli. Qui restano davanti mentre si scorre la
-        sezione, e si aprono per dire anche *dove* è finita la magia. */
+        sezione, e si aprono per dire anche *dove* è finita la magia.
+
+        Attacco e CD viaggiano con loro. Stavano in una riga sotto la testata e
+        sparivano al primo scroll, cioè proprio quando servono: si guarda il
+        bersaglio, si sceglie l'incantesimo, e i due numeri erano già usciti
+        dallo schermo. Stanno qui dentro ma *fuori* dall'isola: il build li
+        conosce già, e due numeri che non cambiano mai non aspettano il
+        JavaScript. */
     }
     <div class="barra-slot-isola">
+      <p class="tenue attacco-inc">Attacco {bonusIncantesimi} · CD {cd}</p>
       <BarraSlot client:only="preact" />
     </div>
 
@@ -164,7 +170,7 @@ const bonusIniziativa = segno(iniziativa(pg));
   }
   <section>
     <TestaSezione kicker="cosa puoi spendere">Capacità e reazioni</TestaSezione>
-    <p class="tenue attacco-inc">
+    <p class="tenue nota-sezione">
       Dopo una reazione non puoi usarne un'altra fino all'inizio del tuo turno successivo.
     </p>
     <CapacitaEReazioni pg={pg} />

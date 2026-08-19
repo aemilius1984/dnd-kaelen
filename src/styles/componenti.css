@@ -507,7 +507,11 @@ dialog.azioni input[type='number'] {
 .difese .valore {
   font-size: 1.5rem;
 }
-.attacco-inc {
+/* La nota in coda a una testata di sezione: una riga di prosa che spiega una
+ * regola, non un valore. Portava anche lei la classe `.attacco-inc`, che dopo
+ * il trasloco di attacco e CD dentro il cappello degli slot avrebbe descritto
+ * un contenuto che non c'era più. */
+.nota-sezione {
   margin: 0.2rem 0 0;
   font-size: 0.85rem;
 }
@@ -1232,7 +1236,19 @@ dialog.vitalita .stato-vitale.stabile {
  *
  * Il contenitore riserva anche l'altezza della barra chiusa: con `client:only`
  * prima dell'idratazione lì non c'è niente, e la sezione salterebbe. */
+/* Due contenuti nella stessa riga appiccicata: a sinistra attacco e CD, che il
+ * build scrive; a destra il conto degli slot e il comando, che scrive l'isola.
+ *
+ * `display: contents` sull'involucro dell'isola e sulla barra è quello che
+ * tiene insieme le due cose: senza, le file aperte sarebbero larghe quanto la
+ * colonna di destra, cioè metà schermo, e le caselle grandi non ci starebbero.
+ * Così invece il riassunto sta in riga uno accanto ai due numeri, e le file
+ * scendono in riga due su tutta la larghezza. */
 .barra-slot-isola {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  column-gap: var(--spazio-2);
   position: sticky;
   top: var(--cappello);
   z-index: 18;
@@ -1261,12 +1277,27 @@ body:has(.barra[data-nascosta]) .barra-slot-isola {
     background: color-mix(in srgb, var(--carta) 97%, transparent);
   }
 }
+.barra-slot-isola > astro-island,
+.barra-slot {
+  display: contents;
+}
+/* Attacco e CD: due numeri fissi, non un discorso. `nowrap` perché spezzarli
+ * su due righe raddoppierebbe l'altezza del cappello a metà scroll. */
+.attacco-inc {
+  grid-area: 1 / 1;
+  margin: 0;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+.barra-slot .file {
+  grid-area: 2 / 1 / auto / -1;
+}
 .barra-slot .riassunto {
-  width: 100%;
+  grid-area: 1 / 2;
   min-height: 48px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: var(--spazio-2);
   padding: 0;
   background: none;
@@ -1274,8 +1305,10 @@ body:has(.barra[data-nascosta]) .barra-slot-isola {
   color: inherit;
   cursor: pointer;
 }
-/* «6 slot su 6»: i due numeri sono la stessa cosa detta due volte, e a due
- * corpi diversi litigavano. A distinguerli bastano colore e peso. */
+/* «6/6»: i due numeri sono la stessa cosa detta due volte, e a due corpi
+ * diversi litigavano. A distinguerli bastano colore e peso. La parola «slot»
+ * è caduta col trasloco di attacco e CD: dentro la sezione Incantesimi, e
+ * accanto a «Attacco +5 · CD 13», non può voler dire altro. */
 .barra-slot .conto {
   font-family: var(--font-mono);
   font-size: 1rem;
