@@ -110,10 +110,10 @@ Dipende dal Task 1: senza `viewport-fit=cover` niente di questo si vede.
 
 - Modify: `public/manifest.webmanifest`
 
-- [ ] **Step 1:** `start_url` da `/scheda/` a `/`, `background_color` da `#efe7d6` a `#24282c`. Lo `scope` resta `/`.
-- [ ] **Step 2:** `theme_color` del manifest **resta** `#efe7d6`: vale per l'app in generale, e cinque rotte su sei sono di pergamena. Quale dei due valori iOS usi per la barra di stato al lancio è incerto e si scopre solo installando: è una domanda per il controllo sul telefono, non da indovinare qui.
-- [ ] **Step 3: la home deve stare nel precache.** `scripts/build-sw.mjs` raccoglie per estensione dentro `dist/`, quindi `dist/index.html` dovrebbe già esserci: confermarlo sulla lista costruita, perché ora è la pagina d'avvio dell'app e una PWA che si apre offline su una pagina non memorizzata è una schermata bianca.
-- [ ] **Step 4:** `npm run gate`, poi commit.
+- [x] **Step 1:** `start_url` da `/scheda/` a `/`, `background_color` da `#efe7d6` a `#24282c`. Lo `scope` resta `/`.
+- [x] **Step 2:** `theme_color` del manifest **resta** `#efe7d6`: vale per l'app in generale, e cinque rotte su sei sono di pergamena. Quale dei due valori iOS usi per la barra di stato al lancio è incerto e si scopre solo installando: è una domanda per il controllo sul telefono, non da indovinare qui.
+- [x] **Step 3: la home deve stare nel precache.** `scripts/build-sw.mjs` raccoglie per estensione dentro `dist/`, quindi `dist/index.html` dovrebbe già esserci: confermarlo sulla lista costruita, perché ora è la pagina d'avvio dell'app e una PWA che si apre offline su una pagina non memorizzata è una schermata bianca.
+- [x] **Step 4:** `npm run gate`, poi commit.
 
 ---
 
