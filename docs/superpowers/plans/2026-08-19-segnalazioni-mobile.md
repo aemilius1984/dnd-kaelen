@@ -271,13 +271,13 @@ deploy successivo**.
 - Modify: `src/islands/PannelloAzioni.tsx`
 - Test: `src/lib/__tests__/nuvola.test.ts`
 
-- [ ] **Step 1: i test che falliscono** su funzioni pure: il riepilogo di una riga («PF 21/27 · 4 slot · 1 Incan.») calcolato da uno stato; il confronto fra `sheet_v` salvata e corrente che marca «scheda precedente»; la decisione di cosa mostrare quando la rete non c'è.
-- [ ] **Step 2: «Salva adesso»** manda `stato.value` intero più l'etichetta breve digitata lì. La nota **non** si digita al salvataggio: è `stato.note`, la stessa di `/note/`, e la riga ne conserva una copia.
-- [ ] **Step 3: «Riprendi…»** apre l'elenco. Ogni riga porta data, etichetta, riepilogo, e il marchio «scheda precedente» dove `sheet_v` non combacia.
-- [ ] **Step 4: la doppia data e il salvataggio di cortesia.** Prima di sovrascrivere, il pannello mostra le due date affiancate e offre «salva prima di riprendere» con un tocco. Il ripristino passa da `carica()`, quindi la regola di `sheetVersion` vale identica: se la scheda è cambiata, azzera, e l'avviso è quello di sempre.
-- [ ] **Step 5: il fallimento è normale.** Nessuna rete, nessun binding, D1 muto: il comando dice che non è riuscito e **non tocca niente in locale**. La nuvola è un comando, non una sincronizzazione.
-- [ ] **Step 6: la nota nel pannello** scrive `stato.note` — un campo, non un secondo posto dove scrivere la stessa frase.
-- [ ] **Step 7:** `npm run gate`, poi commit.
+- [x] **Step 1: i test che falliscono** su funzioni pure: il riepilogo di una riga («PF 21/27 · 4 slot · 1 Incan.») calcolato da uno stato; il confronto fra `sheet_v` salvata e corrente che marca «scheda precedente»; la decisione di cosa mostrare quando la rete non c'è.
+- [x] **Step 2: «Salva adesso»** manda `stato.value` intero più l'etichetta breve digitata lì. La nota **non** si digita al salvataggio: è `stato.note`, la stessa di `/note/`, e la riga ne conserva una copia.
+- [x] **Step 3: «Riprendi…»** apre l'elenco. Ogni riga porta data, etichetta, riepilogo, e il marchio «scheda precedente» dove `sheet_v` non combacia.
+- [x] **Step 4: la doppia data e il salvataggio di cortesia.** Prima di sovrascrivere, il pannello mostra le due date affiancate e offre «salva prima di riprendere» con un tocco. Il ripristino passa da `carica()`, quindi la regola di `sheetVersion` vale identica: se la scheda è cambiata, azzera, e l'avviso è quello di sempre.
+- [x] **Step 5: il fallimento è normale.** Nessuna rete, nessun binding, D1 muto: il comando dice che non è riuscito e **non tocca niente in locale**. La nuvola è un comando, non una sincronizzazione.
+- [x] **Step 6: la nota nel pannello** scrive `stato.note` — un campo, non un secondo posto dove scrivere la stessa frase.
+- [x] **Step 7:** `npm run gate`, poi commit.
 
 ---
 

@@ -1572,3 +1572,103 @@ body:has(.barra[data-nascosta]) .barra-slot-isola {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+/* Il pannello nuvola, dentro il ⚡. Non ha una sezione sua nella scheda perché
+ * non è una cosa del personaggio: è una cosa della *sessione*, come i riposi,
+ * e sta dove stanno quelli. */
+.nuvola {
+  padding: var(--spazio-2) 0;
+  border-bottom: 1px solid var(--filetto);
+}
+.nuvola h4 {
+  margin-top: 0;
+}
+.nuvola input[type='text'],
+.nuvola textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.5rem 0.6rem;
+  font: inherit;
+  font-size: 0.92rem;
+  color: var(--inchiostro);
+  background: var(--superficie-incassata);
+  border: 1px solid var(--filetto);
+  border-radius: var(--raggio);
+}
+.nuvola label.riga {
+  display: grid;
+  gap: 0.2rem;
+}
+.nuvola button {
+  min-height: 44px;
+  padding: 0 0.9rem;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--inchiostro);
+  background: none;
+  border: 1px solid var(--filetto);
+  border-radius: var(--raggio);
+  cursor: pointer;
+}
+.nuvola button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+/* L'esito parla al giocatore, non al programmatore: è la riga che dice se la
+ * copia esiste davvero. Il fallimento non si nasconde. */
+.nuvola .esito {
+  margin: 0.6rem 0 0;
+  font-size: 0.9rem;
+  color: var(--lampo);
+}
+.nuvola .salvataggi {
+  margin: var(--spazio-2) 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.4rem;
+}
+.nuvola .salvataggi li {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 0.4rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--filetto);
+}
+.nuvola .salvataggi .chi {
+  display: grid;
+  gap: 0.1rem;
+  font-size: 0.9rem;
+  min-width: 0;
+}
+.nuvola .nota-riga {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Il marchio che avvisa prima invece di lasciare scoprire l'azzeramento dopo.
+ * Ambra e non allerta: non è un errore, è una sessione di un'altra scheda. */
+.nuvola .precedente {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ambra);
+}
+/* Il passaggio fra il tocco e la sovrascrittura: si prende tutta la riga
+ * perché è il punto dove si può perdere una serata di gioco. */
+.nuvola .conferma-ripresa {
+  grid-column: 1 / -1;
+  padding: 0.5rem 0;
+}
+.nuvola .conferma-ripresa .date {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--lampo);
+}
+.nuvola .conferma-ripresa p {
+  margin: 0.2rem 0 0;
+  font-size: 0.85rem;
+}

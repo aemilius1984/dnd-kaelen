@@ -10,6 +10,7 @@ import {
   usaRisorsa,
 } from '@/lib/sheet-state';
 import { conseguenzaRiposo } from '@/lib/riposi';
+import Nuvola from '@/islands/Nuvola';
 import {
   navigazione,
   PERCORSO_ARCHIVIO,
@@ -124,6 +125,8 @@ export default function PannelloAzioni() {
           'Riposo lungo',
           `Otto ore. Rimette tutto, e porta all’archivio per scegliere i sei preparati. Dadi vita: ${dadiRimasti}/${pg.numeroDadiVita}.`,
         )}
+
+        <Nuvola />
 
         {/* Il caso d'angolo, e si vede che lo è: chiuso finché non serve. Il
             DM concede una carica, si preme due volte, si segna uno slot che
