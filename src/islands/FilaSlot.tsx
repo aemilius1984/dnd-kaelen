@@ -1,3 +1,4 @@
+import { romano } from '@/lib/romani';
 import { sigilloProprio } from '@/lib/sigilli';
 
 interface Props {
@@ -25,7 +26,12 @@ export default function FilaSlot({ livello, max, spesi, grande = false }: Props)
 
   return (
     <div class={grande ? 'risorsa fila-grande' : 'risorsa'} key={`slot-${livello}`}>
-      <span>{livello}° liv.</span>
+      {/* Romano, e nascosto al lettore di schermo: la descrizione per esteso
+          — «tre di quattro slot di 1° livello» — sta già sulla fila accanto, e
+          un lettore che dicesse «I» prima di quella direbbe una lettera. */}
+      <span class="grado" aria-hidden="true">
+        {romano(livello)}
+      </span>
       <span
         class="caselle"
         aria-label={`${max - spesi.length} di ${max} slot di ${livello}° livello`}

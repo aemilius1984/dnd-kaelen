@@ -266,3 +266,24 @@ it('la barra degli slot si appiccica al contenitore, non alla radice dell’isol
   expect(corpo('.barra-slot-isola')).toMatch(/min-height:\s*\d+px/);
   expect(() => corpo('.barra-slot')).toThrow();
 });
+
+it('le file della barra degli slot partono tutte dalla stessa colonna', () => {
+  // In numeri romani «I» e «VIII» sono larghi il doppio l'uno dell'altro: senza
+  // una colonna dichiarata, ogni fila di caselle partirebbe da un punto suo.
+  // E le regole di `.risorsa` stavano dentro `.striscia-risorse`, che non
+  // esiste più — la fila era rimasta senza layout del tutto.
+  expect(corpo('.barra-slot .risorsa')).toMatch(/grid-template-columns:\s*[\d.]+rem\s+1fr/);
+  expect(corpo('.barra-slot .risorsa')).toMatch(/gap:/);
+});
+
+it('i due numeri del conto sono della stessa misura', () => {
+  // «6 slot su 6» sono la stessa cosa detta due volte: a due corpi diversi
+  // litigano. A distinguerli bastano colore e peso.
+  expect(corpo('.barra-slot .conto strong')).not.toMatch(/font-size:/);
+});
+
+it('la barra si legge come un foglio sopra la pagina', () => {
+  // Sovrapposizione: sotto ci scorre il contenuto, e senza ombra il confine
+  // fra i due è solo un filetto da un pixel.
+  expect(corpo('.barra-slot-isola')).toMatch(/box-shadow:/);
+});

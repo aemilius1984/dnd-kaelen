@@ -1102,8 +1102,13 @@ dialog.vitalita .stato-vitale.stabile {
   min-height: 49px;
   margin: 0 calc(-1 * var(--spazio-2)) var(--spazio-2);
   padding: 0 var(--spazio-2);
-  background: color-mix(in srgb, var(--carta) 88%, transparent);
+  background: color-mix(in srgb, var(--carta) 94%, transparent);
   border-bottom: 1px solid var(--filetto);
+  /* L'ombra c'è sempre, non solo da appiccicata: sapere *quando* un elemento
+   * sticky si è fermato richiede un sentinella e un osservatore, cioè
+   * JavaScript per un'ombra. E non serve: la barra è un foglio sopra la
+   * pagina anche da ferma, quindi può dirlo sempre. */
+  box-shadow: var(--ombra-1);
   -webkit-backdrop-filter: blur(14px) saturate(140%);
   backdrop-filter: blur(14px) saturate(140%);
   transition: top 0.5s var(--espo);
@@ -1129,13 +1134,15 @@ body:has(.barra[data-nascosta]) .barra-slot-isola {
   color: inherit;
   cursor: pointer;
 }
+/* «6 slot su 6»: i due numeri sono la stessa cosa detta due volte, e a due
+ * corpi diversi litigavano. A distinguerli bastano colore e peso. */
 .barra-slot .conto {
   font-family: var(--font-mono);
-  font-size: 0.9rem;
+  font-size: 1rem;
   color: var(--inchiostro-tenue);
 }
 .barra-slot .conto strong {
-  font-size: 1.15rem;
+  font-weight: 600;
   color: var(--lampo);
 }
 /* A secco non è un numero come gli altri: è il momento in cui la sezione
@@ -1168,8 +1175,25 @@ body:has(.barra[data-nascosta]) .barra-slot-isola {
 }
 .barra-slot .file {
   display: grid;
-  gap: 0.6rem;
+  gap: 0.5rem;
   padding-bottom: 0.9rem;
+}
+/* Una riga per livello, e la colonna dei gradi è larga uguale per tutte: in
+ * numeri romani «I» e «VIII» sono larghi il doppio l'uno dell'altro, e le file
+ * di caselle partirebbero ognuna da un punto suo. Le regole di `.risorsa`
+ * stavano dentro `.striscia-risorse`, che non esiste più: qui la fila era
+ * rimasta senza layout, e l'etichetta toccava la prima casella. */
+.barra-slot .risorsa {
+  display: grid;
+  grid-template-columns: 2.2rem 1fr;
+  align-items: center;
+  gap: 0.7rem;
+}
+.barra-slot .grado {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  text-align: right;
+  color: var(--inchiostro-muto);
 }
 /* Aperta, la barra può prendersi lo spazio: le caselle raddoppiano, perché
  * qui il sigillo dentro deve leggersi davvero. */
