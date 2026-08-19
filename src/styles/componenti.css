@@ -1079,3 +1079,105 @@ dialog.vitalita .stato-vitale.morto {
 dialog.vitalita .stato-vitale.stabile {
   color: var(--ambra);
 }
+
+/* La barra degli slot, appiccicata in cima alla sezione degli incantesimi.
+ *
+ * Si ferma sotto la barra del menu, e quando quella si toglie di mezzo
+ * scendendo, questa sale a prenderne il posto: due barre che si contendono i
+ * primi cinquantadue pixel lascerebbero una striscia di pagina scoperta fra
+ * l'una e l'altra. Lo stacco lo legge `:has()` dallo stesso attributo che
+ * `barra-scroll.ts` scrive sul menu — nessun secondo pezzo di JavaScript. */
+/* `sticky` sta sul contenitore che il build scrive, non sulla radice
+ * dell'isola. La radice è figlia unica di quel contenitore e ne riempie
+ * l'altezza: un elemento appiccicato che ha esattamente l'altezza del proprio
+ * blocco contenitore non ha spazio dove restare, e se ne va con lo scorrimento
+ * come se `sticky` non ci fosse. Misurato: scendeva a −233px.
+ *
+ * Il contenitore riserva anche l'altezza della barra chiusa: con `client:only`
+ * prima dell'idratazione lì non c'è niente, e la sezione salterebbe. */
+.barra-slot-isola {
+  position: sticky;
+  top: 3.25rem;
+  z-index: 18;
+  min-height: 49px;
+  margin: 0 calc(-1 * var(--spazio-2)) var(--spazio-2);
+  padding: 0 var(--spazio-2);
+  background: color-mix(in srgb, var(--carta) 88%, transparent);
+  border-bottom: 1px solid var(--filetto);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+  transition: top 0.5s var(--espo);
+}
+body:has(.barra[data-nascosta]) .barra-slot-isola {
+  top: 0;
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .barra-slot-isola {
+    background: color-mix(in srgb, var(--carta) 97%, transparent);
+  }
+}
+.barra-slot .riassunto {
+  width: 100%;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spazio-2);
+  padding: 0;
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+}
+.barra-slot .conto {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--inchiostro-tenue);
+}
+.barra-slot .conto strong {
+  font-size: 1.15rem;
+  color: var(--lampo);
+}
+/* A secco non è un numero come gli altri: è il momento in cui la sezione
+ * smette di offrire qualcosa, e va visto senza leggerlo. */
+.barra-slot .conto strong.a-secco {
+  color: var(--allerta);
+}
+.barra-slot .comando {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--inchiostro-muto);
+}
+.barra-slot .comando svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.3s var(--espo);
+}
+.barra-slot.aperta .comando svg {
+  transform: rotate(180deg);
+}
+.barra-slot .file {
+  display: grid;
+  gap: 0.6rem;
+  padding-bottom: 0.9rem;
+}
+/* Aperta, la barra può prendersi lo spazio: le caselle raddoppiano, perché
+ * qui il sigillo dentro deve leggersi davvero. */
+.fila-grande .casella {
+  width: 28px;
+  height: 28px;
+}
+.fila-grande .casella.usata svg {
+  width: 18px;
+  height: 18px;
+}

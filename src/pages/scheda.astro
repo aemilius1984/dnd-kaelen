@@ -10,7 +10,7 @@ import TestaSezione from '@/components/ui/TestaSezione.astro';
 import CapacitaEReazioni from '@/components/CapacitaEReazioni.astro';
 import ElencoArchivio from '@/components/ElencoArchivio.astro';
 import Vitalita from '@/islands/Vitalita';
-import SlotIncantesimi from '@/islands/SlotIncantesimi';
+import BarraSlot from '@/islands/BarraSlot';
 import Contatori from '@/islands/Contatori';
 import ControlliLancio from '@/islands/ControlliLancio';
 import Archivio from '@/islands/Archivio';
@@ -103,6 +103,15 @@ const bonusIniziativa = segno(iniziativa(pg));
     <p class="tenue attacco-inc">Attacco {bonusIncantesimi} · CD {cd}</p>
 
     {
+      /* Gli slot stavano in fondo alla pagina, cioè lontano dal punto in cui
+        si decide di spenderli. Qui restano davanti mentre si scorre la
+        sezione, e si aprono per dire anche *dove* è finita la magia. */
+    }
+    <div class="barra-slot-isola">
+      <BarraSlot client:only="preact" />
+    </div>
+
+    {
       /* Due aree, perché obbediscono a regole diverse: i trucchetti non
         consumano nulla e non si spengono mai; gli altri sì. */
     }
@@ -119,13 +128,6 @@ const bonusIniziativa = segno(iniziativa(pg));
       </button>
       · <a href="/preparati/">apri come pagina</a>
     </p>
-  </section>
-
-  <section>
-    <TestaSezione kicker="quel che si consuma">Slot incantesimo</TestaSezione>
-    <div class="risorse-isola">
-      <SlotIncantesimi client:only="preact" />
-    </div>
   </section>
 
   {

@@ -40,14 +40,20 @@ describe('le sezioni non stanno più dentro un riquadro', () => {
   it('ogni sezione della scheda ha una testata al posto del riquadro', () => {
     const html = dist('scheda');
 
-    for (const kicker of [
-      'in combattimento',
-      'magia',
-      'quel che si consuma',
-      'cosa puoi spendere',
-    ]) {
+    for (const kicker of ['in combattimento', 'magia', 'cosa puoi spendere']) {
       expect(html).toContain(kicker);
     }
+  });
+
+  it('gli slot non hanno più una sezione in fondo: stanno in cima alla magia', () => {
+    // «Quel che si consuma» era una sezione a parte, in fondo alla pagina —
+    // cioè lontano dal punto in cui si decide di spendere. Adesso gli slot
+    // sono una barra appiccicata in cima alla sezione degli incantesimi, e
+    // restano davanti mentre la si scorre.
+    const html = dist('scheda');
+
+    expect(html).not.toContain('quel che si consuma');
+    expect(html).toContain('class="barra-slot-isola"');
   });
 });
 

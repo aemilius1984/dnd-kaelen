@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, expect, it } from 'vitest';
 import { h, render } from 'preact';
-import SlotIncantesimi from '@/islands/SlotIncantesimi';
+import BarraSlot from '@/islands/BarraSlot';
 import { caricaPersonaggioDaFile } from '@/lib/carica-personaggio';
 import { SLOT_MANUALE, spendiSlot, statoIniziale } from '@/lib/sheet-state';
 import { muta } from '@/lib/storage';
@@ -9,6 +9,10 @@ import { muta } from '@/lib/storage';
 // Guardando la scheda si deve poter capire *dove* sono finiti gli slot: due
 // caselle di 2° vuote non dicono niente, due caselle con il sigillo di
 // Frantumare dicono che la serata è andata così.
+//
+// Le file le disegna `FilaSlot`, e si guardano attraverso `BarraSlot` aperta,
+// che è il solo posto della Scheda in cui compaiono. Provarle montate dentro
+// chi le usa costa un click in più e verifica anche che quel click esista.
 
 const pg = caricaPersonaggioDaFile();
 
@@ -17,6 +21,12 @@ let radice: HTMLDivElement;
 const giro = () => new Promise((r) => setTimeout(r, 50));
 
 /** Le caselle della fila di un livello, in ordine da sinistra. */
+/** Le file esistono solo a barra aperta: è la forma scelta negli sketch. */
+const apri = async () => {
+  radice.querySelector<HTMLButtonElement>('.riassunto')!.click();
+  await giro();
+};
+
 const fila = (livello: number): HTMLElement[] => {
   const etichetta = new RegExp(`slot di ${livello}° livello`);
   const gruppo = [...radice.querySelectorAll<HTMLElement>('.caselle')].find((n) =>
@@ -35,7 +45,7 @@ beforeEach(async () => {
     `</script>`;
   radice = document.createElement('div');
   document.body.append(radice);
-  render(h(SlotIncantesimi, {}), radice);
+  render(h(BarraSlot, {}), radice);
   // `stato` è un signal di modulo e `assicuraInizializzato` gira una volta
   // sola: svuotare localStorage non lo riporta indietro, e senza questo ogni
   // prova eredita gli slot spesi dalla precedente.
@@ -47,7 +57,8 @@ afterEach(() => {
   render(null, radice);
 });
 
-it('a stato pieno nessuna casella porta un sigillo', () => {
+it('a stato pieno nessuna casella porta un sigillo', async () => {
+  await apri();
   for (const x of pg.slot) {
     expect(fila(x.livello)).toHaveLength(x.max);
     expect(usati(x.livello)).toHaveLength(0);
@@ -55,6 +66,7 @@ it('a stato pieno nessuna casella porta un sigillo', () => {
 });
 
 it('la casella consumata porta il sigillo dell’incantesimo che l’ha spesa', async () => {
+  await apri();
   muta((x) => spendiSlot(x, pg, 1, 'cura-ferite'));
   await giro();
 
@@ -64,6 +76,7 @@ it('la casella consumata porta il sigillo dell’incantesimo che l’ha spesa', 
 });
 
 it('lo slot speso a mano porta un segno neutro, non un sigillo altrui', async () => {
+  await apri();
   muta((x) => spendiSlot(x, pg, 1, SLOT_MANUALE));
   await giro();
 
@@ -75,6 +88,7 @@ it('lo slot speso a mano porta un segno neutro, non un sigillo altrui', async ()
 });
 
 it('le caselle si consumano da destra, così la prima spesa resta dov’è', async () => {
+  await apri();
   muta((x) => spendiSlot(x, pg, 1, 'benedizione'));
   await giro();
   const dopoUna = fila(1).map((c) => c.querySelector('use')?.getAttribute('href') ?? null);
@@ -91,6 +105,7 @@ it('le caselle si consumano da destra, così la prima spesa resta dov’è', asy
 });
 
 it('il numero di caselle non cambia mai: sono il massimo, piene o no', async () => {
+  await apri();
   for (let i = 0; i < 4; i++) muta((x) => spendiSlot(x, pg, 1, 'comando'));
   await giro();
 
@@ -98,6 +113,7 @@ it('il numero di caselle non cambia mai: sono il massimo, piene o no', async () 
 });
 
 it('un incantesimo senza sigillo proprio ricade sul segno neutro', async () => {
+  await apri();
   // Il pool preparabile è di 32 incantesimi e i sigilli disegnati sono
   // tredici: chi non ce l'ha non deve prendere in prestito quello di un
   // altro. `simbolo()` ripiegherebbe sull'icona del tag, che qui direbbe una

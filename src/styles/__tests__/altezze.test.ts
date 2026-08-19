@@ -254,3 +254,15 @@ it('la rotella non passa alla modale quel che avanza del gesto', () => {
   // non si torna più indietro».
   expect(corpo('.rotella .pista')).toMatch(/overscroll-behavior:\s*contain/);
 });
+
+it('la barra degli slot si appiccica al contenitore, non alla radice dell’isola', () => {
+  // Un elemento `sticky` alto quanto il proprio blocco contenitore non ha
+  // spazio dove restare e se ne va con lo scorrimento: misurato in Chrome,
+  // scendeva a −233px invece di fermarsi. La radice dell'isola è figlia unica
+  // del contenitore e ne riempie l'altezza, quindi `sticky` va sul contenitore
+  // — che è anche l'unico che il build scrive, e che quindi può riservare
+  // l'altezza prima dell'idratazione.
+  expect(corpo('.barra-slot-isola')).toMatch(/position:\s*sticky/);
+  expect(corpo('.barra-slot-isola')).toMatch(/min-height:\s*\d+px/);
+  expect(() => corpo('.barra-slot')).toThrow();
+});
