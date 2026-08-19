@@ -96,11 +96,11 @@ Dipende dal Task 1: senza `viewport-fit=cover` niente di questo si vede.
 
 - Consumes: `viewport-fit=cover` (Task 1).
 
-- [ ] **Step 1: l'immagine si misura sull'altezza grande.** `.splash` da `inset: 0` a `inset: 0 0 auto 0` con `height: 100vh` seguito da `height: 100lvh`. La doppia dichiarazione non è ridondanza: su iOS Safari `100vh` **è già** l'altezza grande, quindi vale da ripiego esatto dove `lvh` non arriva. `.lampo` e l'`img` sono dentro e la seguono senza modifiche.
-- [ ] **Step 2: le porte si misurano sull'altezza piccola.** `.porte` passa da `absolute` a `position: fixed`. Un elemento `fixed` con `bottom: 0` su iOS Safari sta **sopra** la barra URL: i due comandi non ci finiscono mai sotto, e in PWA scendono da soli al bordo perché lì le due altezze coincidono. Il `calc(2rem + env(safe-area-inset-bottom))` già scritto adesso vale davvero.
-- [ ] **Step 3: la trappola da controllare, non da dare per scontata.** `.splash` ha `overflow: hidden`: un figlio `fixed` non viene ritagliato perché `.splash` non crea un blocco contenitore (niente `transform`, `filter` o `will-change` su di lei — l'animazione `deriva` sta sull'`img`). Se la misura del Task 5 dovesse mostrare le porte tagliate, il ripiego è portare `.porte` fuori da `.splash` come sorella e sostituire il selettore `.splash.finita .porte` con `body:has(.splash.finita) .porte`. **Non fare il ripiego preventivamente.**
-- [ ] **Step 4: il desktop non regredisce.** La media query `min-width: 901px` riscrive `.porte` con `inset: 0 auto 0 0`: con `fixed` continua a valere, ma va guardata a 1440×900 prima di chiudere.
-- [ ] **Step 5:** `npm run gate`, poi commit.
+- [x] **Step 1: l'immagine si misura sull'altezza grande.** `.splash` da `inset: 0` a `inset: 0 0 auto 0` con `height: 100vh` seguito da `height: 100lvh`. La doppia dichiarazione non è ridondanza: su iOS Safari `100vh` **è già** l'altezza grande, quindi vale da ripiego esatto dove `lvh` non arriva. `.lampo` e l'`img` sono dentro e la seguono senza modifiche.
+- [x] **Step 2: le porte si misurano sull'altezza piccola.** `.porte` passa da `absolute` a `position: fixed`. Un elemento `fixed` con `bottom: 0` su iOS Safari sta **sopra** la barra URL: i due comandi non ci finiscono mai sotto, e in PWA scendono da soli al bordo perché lì le due altezze coincidono. Il `calc(2rem + env(safe-area-inset-bottom))` già scritto adesso vale davvero.
+- [x] **Step 3: la trappola da controllare, non da dare per scontata.** `.splash` ha `overflow: hidden`: un figlio `fixed` non viene ritagliato perché `.splash` non crea un blocco contenitore (niente `transform`, `filter` o `will-change` su di lei — l'animazione `deriva` sta sull'`img`). Se la misura del Task 5 dovesse mostrare le porte tagliate, il ripiego è portare `.porte` fuori da `.splash` come sorella e sostituire il selettore `.splash.finita .porte` con `body:has(.splash.finita) .porte`. **Non fare il ripiego preventivamente.**
+- [x] **Step 4: il desktop non regredisce.** La media query `min-width: 901px` riscrive `.porte` con `inset: 0 auto 0 0`: con `fixed` continua a valere, ma va guardata a 1440×900 prima di chiudere.
+- [x] **Step 5:** `npm run gate`, poi commit.
 
 ---
 

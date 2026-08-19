@@ -98,9 +98,19 @@ l'immagine deve rimisurarla, altrimenti questo numero resta indietro. -->
 </BaseLayout>
 
 <style>
+  /* Due altezze, non una. Su iOS Safari la barra dell'URL si ritira mentre si
+     scorre, e il browser espone i due stati come misure diverse: `lvh` è la
+     pagina a barra ritirata, `svh` a barra distesa. La fotografia prende la
+     grande, così sotto la barra c'è immagine e non fondo.
+
+     `100vh` prima e `100lvh` dopo non è ridondanza da potare: su iOS `100vh`
+     vale già l'altezza grande, quindi è il ripiego esatto — e dove `lvh` non
+     arriva la riga si scarta da sola lasciando in piedi quella sopra. */
   .splash {
     position: fixed;
-    inset: 0;
+    inset: 0 0 auto 0;
+    height: 100vh;
+    height: 100lvh;
     overflow: hidden;
     background: var(--carta);
   }
@@ -209,10 +219,19 @@ l'immagine deve rimisurarla, altrimenti questo numero resta indietro. -->
      portava due texture sovrapposte. Il lampo resta: agisce sulla luce, non
      sul dettaglio dell'immagine. */
 
+  /* Le porte, al contrario dell'immagine, si misurano sull'altezza piccola:
+     `fixed` con `bottom: 0` su iOS Safari sta sopra la barra dell'URL, non
+     sotto, quindi i due comandi non ci finiscono mai dietro. Installata come
+     PWA la barra non c'è e le due altezze coincidono: le porte scendono da
+     sole al bordo dello schermo, senza una regola dedicata.
+
+     Il ripiego dentro `env()` non è ornamento: senza, su un browser che non
+     popola la zona sicura l'intero `calc()` diventa non valido e le porte
+     perdono lo scarto in fondo invece di averlo a zero. */
   .porte {
-    position: absolute;
+    position: fixed;
     inset: auto 0 0 0;
-    padding: 0 var(--spazio-2) calc(2rem + env(safe-area-inset-bottom));
+    padding: 0 var(--spazio-2) calc(2rem + env(safe-area-inset-bottom, 0px));
     text-align: center;
     opacity: 0;
     animation: entra 1s ease-out 1.2s forwards;
