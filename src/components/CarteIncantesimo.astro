@@ -4,11 +4,13 @@ import { simbolo } from '@/lib/sigilli';
 import Superficie from '@/components/ui/Superficie.astro';
 import NomeDoppio from '@/components/ui/NomeDoppio.astro';
 
-/** Una card per incantesimo, una per riga: la stessa forma delle armi, perché
- *  al tavolo si fa la stessa cosa — si guarda cosa costa, si decide, si lancia.
- *  Il `<details>` di prima chiedeva un tocco in più per vedere se un
- *  incantesimo era ancora lanciabile, che è esattamente l'informazione per cui
- *  lo si apriva.
+/** Una riga per incantesimo, e tutto il resto si apre.
+ *
+ *  La carta di prima portava descrizione, «slot superiore», etichette e i
+ *  bottoni di lancio: dieci incantesimi facevano un muro di testo dentro cui
+ *  si cercava un nome. Qui resta quel che serve per *scegliere* — sigillo,
+ *  nome, riga tecnica, livello — e quel che serve per *capire e lanciare* sta
+ *  in una modale a tutto schermo, la stessa forma delle armi.
  *
  *  Dipendenza: la pagina ospite deve montare `Sprite.astro`, una volta sola e
  *  prima di queste card. I sigilli sono `<use href="#sig-…">` e senza il foglio
@@ -26,145 +28,379 @@ interface Props {
   visibiliDiDefault?: string[];
 }
 const { incantesimi, visibiliDiDefault } = Astro.props;
+
+/** La riga tecnica: quel che si legge per decidere, in una riga sola. */
+function riga(m: Incantesimo): string {
+  const pezzi = [m.lancio, m.gittata];
+  if (m.concentrazione) pezzi.push('conc.');
+  if (m.tiro) pezzi.push(`TS ${m.tiro}`);
+  if (m.danno) pezzi.push(m.danno);
+  return pezzi.join(' · ');
+}
 ---
 
 <div class="carte-incantesimo">
   {
     incantesimi.map((m) => (
       <Superficie
-        class="incantesimo"
+        class:list={['incantesimo', m.dominio && 'di-dominio']}
+        data-carta={m.slug}
         data-slug={visibiliDiDefault ? m.slug : undefined}
         hidden={visibiliDiDefault ? !visibiliDiDefault.includes(m.slug) : undefined}
       >
-        <div class="testa">
+        <button type="button" class="apri-incantesimo" data-apre={`inc-${m.slug}`}>
           <svg class="sigillo" viewBox="0 0 24 24" aria-hidden="true">
             <use href={`#${simbolo(m.slug, m.tag)}`} />
           </svg>
-          <h4 class="titolo">
-            <NomeDoppio it={m.nome} en={m.nomeEn} />
-          </h4>
+
+          <span class="chi">
+            {/* In linea, non impilato: su una riga sola l'inglese fra
+                parentesi costa niente, mentre a capo raddoppierebbe l'altezza
+                di trentanove carte — che è uno schermo di scorrimento in più. */}
+            <span class="titolo">
+              <NomeDoppio it={m.nome} en={m.nomeEn} inline />
+            </span>
+            <span class="riga">
+              {riga(m)}
+              {m.dominio && <span class="dominio"> · dominio</span>}
+              {m.rituale && <span class="rituale"> · rituale</span>}
+            </span>
+          </span>
+
           {m.livello === 0 ? (
-            <span class="a-volonta">
-              a volontà
-              <span class="en">At Will</span>
-            </span>
+            <span class="a-volonta">a volontà</span>
           ) : (
-            <span class="livello">
-              {m.livello}°<span class="en">level</span>
-            </span>
+            <span class="livello">{m.livello}°</span>
           )}
-        </div>
 
-        {m.rituale && (
-          <p class="etichette">
-            {/* Il rituale si lancia senza spendere uno slot, con dieci minuti
-                in più: è la prima cosa da sapere quando si guarda quanto
-                costa, quindi sta sopra la riga dei dati e non dentro. */}
-            <span class="etichetta">rituale · Ritual</span>
+          <svg class="freccia" viewBox="0 0 24 24" aria-hidden="true">
+            <polyline points="9 5 16 12 9 19" />
+          </svg>
+        </button>
+      </Superficie>
+    ))
+  }
+</div>
+
+{
+  incantesimi.map((m) => (
+    <dialog class="incantesimo-pieno" id={`inc-${m.slug}`} aria-label={m.nome}>
+      <div class="testa">
+        <span class="kicker">Incantesimo</span>
+        <button type="button" class="chiudi" data-chiude aria-label="Chiudi">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 5l14 14M19 5L5 19" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="intestazione">
+        <div class="chi">
+          <h4>{m.nome}</h4>
+          <p class="riferimenti">
+            {m.nomeEn} · {m.livello === 0 ? 'trucchetto · At Will' : `${m.livello}° livello`}
           </p>
-        )}
+        </div>
+        {m.dominio && <span class="bollo-dominio">sempre preparato</span>}
+      </div>
 
-        <p class="meta tenue">
-          {m.lancio} · {m.gittata} · {m.componenti}
-          {m.concentrazione && ' · concentrazione'}
-          {m.tiro && ` · TS ${m.tiro}`}
-          {m.danno && ` · ${m.danno}`}
-        </p>
+      <p class="etichette">
+        <span class="etichetta">{m.lancio}</span>
+        <span class="etichetta">{m.gittata}</span>
+        <span class="etichetta">{m.componenti}</span>
+        <span class="etichetta">{m.durata}</span>
+        {m.concentrazione && <span class="etichetta ambra">concentrazione</span>}
+        {m.tiro && <span class="etichetta">TS {m.tiro}</span>}
+        {m.danno && <span class="etichetta">{m.danno}</span>}
+        {m.rituale && <span class="etichetta ambra">rituale · Ritual</span>}
+      </p>
 
-        <p class="testo">{m.testo}</p>
-
-        {m.slotSuperiore && <p class="tenue superiore">Slot superiore: {m.slotSuperiore}</p>}
-
-        {/* Solo gli incantesimi di livello: un trucchetto non spende nulla, e
-            un contenitore vuoto qui sarebbe un bottone che non arriva mai. */}
-        {m.livello > 0 && (
+      {m.livello > 0 ? (
+        <>
+          <p class="kicker sezione">Come lo lanci</p>
+          {/* I blocchi li disegna `ControlliLancio` per portale: qui c'è solo
+              il posto dove andranno. Le regole di quanti slot restano e di
+              quali livelli sono lanciabili stanno in `lancio.ts`, fuori da
+              questo markup e fuori dall'isola. */}
           <div
             class="lancio"
             data-lancio={m.slug}
             data-livello={m.livello}
             data-rituale={m.rituale ? '' : undefined}
           />
+        </>
+      ) : (
+        <>
+          <p class="kicker sezione">Come lo lanci</p>
+          <p class="niente-slot">
+            È un trucchetto: si conosce, non si prepara, e non consuma slot. Si lancia ogni volta
+            che hai il tempo di lancio richiesto.
+          </p>
+        </>
+      )}
+
+      <p class="kicker sezione">Cosa fa</p>
+      <p class="testo">{m.testo}</p>
+
+      <p class="kicker sezione">Da sapere</p>
+      <div class="avvertenze">
+        {m.slotSuperiore && (
+          <p>
+            <strong>Slot superiore:</strong> {m.slotSuperiore}
+          </p>
         )}
-      </Superficie>
-    ))
+        {m.dominio && (
+          <p>
+            Del Dominio della Tempesta: <strong>sempre preparato</strong>, e non occupa uno dei sei
+            posti. Non si scambia al Riposo Lungo.
+          </p>
+        )}
+        {m.rituale && (
+          <p>
+            Si può lanciare come <strong>rituale</strong>: dieci minuti in più e nessuno slot speso.
+          </p>
+        )}
+        {m.livello > 0 && (
+          <p>
+            Nel tuo turno puoi spendere <strong>un solo slot</strong>: Parola Guaritrice + Fiamma
+            Sacra sì; Parola Guaritrice + Benedizione no.
+          </p>
+        )}
+      </div>
+    </dialog>
+  ))
+}
+
+<script>
+  /* Solo l'apertura, come per le armi: il contenuto è statico e i bottoni di
+   * lancio arrivano dall'isola. */
+  for (const bottone of document.querySelectorAll('[data-apre]')) {
+    const finestra = document.getElementById((bottone as HTMLElement).dataset.apre ?? '');
+    if (finestra instanceof HTMLDialogElement) {
+      bottone.addEventListener('click', () => finestra.showModal());
+    }
   }
-</div>
+  for (const chiudi of document.querySelectorAll('[data-chiude]')) {
+    chiudi.addEventListener('click', () => chiudi.closest('dialog')?.close());
+  }
+</script>
 
 <style>
   .carte-incantesimo {
     display: grid;
-    gap: var(--spazio-2);
+    gap: 0.6rem;
+  }
+
+  /* Il bottone riempie la carta da bordo a bordo: l'imbottitura sta su di lui,
+     non sulla Superficie, così il bersaglio del dito è tutta la riga. */
+  .incantesimo {
+    padding: 0;
+  }
+
+  /* Il dominio si riconosce dal bordo, non da una riga in più. */
+  .di-dominio {
+    border-left: 3px solid var(--ambra);
+  }
+
+  .apri-incantesimo {
+    width: 100%;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.7rem var(--spazio-2);
+    background: none;
+    border: none;
+    text-align: left;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  .sigillo {
+    width: 24px;
+    height: 24px;
+    flex: none;
+    color: var(--ambra);
+  }
+
+  .apri-incantesimo .chi {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .titolo {
+    display: block;
+    font-size: 1.02rem;
+  }
+
+  .riga {
+    display: block;
+    margin-top: 1px;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--inchiostro-muto);
+  }
+
+  .riga .dominio {
+    color: var(--ambra);
+  }
+
+  .livello {
+    flex: none;
+    font-family: var(--font-mono);
+    font-size: 1.05rem;
+    color: var(--lampo);
+  }
+
+  .a-volonta {
+    flex: none;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--inchiostro-muto);
+  }
+
+  .freccia {
+    flex: none;
+    width: 15px;
+    height: 15px;
+    fill: none;
+    stroke: var(--inchiostro-muto);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* La modale. `display` solo da aperto: la regola base lo scavalcherebbe e
+     tutto il contenuto finirebbe dentro la pagina. */
+  dialog.incantesimo-pieno {
+    overflow-y: auto;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: none;
+    margin: 0;
+    padding: var(--spazio-2) var(--spazio-2) calc(1.2rem + env(safe-area-inset-bottom));
+    border: none;
+    background: var(--carta);
+    color: var(--inchiostro);
+  }
+
+  dialog.incantesimo-pieno[open] {
+    display: flex;
+    flex-direction: column;
+  }
+
+  dialog.incantesimo-pieno::backdrop {
+    background: rgb(0 0 0 / 0.6);
   }
 
   .testa {
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    min-height: 44px;
+  }
+
+  .chiudi {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: -0.6rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+
+  .chiudi svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: var(--inchiostro);
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+
+  .intestazione {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
     gap: var(--spazio-2);
+    padding: 0.4rem 0 var(--spazio-2);
   }
 
-  .sigillo {
-    width: 26px;
-    height: 26px;
-    flex: none;
-    color: var(--ambra);
-  }
-
-  .titolo {
+  .intestazione h4 {
     margin: 0;
-    flex: 1;
-    font-size: var(--fs-h3);
+    font-size: 1.5rem;
+    line-height: 1.2;
   }
 
-  .livello,
-  .a-volonta {
-    flex: none;
-    display: grid;
-    justify-items: end;
-    text-align: right;
+  .riferimenti {
+    margin: 0.25rem 0 0;
     font-family: var(--font-mono);
-    font-size: 0.95rem;
-  }
-
-  .livello .en,
-  .a-volonta .en {
     font-size: var(--fs-piccolo);
     color: var(--inchiostro-muto);
   }
 
-  .a-volonta {
-    font-size: var(--fs-piccolo);
+  .bollo-dominio {
+    flex: none;
+    max-width: 6.5rem;
+    text-align: right;
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ambra);
   }
 
-  /* Stessa forma delle proprietà dell'arma: sono entrambe termini di
-     regolamento che si cercano a colpo d'occhio, non prosa. */
   .etichette {
-    margin: var(--spazio-2) 0 0;
+    margin: 0;
+    padding-bottom: var(--spazio-2);
     display: flex;
     flex-wrap: wrap;
     gap: 0.3rem;
+    border-bottom: 1px solid var(--filetto);
   }
 
   .etichetta {
     font-family: var(--font-mono);
     font-size: var(--fs-piccolo);
-    padding: 0.1rem 0.4rem;
+    padding: 0.15rem 0.45rem;
     border: 1px solid var(--filetto);
     border-radius: var(--raggio);
   }
 
-  .meta {
-    margin: var(--spazio-2) 0 0;
-    font-size: 0.82rem;
+  .etichetta.ambra {
+    border-color: var(--ambra);
+    color: var(--ambra);
   }
 
-  .testo {
-    margin: var(--spazio-1) 0 0;
-    font-size: 0.92rem;
+  .sezione {
+    margin: 0;
+    padding: var(--spazio-2) 0 0.7rem;
   }
 
-  .superiore {
-    margin: var(--spazio-1) 0 0;
-    font-size: 0.85rem;
+  .testo,
+  .niente-slot {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: var(--inchiostro-tenue);
+  }
+
+  .avvertenze {
+    display: grid;
+    gap: 0.6rem;
+  }
+
+  .avvertenze p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--inchiostro-tenue);
   }
 
   /* `.lancio` non sta qui: i bottoni li inietta `ControlliLancio` via portale,

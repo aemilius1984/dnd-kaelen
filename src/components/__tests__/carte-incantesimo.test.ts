@@ -45,6 +45,9 @@ describe('trucchetti e incantesimi di livello', () => {
   it('un trucchetto si dichiara a volontà e non porta il contenitore di lancio', async () => {
     const html = await rendi([trucchetto]);
 
+    // «a volontà» sta sulla riga della carta, «At Will» dentro la modale: su
+    // una riga sola non ci stanno tutt'e due, e il nome inglese serve a chi
+    // cerca il termine sul manuale, cioè a chi si è già fermato a leggere.
     expect(html).toContain('a volontà');
     expect(html).toContain('At Will');
     // Nessuno slot da spendere: un contenitore vuoto qui sarebbe un bottone
@@ -83,6 +86,9 @@ describe('tag rituale', () => {
   it('l’etichetta compare su un rituale', async () => {
     const html = await rendi([con('presagio')]);
 
+    // Due volte, e sono due cose diverse: in coda alla riga della carta serve
+    // a decidere senza aprire; dentro la modale porta anche il nome inglese.
+    expect(html).toContain('· rituale');
     expect(html).toContain('rituale · Ritual');
   });
 

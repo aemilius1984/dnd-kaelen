@@ -47,7 +47,9 @@ export default function ControlliLancio() {
   // controllo — è una card che smette di offrire i propri bottoni.
   useEffect(() => {
     for (const b of bersagli) {
-      const carta = b.nodo.closest<HTMLElement>('.incantesimo');
+      // La carta non è più un antenato del contenitore di lancio: quello sta
+      // dentro la modale, che è fuori dalla carta. Ci si arriva per slug.
+      const carta = document.querySelector<HTMLElement>(`[data-carta="${b.slug}"]`);
       if (!carta) continue;
       const spenta = cartaSpenta(s, pg, b.livello, b.rituale);
       carta.classList.toggle('spenta', spenta);

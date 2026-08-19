@@ -11,18 +11,18 @@ La domanda era la distinzione fra «preparati» e «sempre attivi». Nel
 regolamento 2024 **«sempre attivi» non esiste**: niente è attivo. Gli stati
 sono tre, e l'audit li aveva già fissati.
 
-| stato                | come si dice                | consuma slot | dentro il limite di sei |
-| -------------------- | --------------------------- | ------------ | ----------------------- |
-| trucchetto           | **conosciuto**              | no           | no, non si prepara      |
-| incantesimo scelto   | **preparato**               | sì           | sì, uno dei sei         |
-| incantesimo di dominio | **sempre preparato**      | sì           | no, si aggiunge         |
+| stato                  | come si dice         | consuma slot | dentro il limite di sei |
+| ---------------------- | -------------------- | ------------ | ----------------------- |
+| trucchetto             | **conosciuto**       | no           | no, non si prepara      |
+| incantesimo scelto     | **preparato**        | sì           | sì, uno dei sei         |
+| incantesimo di dominio | **sempre preparato** | sì           | no, si aggiunge         |
 
 Un trucchetto non si prepara: si conosce. I quattro del Dominio della Tempesta
-sono *sempre preparati* — è il termine del manuale — e stanno **fuori** dal
+sono _sempre preparati_ — è il termine del manuale — e stanno **fuori** dal
 limite di sei: non si scambiano al Riposo Lungo e non tolgono posto.
 
-**Preparato non vuol dire disponibile.** I preparati dicono *quali*
-incantesimi si possono scegliere, gli slot dicono *quante volte*. Al livello 3
+**Preparato non vuol dire disponibile.** I preparati dicono _quali_
+incantesimi si possono scegliere, gli slot dicono _quante volte_. Al livello 3
 Kaelen ha dieci incantesimi pronti e sei soli lanci fra due Riposi Lunghi.
 
 La scheda oggi non distingue il dominio: Nube di Nebbia sembra uno dei sei e

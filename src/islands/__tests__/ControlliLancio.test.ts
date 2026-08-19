@@ -28,12 +28,17 @@ beforeEach(async () => {
     `<script type="application/json" id="dati-iniziali">` +
     JSON.stringify({ pg, sheetVersion: 'v-test', pool: [] }) +
     `</script>` +
-    // La card come la genera `CarteIncantesimo.astro`: il contenitore vuoto è
-    // dentro la superficie, e l'isola lo trova con [data-lancio].
-    `<div class="superficie incantesimo">` +
-    `<div class="testa">Cura Ferite</div>` +
+    // Il markup come lo genera `CarteIncantesimo.astro`: la carta è una riga
+    // muta, e il contenitore vuoto sta dentro la *modale*, che è fuori dalla
+    // carta. L'isola trova il contenitore con [data-lancio] e la carta da
+    // spegnere con [data-carta] — risalire con `closest` non funzionerebbe
+    // più, ed è il difetto che questa disposizione impedisce di riportare.
+    `<div class="superficie incantesimo" data-carta="cura-ferite">` +
+    `<button class="apri-incantesimo">Cura Ferite</button>` +
+    `</div>` +
+    `<dialog class="incantesimo-pieno">` +
     `<div class="lancio" data-lancio="cura-ferite" data-livello="1"></div>` +
-    `</div>`;
+    `</dialog>`;
   radice = document.createElement('div');
   document.body.append(radice);
   render(h(ControlliLancio, {}), radice);
@@ -76,4 +81,19 @@ it('recuperare uno slot riaccende la card', async () => {
 
   expect(carta().getAttribute('aria-disabled')).not.toBe('true');
   expect(contenitore().querySelectorAll('button').length).toBeGreaterThan(0);
+});
+
+it('trova la carta per slug, non risalendo dal contenitore', async () => {
+  // Con `closest` la carta si trovava solo perché il contenitore le stava
+  // dentro. Spostato il contenitore nella modale, quel legame non c'è più: se
+  // qualcuno lo ripristina, la carta resta accesa a slot finiti e nient'altro
+  // se ne accorge. Qui la carta è deliberatamente *lontana* dal contenitore.
+  expect(carta().closest('dialog')).toBeNull();
+  expect(contenitore().closest('.incantesimo')).toBeNull();
+
+  for (let i = 0; i < 4; i++) muta((x) => spendiSlot(x, pg, 1, 'cura-ferite'));
+  for (let i = 0; i < 2; i++) muta((x) => spendiSlot(x, pg, 2, 'cura-ferite'));
+  await giro();
+
+  expect(carta().classList.contains('spenta')).toBe(true);
 });
