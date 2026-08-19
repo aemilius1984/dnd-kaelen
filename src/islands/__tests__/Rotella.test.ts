@@ -19,6 +19,21 @@ const disponi = () => {
   Object.defineProperty(pista(), 'clientHeight', { value: 252, configurable: true });
 };
 
+/** Le stesse misure, ma valide già al montaggio: è così che sta il mondo
+ *  quando la modale si apre e la pista viene disegnata dentro un dialogo già
+ *  aperto. `disponi()` invece arriva dopo, e serve ai casi in cui la pista
+ *  compare solo più tardi. Restituisce come rimettere le cose a posto. */
+const disponiPrima = (): (() => void) => {
+  const veri = ['scrollHeight', 'clientHeight'].map(
+    (n) => [n, Object.getOwnPropertyDescriptor(Element.prototype, n)!] as const,
+  );
+  Object.defineProperty(Element.prototype, 'scrollHeight', { configurable: true, get: () => 1452 });
+  Object.defineProperty(Element.prototype, 'clientHeight', { configurable: true, get: () => 252 });
+  return () => {
+    for (const [nome, desc] of veri) Object.defineProperty(Element.prototype, nome, desc);
+  };
+};
+
 const monta = (valore: number) => {
   letto = [];
   render(h(Rotella, { valore, onCambia: (n: number) => letto.push(n) }), radice);
@@ -54,15 +69,22 @@ it('si annuncia come selettore di numero, non come lista', async () => {
 });
 
 it('scorrere la pista riporta il numero sotto la banda', async () => {
-  monta(4);
-  await giro();
-  disponi();
+  // Disposta già al montaggio: la rotella nasce dentro una modale aperta. Se
+  // comparisse dopo, la prima scorsa servirebbe a rimetterla dov'era e non
+  // sarebbe una scelta — ed è il caso provato più sotto.
+  const ripristina = disponiPrima();
+  try {
+    monta(4);
+    await giro();
 
-  pista().scrollTop = PASSO * 9;
-  pista().dispatchEvent(new Event('scroll'));
-  await giro();
+    pista().scrollTop = PASSO * 9;
+    pista().dispatchEvent(new Event('scroll'));
+    await giro();
 
-  expect(letto).toContain(9);
+    expect(letto).toContain(9);
+  } finally {
+    ripristina();
+  }
 });
 
 it('le frecce girano la rotella di una cifra per volta', async () => {
@@ -197,5 +219,44 @@ it('non prende per scelta una posizione che non ha mai potuto scrivere', async (
     expect(letto).not.toContain(MINIMO);
   } finally {
     Object.defineProperty(Element.prototype, 'scrollTop', vero);
+  }
+});
+
+it('non si blocca se la posizione riletta non è identica a quella scritta', async () => {
+  // Il sintomo: arrivati in fondo alla corsa, la rotella non torna più
+  // indietro. La causa sta nella guardia contro le posizioni mai scritte, che
+  // si fidava di un confronto fra il pixel scritto e il pixel riletto subito
+  // dopo. Al massimo della corsa — e mentre una scorsa per inerzia è ancora
+  // viva — quei due numeri possono non coincidere: da lì la pista risultava
+  // «mai posizionata», e ogni scorsa successiva veniva ingoiata e riportata
+  // dov'era. Ai numeri di mezzo non si nota mai.
+  //
+  // Qui la pista è disposta fin dal montaggio, e la scrittura attacca *quasi*:
+  // rilegge sette pixel più in là, come farebbe un aggancio ancora in corsa.
+  const veri = ['scrollTop', 'scrollHeight', 'clientHeight'].map(
+    (n) => [n, Object.getOwnPropertyDescriptor(Element.prototype, n)!] as const,
+  );
+  let finto = 0;
+  Object.defineProperty(Element.prototype, 'scrollTop', {
+    configurable: true,
+    get: () => finto,
+    set: (n: number) => {
+      finto = n - 7;
+    },
+  });
+  Object.defineProperty(Element.prototype, 'scrollHeight', { configurable: true, get: () => 1452 });
+  Object.defineProperty(Element.prototype, 'clientHeight', { configurable: true, get: () => 252 });
+
+  try {
+    monta(MASSIMO);
+    await giro();
+
+    finto = PASSO * 12; // l'utente ha girato indietro
+    pista().dispatchEvent(new Event('scroll'));
+    await giro();
+
+    expect(letto).toContain(12);
+  } finally {
+    for (const [nome, desc] of veri) Object.defineProperty(Element.prototype, nome, desc);
   }
 });

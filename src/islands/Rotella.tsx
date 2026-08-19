@@ -27,18 +27,31 @@ export default function Rotella({ valore, onCambia, minimo = MINIMO, massimo = M
   // cifra di nessuno. È il difetto che in pagina si leggeva «SPENDI 0».
   const posizionato = useRef(false);
 
-  /** Rimette la pista sul numero scelto, e dice se la scrittura ha attaccato. */
-  const posiziona = (nodo: HTMLDivElement, n: number): boolean => {
-    const voluto = scorrimentoDaValore(n, PASSO, minimo, massimo);
-    nodo.scrollTop = voluto;
-    return nodo.scrollTop === voluto;
+  /** Rimette la pista sul numero scelto. */
+  const posiziona = (nodo: HTMLDivElement, n: number): void => {
+    nodo.scrollTop = scorrimentoDaValore(n, PASSO, minimo, massimo);
   };
+
+  /** Se la pista può scorrere. È la stessa domanda che si fa `leggi`, ed è
+   *  l'unica con una risposta certa: se può scorrere, era disposta, e la
+   *  scrittura di `scrollTop` è arrivata dove doveva.
+   *
+   *  Prima qui si confrontava il pixel scritto con quello riletto subito dopo.
+   *  In fondo alla corsa, o con un aggancio ancora in movimento, quei due
+   *  numeri possono non coincidere: bastava un disaccordo perché la pista
+   *  risultasse «mai posizionata» e ogni scorsa venisse ingoiata e riportata
+   *  dov'era. Ai numeri di mezzo non si notava; a trenta la rotella non tornava
+   *  più indietro. */
+  const disposta = (nodo: HTMLDivElement): boolean => nodo.scrollHeight > nodo.clientHeight;
 
   useEffect(() => {
     const nodo = pista.current;
     if (!nodo) return;
     atteso.current = valore;
-    posizionato.current = posiziona(nodo, valore);
+    // Fuori dal layout — ed è dove sta la pista finché la modale è chiusa —
+    // assegnare `scrollTop` non attacca: si rifarà alla prima occasione utile.
+    posizionato.current = disposta(nodo);
+    posiziona(nodo, valore);
   }, [valore, minimo, massimo]);
 
   const leggi = () => {
@@ -46,11 +59,13 @@ export default function Rotella({ valore, onCambia, minimo = MINIMO, massimo = M
     if (!nodo) return;
     // Finché il browser non ha disposto la pista non c'è niente da leggere:
     // una pista che non può scorrere sta ferma a zero.
-    if (nodo.scrollHeight <= nodo.clientHeight) return;
+    if (!disposta(nodo)) return;
     // Disposta adesso ma mai posizionata: questa è la prima occasione di
-    // rimettere la pista dov'era, non una girata da riferire.
+    // rimettere la pista dov'era, non una girata da riferire. Una volta sola —
+    // da qui in poi quel che si legge è una scelta.
     if (!posizionato.current) {
-      posizionato.current = posiziona(nodo, valore);
+      posizionato.current = true;
+      posiziona(nodo, valore);
       return;
     }
     const n = valoreDaScorrimento(nodo.scrollTop, PASSO, minimo, massimo);

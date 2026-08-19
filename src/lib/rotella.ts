@@ -5,8 +5,7 @@
  *  inerzia, rimbalzo e frenata li mette il browser, ed è la stessa fisica del
  *  selettore di data di iOS. Qui c'è solo la conversione fra la posizione di
  *  scorrimento e il numero sotto la banda di scelta — e siccome è aritmetica
- *  pura, si prova con vitest invece che con un browser, che questo progetto
- *  non ha. */
+ *  pura, si prova con vitest invece che con un browser. */
 
 /** Altezza di una cifra, in px. Deve combaciare con l'altezza dichiarata nel
  *  CSS della pista: se le due divergono, la rotella si ferma fra due cifre. */
@@ -14,8 +13,9 @@ export const PASSO = 40;
 
 export const MINIMO = 0;
 
-/** Oltre trenta la rotella diventerebbe una corsa lunga: da lì in su si usa il
- *  campo «digita», che è comunque la strada da tastiera. */
+/** Oltre trenta la rotella diventerebbe una corsa lunga. Da lì in su non c'è
+ *  strada: i numeri più alti si compongono in due gesti — una cura da trenta e
+ *  una da quel che resta. */
 export const MASSIMO = 30;
 
 function guardia(passo: number): void {

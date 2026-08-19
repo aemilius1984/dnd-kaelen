@@ -246,3 +246,11 @@ it('le carte dei verbi sono su due colonne', () => {
   expect(verbo).toMatch(/flex-direction:\s*row/);
   expect(verbo).toMatch(/justify-content:\s*space-between/);
 });
+
+it('la rotella non passa alla modale quel che avanza del gesto', () => {
+  // Scorrere *oltre* l'ultimo numero incatenava lo scorrimento al genitore: la
+  // modale scendeva, e il gesto per tornare indietro andava a rimettere a
+  // posto lei invece di girare la rotella. Da fuori si legge come «da trenta
+  // non si torna più indietro».
+  expect(corpo('.rotella .pista')).toMatch(/overscroll-behavior:\s*contain/);
+});

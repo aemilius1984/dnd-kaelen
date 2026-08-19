@@ -871,6 +871,11 @@ dialog.vitalita .annuncio {
   overflow-y: auto;
   scroll-snap-type: y mandatory;
   scrollbar-width: none;
+  /* Arrivati in fondo alla corsa, quel che avanza del gesto non deve passare
+   * alla modale sotto. Senza questo, scorrere *oltre* trenta fa scorrere la
+   * modale, e il gesto per tornare indietro se ne va a rimettere a posto lei
+   * invece di girare la rotella: sembra che da trenta non si torni più. */
+  overscroll-behavior: contain;
   /* Mezza rotella meno mezza cifra: così la prima e l'ultima arrivano sotto
    * la banda invece di fermarsi a un bordo. */
   padding-block: var(--scarto);
