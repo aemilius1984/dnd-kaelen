@@ -46,6 +46,30 @@ const { titolo, attiva } = Astro.props;
       <slot />
     </main>
     {
+      /* Aprire e chiudere un `<dialog>` non è stato: sono due chiamate al DOM.
+      Un'isola qui monterebbe Preact per due `addEventListener`, e il bottone
+      resterebbe morto finché non si idrata. Poche righe inline lo fanno
+      funzionare appena il markup esiste.
+
+      Sta nel layout, e non nei componenti, perché di modali ne hanno tre —
+      archivio, armi, incantesimi — e ognuno si era portato la propria copia.
+      Il selettore è globale: tre copie volevano dire tre ascoltatori su ogni
+      bottone e tre `showModal()` per ogni click. Non dava errore, perché un
+      dialogo già modale ignora la seconda chiamata; l'avrebbe dato il giorno
+      in cui uno di quei bottoni avesse commutato invece di aprire. */
+    }
+    <script is:inline>
+      for (const b of document.querySelectorAll('[data-apre]')) {
+        b.addEventListener('click', () => document.getElementById(b.dataset.apre)?.showModal());
+      }
+      /* `data-chiude` non porta un id: il bottone che chiude sta sempre dentro
+      il dialogo che chiude, e farglielo nominare era un secondo posto dove
+      sbagliare a scriverlo. */
+      for (const b of document.querySelectorAll('[data-chiude]')) {
+        b.addEventListener('click', () => b.closest('dialog')?.close());
+      }
+    </script>
+    {
       /* Il service worker non è un sorgente: lo scrive scripts/build-sw.mjs
       dentro dist/ dopo `astro build`. Sotto `astro dev` non esiste e non può
       esistere, quindi registrarlo lì sarebbe solo una 404 per ogni pagina

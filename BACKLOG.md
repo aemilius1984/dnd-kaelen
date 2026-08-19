@@ -222,3 +222,64 @@ impedisce che se ne accumulino altre. Quando la fase 2 cancella
 aspetta di trovare lì. Una guardia che limiti `base.css` a selettori di
 elemento, `@font-face`, `@media` e un piccolo elenco nominato di eccezioni
 vale la pena scriverla, ma su un confine che la fase 2 sta per ridisegnare.
+
+# Note
+
+- https://www.dndbeyond.com/characters/169880275 scheda pg ufficiale D&D
+
+# Lancio rituale
+
+Rimandato di proposito, non dimenticato. L'audit regolamentare
+(`docs/superpowers/specs/2026-08-18-regole-kaelen-chierico.md`, P1) chiede che
+la card di un rituale preparato offra **due azioni distinte**: «Lancia con
+slot» e «Lancia come rituale», la seconda senza slot e con dieci minuti in più.
+
+Oggi la carta _dice_ che la via rituale esiste, e — questo sì fatto — non si
+spegne più quando finiscono gli slot, che era il momento in cui l'opzione
+serviva di più.
+
+Manca l'azione vera, e manca per una ragione precisa: un rituale deve
+verificare e consumare gli eventuali materiali e mantenere la Concentrazione
+per i dieci minuti. Né i materiali né `concentrazioneSu` sono tracciati nello
+stato di sessione. Un bottone «Lancia come rituale» oggi non cambierebbe
+niente e prometterebbe una transazione che il codice non sa eseguire.
+
+Ordine sensato quando si riprende: prima i materiali consumabili (P1), poi la
+Concentrazione, poi il lancio rituale come transazione unica — slot e
+materiali sottratti solo al completamento, come chiede la spec.
+
+## Il 20 e l'1 naturali sui tiri contro morte
+
+L'audit (`docs/superpowers/specs/2026-08-18-regole-kaelen-chierico.md`, P1)
+chiede che il tracker dei TS morte gestisca stabilità, morte, 1 naturale e 20
+naturale. I primi due li fa. Gli altri due non hanno più un comando loro: la
+modale chiede **com'è andata** — «Successo» o «Fallimento» — invece del numero
+uscito, perché rifare il confronto con 10 dentro l'app costringeva a portare il
+d20 nella rotella, e la rotella serve la quantità di punti ferita.
+
+Non è una regola persa, è una regola detta in due gesti già presenti: un 1
+naturale sono **due fallimenti**, un 20 naturale è una **cura di uno**, che è
+il verbo lì sotto. Chi tira il dado quei due casi li riconosce da sé.
+
+Se un giorno dovessero tornare come comando proprio, la primitiva
+`segnaTsMorte` basta per il primo; il secondo è `applicaCura(s, pg, 1)`. La
+funzione `tiroMorte`, che prendeva il d20 grezzo, è stata tolta insieme al suo
+unico chiamante: riscriverla è più onesto che tenerla senza nessuno che la usi.
+
+## L'obbligo di preparare non sopravvive alla chiusura della scheda
+
+Il Riposo Lungo avviene sulla Scheda, i sei preparati si scelgono su
+`/preparati/`: fra i due c'è una navigazione, e la bozza è un signal di modulo
+che una navigazione azzera. Il passaggio di consegne viaggia quindi in
+`sessionStorage` — vedi `src/lib/consegna-preparazione.ts`.
+
+Il limite: chiudendo la scheda del browser fra il riposo e la scelta, l'obbligo
+si perde. Il riposo resta compiuto (quello è stato salvato), ma la sessione di
+preparazione non si riapre da sola, e per correggere resta la strada «Modifica
+concessa dal DM» — che è l'uscita di sicurezza, non il percorso legittimo.
+
+Il rimedio giusto è portare l'obbligo dentro lo stato di sessione, per esempio
+`preparazioneDovuta: boolean`, messo da `riposoLungo` e tolto da `completa`.
+Costa un `SCHEMA_VERSION` e una migrazione, ed è il motivo per cui non è già
+lì: non valeva quel prezzo nello stesso passaggio in cui l'archivio ha
+cambiato sede.

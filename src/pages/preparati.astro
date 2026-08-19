@@ -29,15 +29,36 @@ const tuttoArchivio = [...pg.trucchetti, ...pg.dominio, ...pool.map((m) => m.slu
   <Sprite />
   <DatiIniziali pg={pg} sheetVersion={sheetVersion} pool={pool} />
 
+  {
+    /* Il cappello. Sta in cima e ci resta: quanti ne hai preparati, come si
+      sblocca la scelta, e la via d'uscita. Prima erano un collegamento e un
+      bottone in fondo alla pagina, cioè dopo trentanove incantesimi — per
+      tornare alla Scheda bisognava scorrere tutto, e il conto dei preparati
+      non si vedeva mai.
+
+      La X è statica perché è solo un collegamento: non ha stato e deve
+      funzionare prima che Preact si idrati. Il conto e il comando li disegna
+      l'isola per portale dentro `[data-preparazione]`, come già fanno le
+      spunte dell'elenco. */
+  }
+  <div class="barra-preparati-isola">
+    <div class="barra-preparati">
+      <a class="ics" href="/scheda/" aria-label="Torna alla scheda">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M5 5l14 14M19 5L5 19"></path>
+        </svg>
+      </a>
+      <div class="stato-preparazione" data-preparazione></div>
+    </div>
+  </div>
+
   <TestaSezione kicker="l'archivio">Tutti gli incantesimi</TestaSezione>
   <p class="tenue">
-    Puoi tenerne {pg.limitePreparati} preparati. I quattro del dominio sono sempre pronti e non contano;
-    i trucchetti si lanciano a volontà.
+    Puoi tenerne {pg.limitePreparati} preparati, e si cambiano alla fine di un Riposo Lungo. I quattro
+    del dominio sono sempre pronti e non contano; i trucchetti si lanciano a volontà.
   </p>
 
   <ElencoArchivio incantesimi={tuttoArchivio} preparabili={pool.map((m) => m.slug)} />
-
-  <p class="tenue"><a href="/scheda/">Torna alla scheda</a></p>
 
   <Archivio client:only="preact" />
 </BaseLayout>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { caricaPersonaggioDaFile } from '@/lib/carica-personaggio';
-import { livelliLanciabili } from '@/lib/lancio';
+import { cartaSpenta, livelliLanciabili } from '@/lib/lancio';
 import { spendiSlot, statoIniziale } from '@/lib/sheet-state';
 
 const pg = caricaPersonaggioDaFile();
@@ -30,5 +30,32 @@ describe('livelli con cui si può lanciare', () => {
     for (let i = 0; i < 4; i++) s = spendiSlot(s, pg, 1, 'comando');
     for (let i = 0; i < 2; i++) s = spendiSlot(s, pg, 2, 'frantumare');
     expect(livelliLanciabili(s, pg, 1)).toEqual([]);
+  });
+});
+
+describe('quando una carta si spegne', () => {
+  const pg = caricaPersonaggioDaFile();
+  const vuoto = () => {
+    let s = statoIniziale(pg, 'v');
+    for (const x of pg.slot) for (let i = 0; i < x.max; i++) s = spendiSlot(s, pg, x.livello, 'x');
+    return s;
+  };
+
+  it('a slot pieni nessuna carta è spenta', () => {
+    expect(cartaSpenta(statoIniziale(pg, 'v'), pg, 1, false)).toBe(false);
+  });
+
+  it('finiti gli slot la carta normale si spegne', () => {
+    expect(cartaSpenta(vuoto(), pg, 1, false)).toBe(true);
+  });
+
+  it('ma un rituale resta acceso proprio lì', () => {
+    // È il momento in cui il rituale conta di più: senza slot è l'unico modo
+    // rimasto di lanciarlo. Spegnerlo faceva sparire l'ultima opzione.
+    expect(cartaSpenta(vuoto(), pg, 1, true)).toBe(false);
+  });
+
+  it('un trucchetto non si spegne mai: non spende niente', () => {
+    expect(cartaSpenta(vuoto(), pg, 0, false)).toBe(false);
   });
 });

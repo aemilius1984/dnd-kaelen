@@ -8,7 +8,7 @@ import {
   carica,
   impostaIspirazione,
   impostaPfTemporanei,
-  puoPreparare,
+  impostaPreparati,
   puoSpendereSlot,
   puoUsareRisorsa,
   recuperaSlot,
@@ -18,7 +18,6 @@ import {
   spendiDadoVitaConCura,
   spendiSlot,
   statoIniziale,
-  togglePreparato,
   usaRisorsa,
   type StatoSessione,
 } from '@/lib/sheet-state';
@@ -54,18 +53,18 @@ describe('stato iniziale', () => {
 describe('punti ferita', () => {
   it('consuma prima i PF temporanei', () => {
     s = impostaPfTemporanei(s, 3);
-    s = applicaDanno(s, 5);
+    s = applicaDanno(s, pg, 5);
     expect(s.pfTemporanei).toBe(0);
     expect(s.pf).toBe(19);
   });
 
   it('non scende sotto zero', () => {
-    s = applicaDanno(s, 50);
+    s = applicaDanno(s, pg, pg.pfMax);
     expect(s.pf).toBe(0);
   });
 
   it('non cura oltre il massimo', () => {
-    s = applicaDanno(s, 5);
+    s = applicaDanno(s, pg, 5);
     s = applicaCura(s, pg, 100);
     expect(s.pf).toBe(21);
   });
@@ -73,29 +72,33 @@ describe('punti ferita', () => {
   it('ignora un danno negativo: non genera PF temporanei dal nulla', () => {
     // Il campo "Quantità" del pannello azioni non impedisce un numero
     // negativo: applicaDanno deve scartarlo, non trasformarlo in cura.
-    s = applicaDanno(s, -5);
+    s = applicaDanno(s, pg, -5);
     expect(s.pfTemporanei).toBe(0);
     expect(s.pf).toBe(21);
   });
 
   it('ignora una cura negativa: non riduce i PF', () => {
-    s = applicaDanno(s, 5);
+    s = applicaDanno(s, pg, 5);
     s = applicaCura(s, pg, -3);
     expect(s.pf).toBe(16);
   });
 
   it('azzera i tiri salvezza contro morte quando risale sopra zero', () => {
-    s = applicaDanno(s, 50);
+    s = applicaDanno(s, pg, pg.pfMax);
     s = segnaTsMorte(s, 'fallimento');
     expect(s.tsMorte.fallimenti).toBe(1);
     s = applicaCura(s, pg, 1);
     expect(s.tsMorte).toEqual({ successi: 0, fallimenti: 0 });
   });
 
-  it('non supera tre tiri salvezza contro morte', () => {
-    s = applicaDanno(s, 50);
+  it('il terzo fallimento non si accumula: uccide', () => {
+    // Prima i contatori si fermavano a tre e lì restavano. Ora il terzo segno
+    // è una transizione — `statoVitale` diventa `morto` e i contatori tornano
+    // a zero — quindi per lato ne bastano due.
+    s = applicaDanno(s, pg, pg.pfMax);
     for (let i = 0; i < 4; i++) s = segnaTsMorte(s, 'fallimento');
-    expect(s.tsMorte.fallimenti).toBe(3);
+    expect(s.statoVitale).toBe('morto');
+    expect(s.tsMorte.fallimenti).toBeLessThanOrEqual(2);
   });
 });
 
@@ -135,7 +138,7 @@ describe('riposi', () => {
     s = usaRisorsa(s, pg, 'incanalare');
     s = usaRisorsa(s, pg, 'ira-tempesta');
     s = spendiSlot(s, pg, 1, 'comando');
-    s = applicaDanno(s, 5);
+    s = applicaDanno(s, pg, 5);
     s = riposoBreve(s, pg);
     expect(s.risorseUsate['incanalare']).toBe(1);
     expect(s.risorseUsate['ira-tempesta']).toBe(1);
@@ -143,8 +146,8 @@ describe('riposi', () => {
     expect(s.pf).toBe(16);
   });
 
-  it('il riposo lungo ripristina tutto e recupera metà dei dadi vita', () => {
-    s = applicaDanno(s, 10);
+  it('il riposo lungo ripristina tutto e recupera tutti i dadi vita', () => {
+    s = applicaDanno(s, pg, 10);
     s = impostaPfTemporanei(s, 4);
     s = spendiSlot(s, pg, 2, 'frantumare');
     s = usaRisorsa(s, pg, 'ira-tempesta');
@@ -156,94 +159,72 @@ describe('riposi', () => {
     expect(s.pfTemporanei).toBe(0);
     expect(s.slotSpesi).toEqual({ 1: [], 2: [] });
     expect(s.risorseUsate['ira-tempesta']).toBe(0);
-    expect(s.dadiVitaSpesi).toBe(2);
+    // Erano tre spesi e ne tornava uno solo: `Math.floor(3 / 2)` è la regola
+    // dei *livelli*, non dei dadi vita. Il Riposo Lungo li rimette tutti.
+    expect(s.dadiVitaSpesi).toBe(0);
     expect(s.tsMorte).toEqual({ successi: 0, fallimenti: 0 });
+    expect(s.statoVitale).toBe('cosciente');
+  });
+
+  it('nessuno dei due riposi parte da terra', () => {
+    // Precondizione del manuale: un riposo valido richiede almeno 1 PF. A 0
+    // PF si è incoscienti, e da incoscienti non si riposa — ci si stabilizza.
+    const giu = applicaDanno(statoIniziale(pg, VERSIONE), pg, pg.pfMax);
+
+    expect(riposoBreve(giu, pg)).toBe(giu);
+    expect(riposoLungo(giu, pg)).toBe(giu);
   });
 });
 
-describe('incantesimi preparati', () => {
-  it('non supera il limite di sei', () => {
-    // Slug arbitrario, né in pg.dominio né in pg.trucchetti: a bloccarlo deve
-    // essere il limite di lunghezza, non la guardia su dominio/trucchetti.
-    s = togglePreparato(s, pg, 'incantesimo-di-prova');
-    expect(s.preparati).toHaveLength(6);
-    expect(s.preparati).not.toContain('incantesimo-di-prova');
+describe('i preparati entrano nello stato solo completi e legittimi', () => {
+  const sei = () => [...pg.preparatiIniziali];
+
+  it('accetta una lista di sei validi', () => {
+    const altra = [...sei().slice(1), 'incantesimo-di-prova'];
+
+    expect(impostaPreparati(s, pg, altra).preparati).toEqual(altra);
   });
 
-  it('aggiunge uno slug qualunque una volta liberato uno slot', () => {
-    // Dimostra che il test sopra colpisce davvero il ramo del limite: con la
-    // lista a 5 lo stesso slug arbitrario viene accettato.
-    s = togglePreparato(s, pg, 'comando');
-    s = togglePreparato(s, pg, 'incantesimo-di-prova');
-    expect(s.preparati).toContain('incantesimo-di-prova');
-    expect(s.preparati).toHaveLength(6);
+  it('rifiuta una lista che non è esattamente di sei', () => {
+    // Cinque o sette non sono stati che le regole ammettono: se una sessione
+    // di preparazione interrotta riuscisse a salvarli, il personaggio
+    // resterebbe fuori regola senza che nulla lo segnali.
+    expect(impostaPreparati(s, pg, sei().slice(1))).toBe(s);
+    expect(impostaPreparati(s, pg, [...sei(), 'incantesimo-di-prova'])).toBe(s);
   });
 
-  it('toglie e rimette un preparato', () => {
-    s = togglePreparato(s, pg, 'comando');
-    expect(s.preparati).not.toContain('comando');
-    s = togglePreparato(s, pg, 'comando');
-    expect(s.preparati).toContain('comando');
-    expect(s.preparati).toHaveLength(6);
+  it('rifiuta i duplicati', () => {
+    const doppio = [...sei().slice(1), sei()[1]];
+
+    expect(impostaPreparati(s, pg, doppio)).toBe(s);
   });
 
-  it('non aggiunge uno slug del dominio anche con la lista non piena', () => {
-    s = togglePreparato(s, pg, 'comando');
-    const attesi = s.preparati;
-    s = togglePreparato(s, pg, 'frantumare');
-    expect(s.preparati).toEqual(attesi);
-    expect(s.preparati).toHaveLength(5);
-  });
-
-  it('non aggiunge un trucchetto anche con la lista non piena', () => {
-    s = togglePreparato(s, pg, 'comando');
-    const attesi = s.preparati;
-    s = togglePreparato(s, pg, 'guida');
-    expect(s.preparati).toEqual(attesi);
-    expect(s.preparati).toHaveLength(5);
-  });
-
-  it('rimuove uno slug del dominio se già presente in uno stato salvato in precedenza', () => {
-    // Simula uno stato salvato prima del fix della guardia, dove uno slug di
-    // dominio era finito in `preparati`: la rimozione deve restare possibile
-    // per permettere all'utente di ripulirlo.
-    const statoVecchio = { ...s, preparati: [...s.preparati.slice(0, 5), 'frantumare'] };
-    const risultato = togglePreparato(statoVecchio, pg, 'frantumare');
-    expect(risultato.preparati).not.toContain('frantumare');
-    expect(risultato.preparati).toHaveLength(5);
-  });
-
-  it('puoPreparare è vero lontano dal confine e falso al confine, in accordo con togglePreparato', () => {
-    s = togglePreparato(s, pg, 'comando');
-    expect(s.preparati).toHaveLength(5);
-    expect(puoPreparare(s, pg)).toBe(true);
-    s = togglePreparato(s, pg, 'comando');
-    expect(s.preparati).toHaveLength(6);
-    expect(puoPreparare(s, pg)).toBe(false);
-    // Il predicato falso deve coincidere con un mutatore che non aggiunge
-    // nulla: stesso riferimento in uscita per uno slug nuovo, non solo lo
-    // stesso valore.
-    expect(togglePreparato(s, pg, 'incantesimo-di-prova')).toBe(s);
+  it('rifiuta dominio e trucchetti, che sono già preparati', () => {
+    expect(impostaPreparati(s, pg, [...sei().slice(1), pg.dominio[0]])).toBe(s);
+    expect(impostaPreparati(s, pg, [...sei().slice(1), pg.trucchetti[0]])).toBe(s);
   });
 });
 
 describe('caricamento e versioning', () => {
   it('conserva lo stato quando la versione della scheda non è cambiata', () => {
-    s = applicaDanno(s, 7);
+    s = applicaDanno(s, pg, 7);
     const { stato, azzerato } = carica(JSON.stringify(s), pg, VERSIONE);
     expect(azzerato).toBe(false);
     expect(stato.pf).toBe(14);
   });
 
   it('azzera lo stato quando la scheda è stata ripubblicata', () => {
-    s = applicaDanno(s, 7);
+    s = applicaDanno(s, pg, 7);
     const { stato, azzerato } = carica(JSON.stringify(s), pg, 'altra-versione');
     expect(azzerato).toBe(true);
     expect(stato.pf).toBe(21);
   });
 
-  it('azzera lo stato quando cambia lo schema', () => {
-    const vecchio = JSON.stringify({ ...s, schemaVersion: SCHEMA_VERSION - 1 });
+  it('azzera lo stato quando lo schema non è migrabile', () => {
+    // Lo schema 2 adesso si migra — la prova sta più sotto. Questa guardia
+    // vale per una versione che non sappiamo leggere: lì azzerare è l'unica
+    // cosa onesta.
+    const vecchio = JSON.stringify({ ...s, schemaVersion: 1 });
     expect(carica(vecchio, pg, VERSIONE).azzerato).toBe(true);
   });
 
@@ -265,7 +246,7 @@ describe('hash dei dati', () => {
 describe('dadi vita spesi durante il riposo breve', () => {
   it('spende un dado e cura del totale tirato al tavolo', () => {
     const pg = caricaPersonaggioDaFile();
-    const s = applicaDanno(statoIniziale(pg, 'v'), 10);
+    const s = applicaDanno(statoIniziale(pg, 'v'), pg, 10);
     const dopo = spendiDadoVitaConCura(s, pg, 6);
     expect(dopo.dadiVitaSpesi).toBe(1);
     expect(dopo.pf).toBe(s.pf + 6);
@@ -273,20 +254,20 @@ describe('dadi vita spesi durante il riposo breve', () => {
 
   it('cura almeno 1 PF anche con un totale minore', () => {
     const pg = caricaPersonaggioDaFile();
-    const s = applicaDanno(statoIniziale(pg, 'v'), 10);
+    const s = applicaDanno(statoIniziale(pg, 'v'), pg, 10);
     expect(spendiDadoVitaConCura(s, pg, 0).pf).toBe(s.pf + 1);
     expect(spendiDadoVitaConCura(s, pg, -3).pf).toBe(s.pf + 1);
   });
 
   it('non supera i punti ferita massimi', () => {
     const pg = caricaPersonaggioDaFile();
-    const s = applicaDanno(statoIniziale(pg, 'v'), 2);
+    const s = applicaDanno(statoIniziale(pg, 'v'), pg, 2);
     expect(spendiDadoVitaConCura(s, pg, 9).pf).toBe(pg.pfMax);
   });
 
   it('non fa nulla se non restano dadi vita', () => {
     const pg = caricaPersonaggioDaFile();
-    let s = applicaDanno(statoIniziale(pg, 'v'), 10);
+    let s = applicaDanno(statoIniziale(pg, 'v'), pg, 10);
     for (let i = 0; i < pg.numeroDadiVita; i++) s = spendiDadoVitaConCura(s, pg, 4);
     // Convenzione del file per i mutatori bloccati: stesso riferimento in
     // uscita, non solo lo stesso valore — vedi la riga 108-109 sopra.
@@ -342,5 +323,122 @@ describe('Ispirazione Eroica', () => {
 
   it('nemmeno il riposo breve', () => {
     expect(riposoBreve(impostaIspirazione(s, true), pg).ispirazione).toBe(true);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────
+// Lo stato a 0 PF, secondo docs/superpowers/specs/2026-08-18-regole-kaelen-chierico.md
+// ─────────────────────────────────────────────────────────────────────────
+
+describe('la macchina a stati della vitalità', () => {
+  const vivo = () => statoIniziale(pg, 'v');
+
+  it('si comincia coscienti', () => {
+    expect(vivo().statoVitale).toBe('cosciente');
+  });
+
+  it('il danno che porta a zero rende incoscienti e apre i TS', () => {
+    const s = applicaDanno(vivo(), pg, pg.pfMax);
+
+    expect(s.pf).toBe(0);
+    expect(s.statoVitale).toBe('incosciente');
+    expect(s.tsMorte).toEqual({ successi: 0, fallimenti: 0 });
+  });
+
+  it('un colpo il cui residuo oltre lo zero arriva ai PF massimi uccide sul posto', () => {
+    // Morte istantanea: non si passa dai tiri salvezza.
+    const s = applicaDanno(vivo(), pg, pg.pfMax * 2);
+
+    expect(s.statoVitale).toBe('morto');
+  });
+
+  it('e un colpo che arriva a zero senza quel residuo no', () => {
+    const s = applicaDanno(vivo(), pg, pg.pfMax + (pg.pfMax - 1));
+
+    expect(s.statoVitale).toBe('incosciente');
+  });
+
+  it('il danno subito a terra vale un fallimento, il critico due', () => {
+    const giu = applicaDanno(vivo(), pg, pg.pfMax);
+
+    expect(applicaDanno(giu, pg, 3).tsMorte.fallimenti).toBe(1);
+    expect(applicaDanno(giu, pg, 3, true).tsMorte.fallimenti).toBe(2);
+  });
+
+  it('chi è stabile e viene colpito torna incosciente con un fallimento', () => {
+    let s = applicaDanno(vivo(), pg, pg.pfMax);
+    for (let i = 0; i < 3; i++) s = segnaTsMorte(s, 'successo');
+    expect(s.statoVitale).toBe('stabile');
+
+    s = applicaDanno(s, pg, 2);
+
+    expect(s.statoVitale).toBe('incosciente');
+    expect(s.tsMorte.fallimenti).toBe(1);
+  });
+
+  it('tre successi rendono stabili e azzerano i contatori', () => {
+    let s = applicaDanno(vivo(), pg, pg.pfMax);
+    for (let i = 0; i < 3; i++) s = segnaTsMorte(s, 'successo');
+
+    expect(s.statoVitale).toBe('stabile');
+    expect(s.tsMorte).toEqual({ successi: 0, fallimenti: 0 });
+  });
+
+  it('tre fallimenti uccidono', () => {
+    let s = applicaDanno(vivo(), pg, pg.pfMax);
+    for (let i = 0; i < 3; i++) s = segnaTsMorte(s, 'fallimento');
+
+    expect(s.statoVitale).toBe('morto');
+  });
+
+  it('una cura che riporta sopra zero rimette coscienti e azzera i contatori', () => {
+    let s = applicaDanno(vivo(), pg, pg.pfMax);
+    s = segnaTsMorte(s, 'fallimento');
+
+    s = applicaCura(s, pg, 4);
+
+    expect(s.statoVitale).toBe('cosciente');
+    expect(s.tsMorte).toEqual({ successi: 0, fallimenti: 0 });
+  });
+
+  it('a zero PF non si spendono dadi vita', () => {
+    // Il Riposo Breve richiede almeno 1 PF: da terra non ci si cura da soli.
+    const giu = applicaDanno(vivo(), pg, pg.pfMax);
+
+    expect(spendiDadoVitaConCura(giu, pg, 5)).toBe(giu);
+  });
+});
+
+describe('la migrazione dallo schema 2', () => {
+  const v2 = (extra: Record<string, unknown>) =>
+    JSON.stringify({ ...statoIniziale(pg, 'v'), schemaVersion: 2, ...extra });
+
+  it('una sessione sana non si perde: si migra', () => {
+    // «Migrare ciò che è inequivocabile e azzerare soltanto quando la
+    // migrazione non è sicura» — se aggiungere un campo cancellasse la
+    // sessione, a metà campagna si perderebbero PF, slot e note.
+    const { stato, azzerato } = carica(v2({ pf: 12, note: 'la nave' }), pg, 'v');
+
+    expect(azzerato).toBe(false);
+    expect(stato.pf).toBe(12);
+    expect(stato.note).toBe('la nave');
+    expect(stato.schemaVersion).toBe(SCHEMA_VERSION);
+    expect(stato.statoVitale).toBe('cosciente');
+  });
+
+  it('a zero PF deduce lo stato dai contatori vecchi', () => {
+    expect(carica(v2({ pf: 0 }), pg, 'v').stato.statoVitale).toBe('incosciente');
+    expect(
+      carica(v2({ pf: 0, tsMorte: { successi: 3, fallimenti: 0 } }), pg, 'v').stato.statoVitale,
+    ).toBe('stabile');
+    expect(
+      carica(v2({ pf: 0, tsMorte: { successi: 0, fallimenti: 3 } }), pg, 'v').stato.statoVitale,
+    ).toBe('morto');
+  });
+
+  it('ma una scheda cambiata azzera lo stesso', () => {
+    // La migrazione riguarda la forma dello stato, non i dati del personaggio:
+    // se cambia `sheetVersion` i numeri salvati non valgono più.
+    expect(carica(v2({ pf: 12 }), pg, 'altra').azzerato).toBe(true);
   });
 });

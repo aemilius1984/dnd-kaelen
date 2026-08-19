@@ -30,52 +30,6 @@ button:active {
   color: var(--carta);
 }
 
-/* client:only="preact" non fa alcun render lato server: il pannello resta
- * vuoto finché l'idratazione non disegna i controlli reali. Senza altezza
- * riservata la pagina "salta" nel punto guardato più spesso a ogni apertura,
- * proprio in cima alla scheda. Il Task 8 ha riscritto PfTracker in sola
- * lettura (niente più pulsanti né campo PF temporanei, in compenso una barra
- * di riempimento): misurata di nuovo con Chrome headless via CDP a 390px di
- * larghezza, stato normale (PF > 0, e già allora senza l'avviso di
- * azzeramento, che adesso è un'isola a parte resa dal layout): 146px; 148px
- * lascia un margine di un paio di pixel. A 0 PF compare la riga dei TS morte e
- * l'altezza sale a 186px — caso raro, non riservato qui, stesso criterio di
- * prima: vedi il rapporto del task.
- *
- * Il fondo, il bordo e il raggio non stanno più qui: il markup non porta più
- * la classe `pannello`, li dà `Superficie`. La distanza dai vicini invece
- * resta qui e non nel componente: `Superficie` è un primitivo, sa cos'è
- * (fondo, filetto, raggio, ombra, spaziatura interna) ma non deve sapere
- * quanto stare lontano da chi le sta intorno — quella è una proprietà della
- * pagina che la monta, e la fase 2 la monterà in una dozzina di punti
- * ciascuno con la propria spaziatura.
- *
- * ATTENZIONE: 172px è CALCOLATO, non misurato — i 148px sopra venivano da
- * `.pannello` con 0.75rem di imbottitura per lato; `Superficie` ne mette
- * 1.5rem (`--spazio-3`) per lato, `box-sizing: border-box`, quindi la riserva
- * serve 24px in più: 148 + 24 = 172. Da confermare nella verifica a 390×844,
- * stesso criterio di `.risorse-isola` più sotto. */
-.pf-pannello {
-  min-height: 172px;
-  margin: var(--spazio-2) 0;
-}
-.pf .riga {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-}
-.pf .numero {
-  font-family: var(--font-mono);
-  font-size: 2rem;
-  color: var(--lampo);
-  min-width: 5ch;
-  text-align: center;
-}
-.pf .numero.pericolo {
-  color: var(--allerta);
-}
 .avviso {
   background: var(--superficie-incassata);
   border-left: 3px solid var(--ambra);
@@ -266,20 +220,136 @@ button[disabled] {
   flex-wrap: wrap;
   margin-top: 0.6rem;
 }
-.annulla {
+/* Il velo sotto la striscia di annullamento. Sta sopra tutto ciò che la
+ * scheda tiene fisso — barra del menu (20), pulsante ⚡ e barra degli slot
+ * (18) — perché sono proprio quelli a rubarle l'occhio. Non intercetta i
+ * tocchi: dura cinque secondi, e bloccare la scheda per cinque secondi dopo
+ * ogni lancio sarebbe peggio del problema che risolve. */
+.velo-annulla {
   position: fixed;
-  inset: auto 0 calc(5.5rem + env(safe-area-inset-bottom)) 0;
-  z-index: 15;
-  margin: 0 auto;
-  width: fit-content;
+  inset: 0;
+  z-index: 21;
+  pointer-events: none;
+  background: rgb(0 0 0 / 0.32);
+  animation: appare-velo 0.32s var(--espo) both;
+}
+@keyframes appare-velo {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* La striscia di annullamento. Il nome porta «striscia» perché `.annulla` da
+ * sola è un verbo, e un verbo lo rivendica chiunque: il bottone della sessione
+ * di preparazione si chiamava così, e si prendeva addosso il `position: fixed`
+ * di questa regola. Il piede lo teneva nel DOM, e lui se ne stava in mezzo
+ * all'elenco — misurato, a 672px mentre il suo piede era a 776.
+ *
+ * Larga quanto il foglio meno i margini, non
+ * `fit-content`: dopo il lancio la modale si chiude e questa resta l'unica
+ * cosa che dice cosa è appena successo, quindi porta il nome dell'incantesimo
+ * e non solo il livello dello slot. Il bottone è a destra, la barra del tempo
+ * corre in fondo da bordo a bordo — `overflow: hidden` la fa finire dentro il
+ * raggio invece di sporgere agli angoli.
+ *
+ * Sale dal basso come un cassetto, e si ferma a 8rem dal bordo: sopra il
+ * pulsante ⚡, che ne occupa 76 da solo, e ancora dentro la zona del pollice.
+ * Il vetro è la stessa ricetta della barra del menu — un solo modo di fare il
+ * vetro in tutto il sito — con il ripiego a fondo quasi pieno dove il browser
+ * non lo sa fare: mezzo velo su un testo che ci scorre sotto sarebbe
+ * illeggibile, non trasparente. */
+.striscia-annulla {
+  position: fixed;
+  inset: auto 1rem calc(8rem + env(safe-area-inset-bottom)) 1rem;
+  z-index: 22;
+  overflow: hidden;
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  padding: 0.4rem 0.5rem 0.4rem 0.9rem;
+  padding: 0.55rem 0.55rem 0.7rem 0.9rem;
   border: 1px solid var(--ambra);
   border-radius: var(--raggio);
-  background: var(--superficie-incassata);
+  background: color-mix(in srgb, var(--carta) 55%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+  box-shadow: var(--ombra-2);
   font-size: 0.9rem;
+  animation: sale-annulla 0.32s var(--espo) both;
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .striscia-annulla {
+    background: color-mix(in srgb, var(--carta) 94%, transparent);
+  }
+}
+/* La distanza da percorrere è tutta l'altezza della striscia più lo stacco dal
+ * bordo: così parte da fuori schermo davvero, invece di apparire già a metà
+ * strada. */
+@keyframes sale-annulla {
+  from {
+    transform: translateY(calc(100% + 8rem));
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.striscia-annulla .detto {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.striscia-annulla .detto strong {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.striscia-annulla .costo {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--inchiostro-muto);
+}
+.striscia-annulla button {
+  flex: none;
+  min-height: 44px;
+}
+/* Il tempo che resta per disfare, non un ornamento: si svuota, e a vuoto la
+ * striscia è già sparita. La durata arriva dall'isola come `--durata-annulla`,
+ * perché il timer che decide vive lì: due numeri scritti a mano si sarebbero
+ * scollati. `scaleX` invece della larghezza per restare sul compositore. */
+.striscia-annulla .tempo {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 3px;
+  background: var(--filetto);
+}
+.striscia-annulla .tempo > i {
+  display: block;
+  height: 100%;
+  background: var(--ambra);
+  transform-origin: left center;
+  animation: scarica-annulla var(--durata-annulla, 5000ms) linear forwards;
+}
+@keyframes scarica-annulla {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+/* `base.css` spegne ogni animazione sotto `prefers-reduced-motion`. Una barra
+ * ferma su «pieno» mentre il tempo scorre direbbe il falso: meglio non
+ * mostrarla. Il diritto di annullare non cambia — scade lo stesso. */
+@media (prefers-reduced-motion: reduce) {
+  .striscia-annulla .tempo {
+    display: none;
+  }
 }
 
 .apri-azioni {
@@ -344,19 +414,6 @@ dialog.archivio .testa {
   padding: var(--spazio-3) 0 var(--spazio-2);
   background: var(--carta);
   border-bottom: 1px solid var(--filetto);
-}
-
-/* Un bottone che si comporta da collegamento: apre l'archivio, che è una
- * finestra e non una rotta. Non deve sembrare un bottone d'azione fra quelli
- * di lancio poco sopra. */
-.apri-archivio {
-  min-height: 0;
-  min-width: 0;
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--lampo);
-  text-decoration: underline;
 }
 dialog.azioni .testa {
   display: flex;
@@ -435,20 +492,12 @@ dialog.azioni input[type='number'] {
  * come per `.pf-pannello`. */
 .difese {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 0.25rem;
   text-align: center;
   margin: var(--spazio-2) 0;
   padding: 0.5rem 0;
   border-block: 1px solid var(--filetto);
-}
-/* Spenta è un contorno, accesa è ambra piena: la differenza si deve cogliere
- * senza leggere, perché è un sì/no e non un numero. */
-.ispirazione .valore {
-  color: var(--inchiostro-muto);
-}
-.ispirazione.accesa .valore {
-  color: var(--ambra);
 }
 .difese .tenue {
   display: block;
@@ -532,26 +581,885 @@ dialog.azioni input[type='number'] {
   background: var(--superficie);
 }
 
-/* Barra di riempimento dei PF: il numero resta la fonte di verità testuale,
- * la barra è un rinforzo visivo aggiunto in sola lettura dal Task 8 —
- * `role="progressbar"` con `aria-valuenow`/min/max sul contenitore, così
- * la tecnologia assistiva annuncia il nuovo valore quando il pannello
- * applica un danno, invece di dover rileggere un'etichetta intera. La
- * barra interna resta puramente decorativa. */
-.barra-pf {
+/* L'altezza della scheda della vitalità è FISSA, non minima, e non è
+ * misurata: è la somma delle sette costanti qui sotto. Le altre isole di
+ * questo progetto riservano il proprio spazio con numeri presi da Chrome
+ * headless, e uno di quelli è già segnalato come incerto perché la sessione
+ * che l'ha scritto non aveva un browser. Questa non si aggiunge alla lista —
+ * `src/styles/__tests__/altezze.test.ts` fa tornare i conti a ogni gate.
+ *
+ * È anche il motivo per cui il chip dei temporanei tiene il suo posto anche a
+ * zero: se sparisse dal flusso, la riga si accorcerebbe. */
+.vitalita-isola {
+  /* L'altezza riservata è FISSA e non misurata: è la somma delle costanti qui
+   * sotto, e `src/styles/__tests__/altezze.test.ts` la fa tornare a ogni gate.
+   *
+   * Sta su questo contenitore, che il build scrive nell'HTML, e non sul
+   * bottone dentro: con `client:only` quel bottone non esiste finché il
+   * JavaScript non gira, e una riserva su un elemento assente non riserva
+   * niente — è già successo una volta.
+   *
+   * Le righe non hanno margini. Un margine sta *fuori* dall'altezza che la
+   * riga dichiara, quindi non entrerebbe nella somma: il totale tornava sulla
+   * carta e sbagliava di diciotto pixel nella scatola vera. Lo stacco è un
+   * `gap`, dichiarato e contato quattro volte, una per ogni interstizio fra
+   * le cinque righe. */
+  --v-numero: 48px;
+  --v-metro: 16px;
+  --v-tacche: 12px;
+  --v-piede: 48px;
+  --v-stacco: 8px; /* × 3 interstizi */
+  --v-imbottitura: 32px; /* 2 × var(--spazio-2) */
+  --v-bordi: 2px;
+  height: 182px;
+  margin: var(--spazio-2) 0;
+}
+.vitalita-scheda {
+  height: 100%;
   width: 100%;
-  height: 8px;
-  margin-top: 0.5rem;
-  border-radius: 999px;
-  background: var(--superficie-incassata);
+  display: flex;
+  flex-direction: column;
+  gap: var(--v-stacco);
+  padding: var(--spazio-2);
+  text-align: left;
+  cursor: pointer;
+  border-radius: var(--raggio-superficie);
+  background: var(--superficie);
   border: 1px solid var(--filetto);
+  box-shadow: var(--ombra-2);
+  color: var(--inchiostro);
+}
+/* La croce a sinistra, il contatore a destra, sulla stessa riga. La testata
+ * con scritto «punti ferita» non c'è più: era una riga intera per una parola
+ * che l'icona dice meglio, e la sua altezza è tornata alla scheda. */
+.vitalita-scheda .numero {
+  height: var(--v-numero);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.vitalita-scheda .simbolo {
+  display: flex;
+  align-items: center;
+  color: var(--lampo);
+}
+.vitalita-scheda .simbolo.pericolo {
+  color: var(--allerta);
+}
+.vitalita-scheda .conto {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+.vitalita-scheda .pf {
+  font-family: var(--font-mono);
+  font-size: 3rem;
+  line-height: 0.95;
+  color: var(--lampo);
+}
+.vitalita-scheda .pf.pericolo {
+  color: var(--allerta);
+}
+.vitalita-scheda .su {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  line-height: 2.4;
+  color: var(--inchiostro-tenue);
+}
+.vitalita-scheda .vitalita-temp {
+  align-self: center;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--ambra);
+  border-radius: 999px;
+  color: var(--ambra);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+}
+/* `hidden` toglierebbe il chip dal flusso e accorcerebbe la riga: qui deve
+ * sparire alla vista e tenere il posto. */
+.vitalita-temp[hidden] {
+  display: block;
+  visibility: hidden;
+}
+/* Il metro è una fila: i punti ferita, e subito dopo i temporanei. Sono uno
+ * scudo *sopra* i PF, non parte di essi, quindi vanno in coda e di un altro
+ * colore. Quel che esce dal massimo lo taglia `overflow`. */
+.vitalita-scheda .metro {
+  height: var(--v-metro);
+  display: flex;
+  border: 1px solid var(--filetto);
+  border-radius: 3px;
+  background: var(--superficie-incassata);
   overflow: hidden;
 }
-.barra-pf .riempimento {
+.vitalita-scheda .metro .riempimento,
+dialog.vitalita .stato .metro .riempimento {
+  flex: none;
   height: 100%;
   background: var(--lampo);
-  border-radius: inherit;
 }
-.barra-pf .riempimento.pericolo {
-  background: var(--allerta);
+.vitalita-scheda .metro .temporanei,
+dialog.vitalita .stato .metro .temporanei {
+  flex: none;
+  height: 100%;
+  background: var(--ambra);
+}
+/* Due gradienti sovrapposti invece di ventidue nodi: quello fitto disegna le
+ * tacche corte ogni 16px, quello rado le lunghe ogni quinta. */
+.tacche {
+  background-repeat: repeat-x;
+  background-image:
+    repeating-linear-gradient(to right, var(--inchiostro) 0 1px, transparent 1px 16px),
+    repeating-linear-gradient(to right, var(--inchiostro) 0 1px, transparent 1px 80px);
+  opacity: 0.3;
+}
+.vitalita-scheda .tacche {
+  height: var(--v-tacche);
+  display: block;
+  background-size:
+    16px 7px,
+    80px 12px;
+}
+.vitalita-scheda .piede {
+  height: var(--v-piede);
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--filetto);
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--inchiostro-muto);
+}
+.vitalita-scheda .isp.accesa {
+  color: var(--ambra);
+}
+/* Sull'ultima riga e spinto a destra. Sopra rubava il posto al numero, che è
+ * la sola cosa che questa scheda deve far leggere in un colpo d'occhio. */
+.vitalita-scheda .apri {
+  margin-left: auto;
+  color: var(--inchiostro-tenue);
+}
+
+/* La modale: a tutto schermo come l'archivio, non una tendina dal basso. Si
+ * apre per agire con calma su una cosa sola, e la zona del pollice deve poter
+ * stare in fondo. */
+dialog.vitalita {
+  /* Su uno schermo corto il contenuto supera l'altezza: senza questo si
+   * taglierebbe, e a tagliarsi sarebbe la zona del pollice in fondo. */
+  overflow-y: auto;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: var(--spazio-2) var(--spazio-2) calc(1.2rem + env(safe-area-inset-bottom));
+  border: none;
+  background: var(--carta);
+  color: var(--inchiostro);
+}
+/* `display` **solo** da aperto. Il browser tiene chiuso un <dialog> con
+ * `display: none` nel proprio foglio: dichiararlo sulla regola base lo
+ * scavalca, e tutta la modale finisce dentro la pagina, sempre visibile,
+ * sotto la scheda. È esattamente quel che è successo. `dialog.archivio`, che
+ * funziona da sempre, non dichiara `display` affatto. */
+dialog.vitalita[open] {
+  display: flex;
+  flex-direction: column;
+}
+dialog.vitalita::backdrop {
+  background: rgb(0 0 0 / 0.6);
+}
+dialog.vitalita .testa {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+}
+dialog.vitalita .riga {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border-top: 1px solid var(--filetto);
+}
+dialog.vitalita .riga .conto {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--inchiostro-tenue);
+}
+dialog.vitalita .riga .stella.accesa {
+  color: var(--ambra);
+}
+/* Tutti larghi uguale: due bottoni che dicono quasi la stessa cosa e finiscono
+ * a due larghezze diverse fanno sembrare storta la colonna. La misura è quella
+ * della rotella, così i due bordi destri della modale si rispondono. */
+dialog.vitalita .riga button {
+  margin-left: auto;
+  height: 40px;
+  min-width: 108px;
+  padding: 0 0.85rem;
+  background: transparent;
+  border: 1px solid var(--filetto);
+  border-radius: var(--raggio);
+  color: var(--lampo);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+dialog.vitalita .riga-ts .kicker,
+dialog.vitalita .riga-ts .conto {
+  color: var(--allerta);
+}
+/* I tiri contro morte non passano più dal dado: si dice com'è andata. Serve
+ * quindi una riga di due bottoni, non uno solo spinto a destra, e i due
+ * devono essere identici — è una scelta fra pari, non un'azione con un
+ * ripensamento. */
+dialog.vitalita .riga-ts {
+  height: auto;
+  display: block;
+  padding-block: 0.7rem;
+}
+dialog.vitalita .riga-ts .riga-testa {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 24px;
+}
+dialog.vitalita .riga-ts .riga-esiti {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+}
+dialog.vitalita .riga-ts .riga-esiti button {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 44px;
+  margin-left: 0;
+}
+/* La zona del pollice: la rotella a sinistra, i tre verbi a destra. Le due
+ * colonne devono cominciare e finire sulla stessa riga, e prima non lo
+ * facevano — la rotella ne aveva 252 di suo, i verbi 247,2 di somma, e sopra
+ * la rotella c'era un campo «digita» che allungava solo quel lato.
+ *
+ * Adesso c'è un'aritmetica sola. Il verbo è l'unità: tre verbi e due stacchi
+ * fanno la colonna, e la rotella prende quel che avanza fra le due frecce.
+ * `src/styles/__tests__/altezze.test.ts` la fa tornare a ogni gate. */
+dialog.vitalita .zona-pollice {
+  --pollice-rotella: 200px;
+  --pollice-stacco: 12px;
+  --pollice-freccia: 44px;
+  --pollice-colonna: calc(
+    var(--pollice-rotella) + 2 * var(--pollice-freccia) + 2 * var(--pollice-stacco)
+  ); /* 312px */
+  --pollice-verbo: calc((var(--pollice-colonna) - 2 * var(--pollice-stacco)) / 3); /* 96px */
+  margin-top: auto;
+  padding-top: var(--spazio-2);
+  display: flex;
+  gap: var(--spazio-2);
+  align-items: flex-start;
+}
+dialog.vitalita .verbi {
+  flex: 1 1 0;
+  height: var(--pollice-colonna);
+  display: flex;
+  flex-direction: column;
+  gap: var(--pollice-stacco);
+}
+/* Nessuna altezza propria: i tre verbi si dividono la colonna in parti
+ * uguali. Scritta a mano, quell'altezza era il termine che si scollava. */
+/* Due colonne, non due righe: a sinistra cosa si sta per fare, a destra cosa
+ * comporta. Impilati, il nome e l'effetto lasciavano vuota tutta la metà
+ * destra della carta. */
+dialog.vitalita .verbi button {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0 1rem;
+  background: var(--superficie);
+  border: 1px solid var(--filetto);
+  border-radius: var(--raggio);
+}
+dialog.vitalita .verbo-danno {
+  border-color: var(--allerta);
+  color: var(--allerta);
+}
+dialog.vitalita .verbo-cura {
+  border-color: var(--lampo);
+  color: var(--lampo);
+}
+dialog.vitalita .verbo-temp {
+  border-color: var(--ambra);
+  color: var(--ambra);
+}
+dialog.vitalita .verbi .nome {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+dialog.vitalita .verbi .effetto {
+  flex: none;
+  text-align: right;
+  font-size: 0.74rem;
+  color: var(--inchiostro-muto);
+}
+dialog.vitalita .annuncio {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+/* La colonna della rotella: una freccia sopra, una sotto, e in mezzo i numeri
+ * che si girano col dito. Le frecce servono a chi vuole un passo per volta
+ * senza dosare un trascinamento — e sono anche la strada col mouse. */
+.rotella-colonna {
+  flex: none;
+  height: var(--pollice-colonna);
+  display: flex;
+  flex-direction: column;
+  gap: var(--pollice-stacco);
+}
+.rotella-colonna .freccia {
+  flex: none;
+  height: var(--pollice-freccia);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--superficie);
+  border: 1px solid var(--filetto);
+  border-radius: var(--raggio);
+  color: var(--inchiostro-tenue);
+  cursor: pointer;
+}
+.rotella-colonna .freccia:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* La rotella: l'aggancio e l'inerzia li fa il browser, qui c'è solo la forma.
+ * `--passo` è alto quanto `PASSO` in `src/lib/rotella.ts` — se le due
+ * divergono la rotella si ferma fra due numeri. È dichiarato una volta sola:
+ * cifra, banda e scarto scendono da lì invece di essere quattro numeri
+ * copiati che possono divergere in silenzio.
+ *
+ * L'altezza arriva dalla colonna del pollice. Il ripiego di 164px vale solo
+ * se un giorno la rotella venisse montata fuori da quella modale. */
+.rotella {
+  --passo: 40px;
+  --bordo: 1px;
+  --altezza: var(--pollice-rotella, 164px);
+  /* Lo scarto va contato sulla scatola *interna*: la pista e la banda vivono
+   * dentro il bordo, l'altezza lo comprende. Senza sottrarlo la banda finiva
+   * un pixel sotto la cifra — misurato in Chrome, 63px sopra e 61 sotto. */
+  --scarto: calc((var(--altezza) - 2 * var(--bordo) - var(--passo)) / 2);
+  position: relative;
+  width: 108px;
+  height: var(--altezza);
+  border: var(--bordo) solid var(--filetto);
+  border-radius: var(--raggio);
+  background: var(--superficie-incassata);
+  overflow: hidden;
+}
+.rotella .pista {
+  height: 100%;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+  /* Arrivati in fondo alla corsa, quel che avanza del gesto non deve passare
+   * alla modale sotto. Senza questo, scorrere *oltre* trenta fa scorrere la
+   * modale, e il gesto per tornare indietro se ne va a rimettere a posto lei
+   * invece di girare la rotella: sembra che da trenta non si torni più. */
+  overscroll-behavior: contain;
+  /* Mezza rotella meno mezza cifra: così la prima e l'ultima arrivano sotto
+   * la banda invece di fermarsi a un bordo. */
+  padding-block: var(--scarto);
+}
+.rotella .pista::-webkit-scrollbar {
+  display: none;
+}
+.rotella .cifra {
+  height: var(--passo);
+  line-height: var(--passo);
+  text-align: center;
+  scroll-snap-align: center;
+  font-family: var(--font-mono);
+  font-size: 1.35rem;
+  color: var(--inchiostro-tenue);
+  opacity: 0.55;
+}
+.rotella .cifra.scelta {
+  font-size: 2.1rem;
+  color: var(--inchiostro);
+  opacity: 1;
+}
+/* Deve combaciare esattamente con una cella, e stare dove sta il suo
+ * `padding-block`: una banda più alta della cifra sembra fermarsi in mezzo. */
+.rotella .banda {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: var(--scarto);
+  height: var(--passo);
+  border-top: 1px solid var(--lampo);
+  border-bottom: 1px solid var(--lampo);
+  pointer-events: none;
+}
+.rotella .sfumatura {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    var(--superficie-incassata) 0%,
+    rgb(228 218 196 / 0) 26%,
+    rgb(228 218 196 / 0) 74%,
+    var(--superficie-incassata) 100%
+  );
+}
+
+/* La sessione di preparazione. La barra è fissa perché l'elenco è lungo
+ * trentanove voci: il conto e i due comandi devono restare sotto il pollice
+ * mentre si scorre, non in fondo alla pagina. */
+/* Il cappello dell'archivio: via d'uscita, conto, comando. Si appiccica sotto
+ * la barra del menu e sale a filo quando quella si ritira scorrendo — la
+ * stessa regola di `.barra-slot-isola`, di cui è la sorella su questa rotta.
+ *
+ * `sticky` sta sul contenitore e non sulla barra: il contenitore è l'unico che
+ * il build scrive, quindi è l'unico che può riservare l'altezza prima che
+ * l'isola scriva conto e comando. La barra esce dall'imbottitura del body per
+ * toccare i due bordi, come farebbe un cappello vero. */
+.barra-preparati-isola {
+  position: sticky;
+  top: 3.25rem;
+  z-index: 18;
+  min-height: 49px;
+  margin: 0 calc(-1 * var(--spazio-2)) var(--spazio-2);
+  padding: 0 var(--spazio-2);
+  background: color-mix(in srgb, var(--carta) 94%, transparent);
+  border-bottom: 1px solid var(--filetto);
+  box-shadow: var(--ombra-1);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+  transition: top 0.5s var(--espo);
+}
+body:has(.barra[data-nascosta]) .barra-preparati-isola {
+  top: 0;
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .barra-preparati-isola {
+    background: color-mix(in srgb, var(--carta) 97%, transparent);
+  }
+}
+.barra-preparati {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: 49px;
+}
+/* La via d'uscita, non un comando della sessione: sta a sinistra, dove si
+ * cerca, e nello stesso posto in tutti e due gli stati. Il margine negativo
+ * riallinea il glifo al bordo del testo sotto, lasciando al dito i 44px
+ * dell'area premibile. */
+.barra-preparati .ics {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  margin-left: -0.6rem;
+  display: grid;
+  place-items: center;
+  color: var(--inchiostro-tenue);
+}
+.barra-preparati .ics svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+.stato-preparazione {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+/* Stessa forma del conto sulla barra degli slot: i due numeri sono la stessa
+ * cosa detta due volte, e a due corpi diversi litigherebbero. A distinguerli
+ * bastano colore e peso. */
+.stato-preparazione .conto {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--inchiostro-tenue);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.stato-preparazione .conto strong {
+  font-weight: 600;
+  color: var(--lampo);
+}
+/* Sotto i sei non è un allarme: è l'aspetto normale di una scelta a metà —
+ * per sostituire si toglie prima e si aggiunge dopo. Quindi lo dice a parole,
+ * in grigio, e il rosso resta a chi ha finito qualcosa davvero. */
+.stato-preparazione .dritta {
+  color: var(--inchiostro-muto);
+}
+.stato-preparazione .sblocca {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 44px;
+  border-color: var(--spento);
+  color: var(--ambra);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.stato-preparazione .sblocca svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.stato-preparazione .aperta {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ambra);
+}
+
+/* Il piede porta solo i due comandi: il conto è salito nel cappello, dove si
+ * legge scorrendo. Qui restano i due tocchi che decidono, nella zona del
+ * pollice. */
+.barra-preparazione {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 30;
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spazio-2);
+  padding: 0.7rem var(--spazio-2) calc(0.7rem + env(safe-area-inset-bottom));
+  background: var(--superficie);
+  border-top: 1px solid var(--filetto);
+  box-shadow: var(--ombra-2);
+}
+.barra-preparazione button {
+  min-height: 44px;
+}
+.barra-preparazione .conferma {
+  border-color: var(--lampo);
+  color: var(--lampo);
+}
+
+/* Fuori dalla sessione le spunte restano visibili ma spente: si continua a
+ * leggere quali sono i sei, e si vede che non si toccano. */
+.prepara input[disabled] {
+  cursor: not-allowed;
+}
+.prepara:has(input[disabled]) .etichetta-prepara {
+  opacity: 0.5;
+}
+/* La via rituale non è un bottone: non c'è niente da consumare finché
+ * materiali e Concentrazione non sono tracciati. È l'informazione che al
+ * tavolo mancava — che l'incantesimo si può lanciare anche senza slot. */
+.via-rituale {
+  display: block;
+  width: 100%;
+  margin-top: 0.4rem;
+  font-size: 0.78rem;
+}
+
+/* Il quadrante dentro la modale. Stessi pezzi della scheda in pagina ma più
+ * grandi: qui il numero è la cosa che si guarda mentre si agisce, non un
+ * riassunto da colpire col pollice. */
+dialog.vitalita .stato {
+  padding: 0.6rem 0 1rem;
+}
+dialog.vitalita .stato .numero {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+dialog.vitalita .stato .pf {
+  font-family: var(--font-mono);
+  font-size: 4.2rem;
+  line-height: 0.92;
+  color: var(--lampo);
+}
+dialog.vitalita .stato .pf.pericolo {
+  color: var(--allerta);
+}
+dialog.vitalita .stato .su {
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  line-height: 2.2;
+  color: var(--inchiostro-tenue);
+}
+dialog.vitalita .stato .vitalita-temp {
+  margin-left: auto;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid var(--ambra);
+  border-radius: 999px;
+  color: var(--ambra);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+}
+dialog.vitalita .stato .vitalita-temp[hidden] {
+  display: block;
+  visibility: hidden;
+}
+dialog.vitalita .stato .metro {
+  display: flex;
+  height: 16px;
+  margin-top: 0.8rem;
+  border: 1px solid var(--filetto);
+  border-radius: 3px;
+  background: var(--superficie-incassata);
+  overflow: hidden;
+}
+dialog.vitalita .stato .tacche {
+  display: block;
+  height: 15px;
+  margin-top: 5px;
+  background-repeat: repeat-x;
+  background-size:
+    16px 9px,
+    80px 15px;
+  background-image:
+    repeating-linear-gradient(to right, var(--inchiostro) 0 1px, transparent 1px 16px),
+    repeating-linear-gradient(to right, var(--inchiostro) 0 1px, transparent 1px 80px);
+  opacity: 0.3;
+}
+
+/* Lo stato vitale, in cima al quadrante. Cosciente è discreto: è il caso
+ * normale e non deve gridare. Gli altri tre sono il motivo per cui questa
+ * riga esiste, e si vedono. */
+dialog.vitalita .stato-vitale {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--inchiostro-muto);
+}
+dialog.vitalita .stato-vitale.incosciente,
+dialog.vitalita .stato-vitale.morto {
+  color: var(--allerta);
+}
+dialog.vitalita .stato-vitale.stabile {
+  color: var(--ambra);
+}
+
+/* La barra degli slot, appiccicata in cima alla sezione degli incantesimi.
+ *
+ * Si ferma sotto la barra del menu, e quando quella si toglie di mezzo
+ * scendendo, questa sale a prenderne il posto: due barre che si contendono i
+ * primi cinquantadue pixel lascerebbero una striscia di pagina scoperta fra
+ * l'una e l'altra. Lo stacco lo legge `:has()` dallo stesso attributo che
+ * `barra-scroll.ts` scrive sul menu — nessun secondo pezzo di JavaScript. */
+/* `sticky` sta sul contenitore che il build scrive, non sulla radice
+ * dell'isola. La radice è figlia unica di quel contenitore e ne riempie
+ * l'altezza: un elemento appiccicato che ha esattamente l'altezza del proprio
+ * blocco contenitore non ha spazio dove restare, e se ne va con lo scorrimento
+ * come se `sticky` non ci fosse. Misurato: scendeva a −233px.
+ *
+ * Il contenitore riserva anche l'altezza della barra chiusa: con `client:only`
+ * prima dell'idratazione lì non c'è niente, e la sezione salterebbe. */
+.barra-slot-isola {
+  position: sticky;
+  top: 3.25rem;
+  z-index: 18;
+  min-height: 49px;
+  margin: 0 calc(-1 * var(--spazio-2)) var(--spazio-2);
+  padding: 0 var(--spazio-2);
+  background: color-mix(in srgb, var(--carta) 94%, transparent);
+  border-bottom: 1px solid var(--filetto);
+  /* L'ombra c'è sempre, non solo da appiccicata: sapere *quando* un elemento
+   * sticky si è fermato richiede un sentinella e un osservatore, cioè
+   * JavaScript per un'ombra. E non serve: la barra è un foglio sopra la
+   * pagina anche da ferma, quindi può dirlo sempre. */
+  box-shadow: var(--ombra-1);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+  transition: top 0.5s var(--espo);
+}
+body:has(.barra[data-nascosta]) .barra-slot-isola {
+  top: 0;
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .barra-slot-isola {
+    background: color-mix(in srgb, var(--carta) 97%, transparent);
+  }
+}
+.barra-slot .riassunto {
+  width: 100%;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spazio-2);
+  padding: 0;
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+}
+/* «6 slot su 6»: i due numeri sono la stessa cosa detta due volte, e a due
+ * corpi diversi litigavano. A distinguerli bastano colore e peso. */
+.barra-slot .conto {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  color: var(--inchiostro-tenue);
+}
+.barra-slot .conto strong {
+  font-weight: 600;
+  color: var(--lampo);
+}
+/* A secco non è un numero come gli altri: è il momento in cui la sezione
+ * smette di offrire qualcosa, e va visto senza leggerlo. */
+.barra-slot .conto strong.a-secco {
+  color: var(--allerta);
+}
+.barra-slot .comando {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--inchiostro-muto);
+}
+.barra-slot .comando svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.3s var(--espo);
+}
+.barra-slot.aperta .comando svg {
+  transform: rotate(180deg);
+}
+.barra-slot .file {
+  display: grid;
+  gap: 0.5rem;
+  padding-bottom: 0.9rem;
+}
+/* Una riga per livello, e la colonna dei gradi è larga uguale per tutte: in
+ * numeri romani «I» e «VIII» sono larghi il doppio l'uno dell'altro, e le file
+ * di caselle partirebbero ognuna da un punto suo. Le regole di `.risorsa`
+ * stavano dentro `.striscia-risorse`, che non esiste più: qui la fila era
+ * rimasta senza layout, e l'etichetta toccava la prima casella. */
+.barra-slot .risorsa {
+  display: grid;
+  grid-template-columns: 2.2rem 1fr;
+  align-items: center;
+  gap: 0.7rem;
+}
+.barra-slot .grado {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  text-align: right;
+  color: var(--inchiostro-muto);
+}
+/* Aperta, la barra può prendersi lo spazio: le caselle raddoppiano, perché
+ * qui il sigillo dentro deve leggersi davvero. */
+.fila-grande .casella {
+  width: 28px;
+  height: 28px;
+}
+.fila-grande .casella.usata svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* La carta che porta all'archivio. Era due collegamenti in fila — «Tutti gli
+ * incantesimi · apri come pagina» — cioè due strade per lo stesso posto,
+ * scritte come una nota a piè di sezione. È una destinazione, e ha la stessa
+ * forma di tutto il resto: icona, nome, conto, freccia. */
+/* Il sigillo: cerchio inciso più glifo, sempre ambra, sempre 24px. Stava
+ * scritto uguale dentro due componenti con stile ad ambito, e la carta verso
+ * l'archivio ne avrebbe fatta una terza copia. Il colore è `color` e non
+ * `stroke` perché le forme dentro i <symbol> disegnano in `currentColor`. */
+.sigillo {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  color: var(--ambra);
+}
+
+/* La carta verso l'archivio vive in fondo all'elenco degli incantesimi, quindi
+ * si veste come loro: stessa altezza minima, stesso passo, sigillo a sinistra,
+ * nome, riga tecnica, un numero a destra e la freccia. Prima si distingueva
+ * per tre cose sbagliate — il titolo nel font dei titoli invece che in quello
+ * delle carte, un'icona senza cerchio inciso, e nessun numero nella colonna
+ * dove tutte le vicine ne hanno uno. */
+.verso-archivio {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: 60px;
+  margin-top: 0.6rem;
+  padding: 0.7rem var(--spazio-2);
+  background: var(--superficie);
+  border: 1px solid var(--filetto);
+  border-radius: var(--raggio-superficie);
+  box-shadow: var(--ombra-1);
+  color: var(--inchiostro);
+  text-decoration: none;
+}
+.verso-archivio .chi {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.verso-archivio .titolo {
+  display: block;
+  font-size: 1.02rem;
+}
+.verso-archivio .conto {
+  display: block;
+  margin-top: 1px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--inchiostro-muto);
+}
+/* Dove le carte di incantesimo portano il livello dello slot, questa porta
+ * quanti ne contiene: stessa colonna, stesso mono, stesso blu. */
+.verso-archivio .quanti {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  color: var(--lampo);
+}
+.verso-archivio .freccia {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: var(--inchiostro-muto);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }

@@ -66,8 +66,9 @@ const desk = await getImage({ src: desktop, format: 'webp' });
   </svg>
 
   <script is:inline>
-    // Tre comportamenti che il CSS non copre: mostrare l'animazione una sola
-    // volta al giorno, saltarla al primo tocco, ricordare che è stata vista.
+    // Tre comportamenti che il CSS non copre: mostrare l'animazione d'ingresso
+    // una sola volta al giorno, saltarla al primo tocco, ricordare che è stata
+    // vista. Il lampo non passa di qui: è CSS puro, in loop, sempre acceso.
     (function () {
       const splash = document.getElementById('splash');
       const oggi = new Date().toISOString().slice(0, 10);
@@ -117,29 +118,83 @@ const desk = await getImage({ src: desktop, format: 'webp' });
     }
   }
 
+  /* Il temporale non si esaurisce mentre la pagina è aperta: due colpi e poi
+     più nulla lasciavano una fotografia ferma, e chi tornava sulla home nella
+     stessa giornata non vedeva niente del tutto — la regola di salto spegneva
+     anche questo. Ora è un ciclo infinito: ogni caricamento della home lo fa
+     ripartire da capo, su desktop come su mobile.
+
+     Le quattro scariche stanno a distanze irregolari dentro lo stesso giro di
+     24s — 4,6s, 2,9s, 6,2s, 5,5s — perché un colpo solo per ciclo si sente
+     come un metronomo. La prima cade a 1,6s, insieme alle porte. */
   .lampo {
     position: absolute;
     inset: 0;
     background: #cfe3f2;
     opacity: 0;
     mix-blend-mode: screen;
-    animation: lampo 9s ease-out 1.6s 2;
+    animation: lampo 24s ease-out 1.6s infinite;
   }
   @keyframes lampo {
-    0%,
-    100% {
+    /* prima scarica: doppio colpo */
+    0% {
       opacity: 0;
     }
-    2% {
+    0.8% {
       opacity: 0.5;
     }
-    5% {
+    2% {
       opacity: 0.05;
     }
-    7% {
+    3% {
       opacity: 0.35;
     }
-    12% {
+    5% {
+      opacity: 0;
+    }
+    /* seconda: un colpo solo, più debole */
+    24% {
+      opacity: 0;
+    }
+    24.8% {
+      opacity: 0.32;
+    }
+    29% {
+      opacity: 0;
+    }
+    /* terza: la più vicina e la più forte */
+    41% {
+      opacity: 0;
+    }
+    41.8% {
+      opacity: 0.55;
+    }
+    43% {
+      opacity: 0.08;
+    }
+    44% {
+      opacity: 0.4;
+    }
+    46% {
+      opacity: 0;
+    }
+    /* quarta, dopo la pausa lunga */
+    72% {
+      opacity: 0;
+    }
+    72.8% {
+      opacity: 0.4;
+    }
+    74% {
+      opacity: 0.06;
+    }
+    75% {
+      opacity: 0.28;
+    }
+    77% {
+      opacity: 0;
+    }
+    100% {
       opacity: 0;
     }
   }
@@ -212,9 +267,9 @@ const desk = await getImage({ src: desktop, format: 'webp' });
   }
 
   /* Salto: qualunque tocco, o la seconda apertura della giornata, portano
-   * tutto allo stato finale senza attese. */
+   * l'ingresso allo stato finale senza attese. Il lampo non è ingresso ed è
+   * fuori da questa regola: è l'ambiente della scena e non finisce mai. */
   .splash.finita img,
-  .splash.finita .lampo,
   .splash.finita .porte {
     animation: none;
   }

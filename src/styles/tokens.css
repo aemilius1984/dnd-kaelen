@@ -78,4 +78,11 @@
   --spazio-6: 3rem;
   --spazio-8: 4rem;
   --misura: 34rem;
+
+  /* Le due curve del movimento. Espo è quella dei pannelli: parte forte e si
+   * posa lunga, così un'apertura di quasi un secondo non sembra lenta. Quint
+   * è la sorella più corta, per quel che entra di lato. Stanno qui e non nei
+   * componenti perché il ritmo è vocabolario quanto il colore. */
+  --espo: cubic-bezier(0.19, 1, 0.22, 1);
+  --quint: cubic-bezier(0.23, 1, 0.32, 1);
 }

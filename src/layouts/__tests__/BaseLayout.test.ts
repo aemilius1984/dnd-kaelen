@@ -1,3 +1,4 @@
+import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import BaseLayout from '@/layouts/BaseLayout.astro';
@@ -31,4 +32,25 @@ describe('BaseLayout', () => {
     expect(html).not.toContain('kaelen:tema');
     expect(html).not.toContain('prefers-color-scheme');
   });
+});
+
+it('l’apertura delle modali è dichiarata una volta sola', () => {
+  // Ne esistevano tre copie — archivio, armi, incantesimi — e ognuna
+  // scandiva l'intero documento: tre ascoltatori su ogni bottone e tre
+  // `showModal()` per click. Non dava errore perché un dialogo già modale
+  // ignora la seconda chiamata, e sarebbe rimasto invisibile fino al giorno in
+  // cui uno di quei bottoni avesse commutato invece di aprire.
+  const sorgenti = [
+    ...readdirSync('src/components')
+      .filter((f) => f.endsWith('.astro'))
+      .map((f) => `src/components/${f}`),
+    ...readdirSync('src/pages')
+      .filter((f) => f.endsWith('.astro'))
+      .map((f) => `src/pages/${f}`),
+    'src/layouts/BaseLayout.astro',
+  ];
+
+  const dichiarano = sorgenti.filter((f) => readFileSync(f, 'utf8').includes('showModal'));
+
+  expect(dichiarano).toEqual(['src/layouts/BaseLayout.astro']);
 });

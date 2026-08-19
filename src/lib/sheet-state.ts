@@ -1,6 +1,11 @@
 import type { Personaggio } from './schema';
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
+
+/** Dove sta Kaelen rispetto alla morte. È un campo suo e non una deduzione dai
+ *  PF, perché a 0 PF ci sono tre situazioni diverse — si tira, si è stabili, si
+ *  è morti — e i punti ferita sono zero in tutte e tre. */
+export type StatoVitale = 'cosciente' | 'incosciente' | 'stabile' | 'morto';
 
 /** Lo slot speso a mano dal pannello azioni non ha un incantesimo dietro, ma
  *  occupa comunque una casella. Il carattere `:` non può comparire in uno
@@ -14,6 +19,9 @@ export interface StatoSessione {
   pf: number;
   pfTemporanei: number;
   dadiVitaSpesi: number;
+  statoVitale: StatoVitale;
+  /** Solo 0..2 per contatore: il terzo segno non si accumula, cambia
+   *  `statoVitale` e azzera entrambi. */
   tsMorte: { successi: number; fallimenti: number };
   /** Per ogni livello, gli slug degli incantesimi che ne hanno bruciato uno
    *  slot, in ordine cronologico. Un elenco e non un conteggio perché la
@@ -40,6 +48,7 @@ export function statoIniziale(pg: Personaggio, sheetVersion: string): StatoSessi
     pf: pg.pfMax,
     pfTemporanei: 0,
     dadiVitaSpesi: 0,
+    statoVitale: 'cosciente',
     tsMorte: { successi: 0, fallimenti: 0 },
     slotSpesi: Object.fromEntries(pg.slot.map((s) => [s.livello, []])),
     risorseUsate: Object.fromEntries(pg.risorse.map((r) => [r.id, 0])),
@@ -56,6 +65,26 @@ function aggiorna(s: StatoSessione, patch: Partial<StatoSessione>): StatoSession
   return { ...s, ...patch, aggiornatoIl: adesso() };
 }
 
+/** Dallo schema 2 al 3: l'unica novità è `statoVitale`, e a 0 PF si deduce dai
+ *  contatori vecchi senza ambiguità — tre fallimenti erano la morte, tre
+ *  successi la stabilità, il resto è un tiro ancora aperto. */
+function migraDa2(v2: StatoSessione): StatoSessione {
+  const ts = v2.tsMorte ?? { successi: 0, fallimenti: 0 };
+  let statoVitale: StatoVitale = 'cosciente';
+  let tsMorte = { successi: 0, fallimenti: 0 };
+
+  if (v2.pf <= 0) {
+    if (ts.fallimenti >= 3) statoVitale = 'morto';
+    else if (ts.successi >= 3) statoVitale = 'stabile';
+    else {
+      statoVitale = 'incosciente';
+      tsMorte = { successi: Math.min(2, ts.successi), fallimenti: Math.min(2, ts.fallimenti) };
+    }
+  }
+
+  return { ...v2, schemaVersion: SCHEMA_VERSION, statoVitale, tsMorte, aggiornatoIl: adesso() };
+}
+
 export function carica(
   raw: string | null,
   pg: Personaggio,
@@ -64,10 +93,17 @@ export function carica(
   if (!raw) return { stato: statoIniziale(pg, sheetVersion), azzerato: false };
   try {
     const salvato = JSON.parse(raw) as StatoSessione;
-    const compatibile =
-      salvato?.schemaVersion === SCHEMA_VERSION && salvato?.sheetVersion === sheetVersion;
-    if (!compatibile) return { stato: statoIniziale(pg, sheetVersion), azzerato: true };
-    return { stato: salvato, azzerato: false };
+    // I dati del personaggio sono cambiati: i numeri salvati non valgono più,
+    // e nessuna migrazione può indovinarli.
+    if (salvato?.sheetVersion !== sheetVersion) {
+      return { stato: statoIniziale(pg, sheetVersion), azzerato: true };
+    }
+    if (salvato.schemaVersion === SCHEMA_VERSION) return { stato: salvato, azzerato: false };
+    // La forma dello stato è cambiata, i dati no: si migra ciò che è
+    // inequivocabile e si azzera solo dove non lo è. Aggiungere un campo non
+    // deve costare PF, slot e note a metà campagna.
+    if (salvato.schemaVersion === 2) return { stato: migraDa2(salvato), azzerato: false };
+    return { stato: statoIniziale(pg, sheetVersion), azzerato: true };
   } catch {
     return { stato: statoIniziale(pg, sheetVersion), azzerato: true };
   }
@@ -77,14 +113,39 @@ export function impostaPfTemporanei(s: StatoSessione, n: number): StatoSessione 
   return aggiorna(s, { pfTemporanei: Math.max(0, n) });
 }
 
-export function applicaDanno(s: StatoSessione, n: number): StatoSessione {
+export function applicaDanno(
+  s: StatoSessione,
+  pg: Personaggio,
+  n: number,
+  critico = false,
+): StatoSessione {
   // `n` viene anche da un campo libero nel pannello azioni: un valore
   // negativo non è "cura mascherata da danno", è un input da scartare.
   const danno = Math.max(0, n);
+  if (danno === 0 || s.statoVitale === 'morto') return s;
+
+  // Già a terra: il danno non toglie punti ferita che non ci sono, segna
+  // fallimenti. Un critico ne segna due, e un colpo abbastanza grosso uccide
+  // comunque sul posto.
+  if (s.pf === 0) {
+    if (danno >= pg.pfMax) return aggiorna(s, { statoVitale: 'morto', ...AZZERA_TS });
+    let out = s.statoVitale === 'stabile' ? aggiorna(s, { statoVitale: 'incosciente' }) : s;
+    for (let i = 0; i < (critico ? 2 : 1); i++) out = segnaTsMorte(out, 'fallimento');
+    return out;
+  }
+
   const assorbito = Math.min(s.pfTemporanei, danno);
+  const aiPf = danno - assorbito;
+  const pfTemporanei = s.pfTemporanei - assorbito;
+  if (aiPf < s.pf) return aggiorna(s, { pfTemporanei, pf: s.pf - aiPf });
+
+  // Morte istantanea: conta il danno che avanza *dopo* aver azzerato i PF.
+  const residuo = aiPf - s.pf;
   return aggiorna(s, {
-    pfTemporanei: s.pfTemporanei - assorbito,
-    pf: Math.max(0, s.pf - (danno - assorbito)),
+    pfTemporanei,
+    pf: 0,
+    statoVitale: residuo >= pg.pfMax ? 'morto' : 'incosciente',
+    ...AZZERA_TS,
   });
 }
 
@@ -92,14 +153,31 @@ export function applicaCura(s: StatoSessione, pg: Personaggio, n: number): Stato
   // Stessa guardia di applicaDanno: un input negativo non deve poter
   // sottrarre PF da qui.
   const pf = Math.min(pg.pfMax, s.pf + Math.max(0, n));
-  const tsMorte = pf > 0 ? { successi: 0, fallimenti: 0 } : s.tsMorte;
-  return aggiorna(s, { pf, tsMorte });
+  if (pf === 0) return aggiorna(s, { pf });
+  // Vale anche da `morto`. È una deviazione consapevole dal manuale: questo è
+  // un tabellone da tavolo, e un «morto» segnato per sbaglio senza altra via
+  // d'uscita che azzerare la sessione farebbe più danni della regola.
+  return aggiorna(s, { pf, statoVitale: 'cosciente', ...AZZERA_TS });
 }
 
+const AZZERA_TS = { tsMorte: { successi: 0, fallimenti: 0 } } as const;
+
+/** Un segno sul tabellone dei TS morte. La modale chiede l'esito, non il
+ *  numero uscito: il confronto con 10 lo fa già chi tira il dado. Il terzo
+ *  segno non si accumula — cambia stato e azzera i contatori, che è perché ne
+ *  bastano due per lato. */
 export function segnaTsMorte(s: StatoSessione, esito: 'successo' | 'fallimento'): StatoSessione {
+  if (s.statoVitale !== 'incosciente') return s;
   const tsMorte = { ...s.tsMorte };
-  if (esito === 'successo') tsMorte.successi = Math.min(3, tsMorte.successi + 1);
-  else tsMorte.fallimenti = Math.min(3, tsMorte.fallimenti + 1);
+
+  if (esito === 'successo') {
+    tsMorte.successi += 1;
+    if (tsMorte.successi >= 3) return aggiorna(s, { statoVitale: 'stabile', ...AZZERA_TS });
+  } else {
+    tsMorte.fallimenti += 1;
+    if (tsMorte.fallimenti >= 3) return aggiorna(s, { statoVitale: 'morto', ...AZZERA_TS });
+  }
+
   return aggiorna(s, { tsMorte });
 }
 
@@ -111,7 +189,8 @@ export function spendiDadoVitaConCura(
   pg: Personaggio,
   pf: number,
 ): StatoSessione {
-  if (s.dadiVitaSpesi >= pg.numeroDadiVita) return s;
+  // Il Riposo Breve richiede almeno 1 PF: da terra non ci si cura da soli.
+  if (s.pf === 0 || s.dadiVitaSpesi >= pg.numeroDadiVita) return s;
   return aggiorna(s, {
     dadiVitaSpesi: s.dadiVitaSpesi + 1,
     pf: Math.min(pg.pfMax, s.pf + Math.max(1, pf)),
@@ -161,21 +240,23 @@ export function recuperaRisorsa(s: StatoSessione, id: string): StatoSessione {
   });
 }
 
-export function puoPreparare(s: StatoSessione, pg: Personaggio): boolean {
-  return s.preparati.length < pg.limitePreparati;
-}
-
-export function togglePreparato(s: StatoSessione, pg: Personaggio, slug: string): StatoSessione {
-  if (s.preparati.includes(slug)) {
-    return aggiorna(s, { preparati: s.preparati.filter((x) => x !== slug) });
+/** L'ultima guardia prima di localStorage: nello stato canonico entra solo una
+ *  lista completa e legittima. Non esiste più un «commuta un preparato» che
+ *  scriva diretto — cambiare i sei è un atto che si conferma, e fuori dalla
+ *  sessione di preparazione non si fa affatto. Vedi `src/lib/preparazione.ts`. */
+export function impostaPreparati(
+  s: StatoSessione,
+  pg: Personaggio,
+  lista: string[],
+): StatoSessione {
+  if (lista.length !== pg.limitePreparati) return s;
+  if (new Set(lista).size !== lista.length) return s;
+  // Dominio e trucchetti sono sempre preparati e stanno fuori dal conto: se
+  // entrassero qui ruberebbero un posto a un incantesimo da scegliere.
+  for (const slug of lista) {
+    if (pg.dominio.includes(slug) || pg.trucchetti.includes(slug)) return s;
   }
-  // Gli incantesimi di dominio sono sempre preparati e i trucchetti non si
-  // "preparano": non devono mai entrare in questa lista, né occupare uno
-  // slot del limite, indipendentemente da come è arrivato qui lo slug (uno
-  // stato salvato in precedenza incluso).
-  if (pg.dominio.includes(slug) || pg.trucchetti.includes(slug)) return s;
-  if (!puoPreparare(s, pg)) return s;
-  return aggiorna(s, { preparati: [...s.preparati, slug] });
+  return aggiorna(s, { preparati: [...lista] });
 }
 
 export function impostaMonete(s: StatoSessione, monete: StatoSessione['monete']): StatoSessione {
@@ -196,7 +277,14 @@ export function impostaIspirazione(s: StatoSessione, valore: boolean): StatoSess
 
 /** Riposo Breve: recupera un uso delle risorse a recupero breve. Non tocca PF,
  *  slot né dadi vita: la spesa dei dadi vita resta una scelta manuale. */
+/** Precondizione di entrambi i riposi: almeno 1 PF. A zero si è incoscienti, e
+ *  da incoscienti non si riposa — ci si stabilizza. */
+function puoRiposare(s: StatoSessione): boolean {
+  return s.pf > 0;
+}
+
 export function riposoBreve(s: StatoSessione, pg: Personaggio): StatoSessione {
+  if (!puoRiposare(s)) return s;
   const risorseUsate = { ...s.risorseUsate };
   for (const r of pg.risorse) {
     if (r.recupero === 'breve') risorseUsate[r.id] = Math.max(0, (risorseUsate[r.id] ?? 0) - 1);
@@ -205,12 +293,18 @@ export function riposoBreve(s: StatoSessione, pg: Personaggio): StatoSessione {
 }
 
 export function riposoLungo(s: StatoSessione, pg: Personaggio): StatoSessione {
-  const recuperati = Math.max(1, Math.floor(pg.numeroDadiVita / 2));
+  if (!puoRiposare(s)) return s;
+  // Tutti i dadi vita, qualunque fosse il numero speso. Qui c'era
+  // `Math.floor(numeroDadiVita / 2)`, che è la regola con cui si *recuperano i
+  // livelli* di dado vita in altre edizioni: applicata al Chierico 2024
+  // restituiva un dado su tre e lasciava Kaelen più fragile del dovuto a ogni
+  // giornata di gioco. Vedi la tabella P0 dell'audit regolamentare.
   return aggiorna(s, {
     pf: pg.pfMax,
     pfTemporanei: 0,
+    statoVitale: 'cosciente',
     tsMorte: { successi: 0, fallimenti: 0 },
-    dadiVitaSpesi: Math.max(0, s.dadiVitaSpesi - recuperati),
+    dadiVitaSpesi: 0,
     slotSpesi: Object.fromEntries(pg.slot.map((x) => [x.livello, []])),
     risorseUsate: Object.fromEntries(pg.risorse.map((r) => [r.id, 0])),
   });

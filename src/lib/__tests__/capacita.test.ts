@@ -1,5 +1,5 @@
-import { expect, it } from 'vitest';
-import { fondiCapacita } from '@/lib/capacita';
+import { expect, it, describe } from 'vitest';
+import { fondiCapacita, testoRecupero } from '@/lib/capacita';
 import { caricaPersonaggioDaFile } from '@/lib/carica-personaggio';
 
 const pg = caricaPersonaggioDaFile();
@@ -49,5 +49,25 @@ it('non inventa un contatore per una reazione che non ne ha', () => {
     nomeEn: 'Opportunity Attack',
     innesco: expect.any(String),
     effetto: expect.any(String),
+  });
+});
+
+describe('il testo del recupero dice la verità intera', () => {
+  it('una risorsa a recupero breve ne rimette una, e tutte solo col lungo', () => {
+    // «Riposo Breve» da solo, accanto a «2», si leggeva come la promessa che
+    // entrambe le cariche di Incanalare Divinità tornassero con un riposo
+    // breve. La meccanica era già giusta: sbagliava l'etichetta.
+    const testo = testoRecupero('breve');
+
+    expect(testo).toContain('+1');
+    expect(testo).toContain('Riposo Breve');
+    expect(testo).toContain('Riposo Lungo');
+  });
+
+  it('una risorsa a recupero lungo non nomina il riposo breve', () => {
+    const testo = testoRecupero('lungo');
+
+    expect(testo).toContain('Riposo Lungo');
+    expect(testo).not.toContain('Breve');
   });
 });

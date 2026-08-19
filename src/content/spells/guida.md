@@ -14,5 +14,5 @@ tag: [utilità]
 dominio: false
 ---
 
-Tocchi un alleato e scegli un'abilità: finché dura, aggiunge 1d4 alle prove effettuate con
-quell'abilità. Serve fuori dal combattimento.
+Tocchi una creatura consenziente — anche te stesso — e scegli un'abilità: finché dura,
+aggiunge 1d4 alle prove effettuate con quell'abilità. Serve fuori dal combattimento.

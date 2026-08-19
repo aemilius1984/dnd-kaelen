@@ -4,6 +4,7 @@ import { h, render } from 'preact';
 import PannelloAzioni from '@/islands/PannelloAzioni';
 import { caricaPersonaggioDaFile } from '@/lib/carica-personaggio';
 import { impostaPfTemporanei } from '@/lib/sheet-state';
+import { navigazione, raccogliPreparazioneDovuta } from '@/lib/consegna-preparazione';
 import { muta, stato } from '@/lib/storage';
 
 // Due campi numerici del pannello si comportavano male sotto le dita:
@@ -129,28 +130,33 @@ describe('campo dei dadi vita', () => {
   });
 });
 
-describe('apertura dell’archivio dopo il riposo lungo', () => {
+describe('il passaggio all’archivio dopo il riposo lungo', () => {
   // Cambiare i preparati è dovuto alla fine di un Riposo Lungo: il momento in
   // cui il giocatore deve decidere è quello, non dieci minuti dopo quando se
   // lo ricorda.
-  let aperture: string[];
+  //
+  // L'archivio non è più un dialogo su questa pagina: ha una sede sola,
+  // `/preparati/`. Fra le due c'è una navigazione, e la bozza è un signal di
+  // modulo che una navigazione azzera — quindi il pannello lascia detto che la
+  // preparazione è dovuta, e la sessione la apre l'archivio quando arriva.
+  let andati: string[];
 
   beforeEach(() => {
-    aperture = [];
-    // jsdom non implementa né `confirm` né `showModal`.
+    andati = [];
+    // jsdom non implementa né `confirm` né la navigazione.
     vi.stubGlobal('confirm', () => true);
-    HTMLDialogElement.prototype.showModal = function () {
-      aperture.push(this.id);
-      this.open = true;
-    };
+    vi.spyOn(navigazione, 'vai').mockImplementation((u) => {
+      andati.push(u);
+    });
     HTMLDialogElement.prototype.close = function () {
       this.open = false;
     };
-    document.body.insertAdjacentHTML('beforeend', '<dialog id="archivio"></dialog>');
+    sessionStorage.clear();
   });
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   const premi = (etichetta: string) => {
@@ -160,28 +166,28 @@ describe('apertura dell’archivio dopo il riposo lungo', () => {
     b!.click();
   };
 
-  it('il riposo lungo apre l’archivio', async () => {
+  it('il riposo lungo porta all’archivio, e lascia detto perché', async () => {
     premi('Riposo lungo');
     await giro();
 
-    expect(aperture).toContain('archivio');
+    expect(andati).toEqual(['/preparati/']);
+    expect(raccogliPreparazioneDovuta(sessionStorage)).toBe(true);
   });
 
   it('il riposo breve no: i preparati non si toccano', async () => {
     premi('Concludi riposo breve');
     await giro();
 
-    expect(aperture).not.toContain('archivio');
+    expect(andati).toEqual([]);
+    expect(raccogliPreparazioneDovuta(sessionStorage)).toBe(false);
   });
 
-  it('se l’archivio non c’è, il riposo lungo funziona lo stesso', async () => {
-    document.getElementById('archivio')!.remove();
-
+  it('il riposo si compie prima di andarsene', async () => {
+    // Se la navigazione precedesse la mutazione, il riposo si perderebbe per
+    // strada: i punti ferita devono essere già tornati quando si parte.
     premi('Riposo lungo');
     await giro();
 
-    // La pagina /personaggio/ monta il pannello ma non l'archivio: cercare un
-    // dialogo assente non deve buttare giù il riposo.
     expect(stato.value.pf).toBe(pg.pfMax);
   });
 });

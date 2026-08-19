@@ -5,6 +5,7 @@ import {
   bonusAbilita,
   bonusTiroSalvezza,
   capacitaTrasporto,
+  cdContrasto,
   cdIncantesimi,
   classeArmatura,
   dannoTesto,
@@ -79,16 +80,27 @@ describe('valori derivati della scheda di Kaelen', () => {
 // personaggio (es. Forza sale a 18 al 4° livello) e la prosa non viene
 // aggiornata di conseguenza.
 describe('numeri scritti nella prosa', () => {
-  it('la CD per afferrare/spingere nella nota del colpo senz’armi corrisponde alla CD calcolata', () => {
-    const cd = 8 + pg.competenza + modificatore(pg.caratteristiche.for);
-    const nota = pg.attacchi.find((a) => a.id === 'colpo-senzarmi')?.note;
-    expect(nota).toContain(`CD ${cd}`);
+  // Queste due prima verificavano che i numeri *scritti a mano* nelle note
+  // combaciassero con quelli calcolati. Adesso quei numeri nelle note non ci
+  // sono più — la CD la deriva `cdContrasto`, la CA `classeArmatura` dal
+  // booleano `scudo` — e la guardia giusta è più forte: che non tornino.
+  it('nessuna prosa degli attacchi si scrive una CA o una CD a mano', () => {
+    const prosa = pg.attacchi
+      .flatMap((a) => [a.descrizione, a.note ?? '', ...a.avvertenze])
+      .concat(pg.attacchi.flatMap((a) => a.alternative.flatMap((x) => [x.effetto, x.limite ?? ''])))
+      .join(' ');
+
+    expect(prosa).not.toMatch(/\bC[AD]\s*\d/i);
+    expect(prosa).not.toMatch(/\bCA scende\b/i);
   });
 
-  it('la CA senza scudo citata nella nota del maglio a due mani corrisponde alla CA calcolata', () => {
-    const caSenzaScudo = classeArmatura(pg, false);
-    const nota = pg.attacchi.find((a) => a.id === 'maglio-due-mani')?.note;
-    expect(nota).toContain(`CA scende a ${caSenzaScudo}`);
+  it('afferrare e spingere sono dati, non una nota', () => {
+    // L'audit chiede che il colpo senz'armi distingua tre scelte. Finché
+    // stavano dentro `note` come una frase, distinguerle era impossibile.
+    const pugno = pg.attacchi.find((a) => a.id === 'colpo-senzarmi')!;
+
+    expect(pugno.alternative.map((x) => x.nome)).toEqual(['Afferra', 'Spingi']);
+    for (const x of pugno.alternative) expect(x.ts).toMatch(/Forza o Destrezza/);
   });
 
   it('il dado di Scintilla Divina nelle capacità corrisponde al modificatore di Saggezza calcolato', () => {
@@ -131,5 +143,24 @@ describe('scomposizione del tiro per colpire', () => {
     expect(scomposizioneColpire(senza, 'maglio-una-mano')).toEqual([
       { etichetta: 'FOR', valore: 3 },
     ]);
+  });
+});
+
+describe('la CD di afferrare e spingere', () => {
+  it('è otto più competenza più Forza', () => {
+    // 8 + 2 + 3 per Kaelen al livello 3.
+    expect(cdContrasto(pg)).toBe(8 + pg.competenza + modificatore(pg.caratteristiche.for));
+  });
+
+  it('non è la CD degli incantesimi, anche quando il numero coincide', () => {
+    // Oggi valgono tutt'e due 13, e da lì la tentazione di riusarne una sola.
+    // Poggiano su caratteristiche diverse: al primo aumento di punteggio
+    // divergono, e chi ha riusato la funzione se ne accorge al tavolo.
+    const forzuto = {
+      ...pg,
+      caratteristiche: { ...pg.caratteristiche, for: pg.caratteristiche.for + 4 },
+    };
+
+    expect(cdContrasto(forzuto)).not.toBe(cdIncantesimi(forzuto));
   });
 });
