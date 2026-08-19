@@ -85,4 +85,20 @@
    * componenti perché il ritmo è vocabolario quanto il colore. */
   --espo: cubic-bezier(0.19, 1, 0.22, 1);
   --quint: cubic-bezier(0.23, 1, 0.32, 1);
+
+  /* La tacca e il cappello.
+   *
+   * `--tacca` è quanto lo schermo si tiene per sé in cima: la dynamic island
+   * su iPhone, zero su desktop e su Android senza intaglio. Il valore di
+   * ripiego non è ornamento — senza `viewport-fit=cover` nel meta viewport
+   * (BaseLayout) il browser non popola affatto `env()`, e ogni `calc()` che lo
+   * contenesse diventerebbe non valido invece di valere zero.
+   *
+   * `--cappello` è l'altezza della barra del menu, tacca compresa. Esiste
+   * perché quel numero comanda quattro cose che devono muoversi insieme:
+   * l'altezza della barra, i due cappelli di sezione che si appiccicano sotto
+   * di lei, e lo scarto che ogni pagina le riserva in cima. Erano sei numeri
+   * copiati a mano; adesso è uno. */
+  --tacca: env(safe-area-inset-top, 0px);
+  --cappello: calc(3.25rem + var(--tacca));
 }

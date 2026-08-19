@@ -984,7 +984,7 @@ dialog.vitalita .annuncio {
  * toccare i due bordi, come farebbe un cappello vero. */
 .barra-preparati-isola {
   position: sticky;
-  top: 3.25rem;
+  top: var(--cappello);
   z-index: 18;
   min-height: 49px;
   margin: 0 calc(-1 * var(--spazio-2)) var(--spazio-2);
@@ -996,8 +996,11 @@ dialog.vitalita .annuncio {
   backdrop-filter: blur(14px) saturate(140%);
   transition: top 0.5s var(--espo);
 }
+/* A barra ritirata i cappelli salgono a filo, ma «a filo» è sotto la
+ * tacca, non sotto l'orologio: `top: 0` li mandava a finire dietro
+ * l'ora e la batteria. */
 body:has(.barra[data-nascosta]) .barra-preparati-isola {
-  top: 0;
+  top: var(--tacca);
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .barra-preparati-isola {
@@ -1231,7 +1234,7 @@ dialog.vitalita .stato-vitale.stabile {
  * prima dell'idratazione lì non c'è niente, e la sezione salterebbe. */
 .barra-slot-isola {
   position: sticky;
-  top: 3.25rem;
+  top: var(--cappello);
   z-index: 18;
   min-height: 49px;
   margin: 0 calc(-1 * var(--spazio-2)) var(--spazio-2);
@@ -1247,8 +1250,11 @@ dialog.vitalita .stato-vitale.stabile {
   backdrop-filter: blur(14px) saturate(140%);
   transition: top 0.5s var(--espo);
 }
+/* A barra ritirata i cappelli salgono a filo, ma «a filo» è sotto la
+ * tacca, non sotto l'orologio: `top: 0` li mandava a finire dietro
+ * l'ora e la batteria. */
 body:has(.barra[data-nascosta]) .barra-slot-isola {
-  top: 0;
+  top: var(--tacca);
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .barra-slot-isola {

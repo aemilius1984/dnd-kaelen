@@ -54,14 +54,14 @@ Tocca cinque file perché i tre numeri del cappello sono ripetuti a mano.
 - Produces: `--tacca: env(safe-area-inset-top, 0px)` e `--cappello: calc(3.25rem + var(--tacca))` in `tokens.css`.
 - Consumes: niente.
 
-- [ ] **Step 1: il test che fallisce** — in `BaseLayout.test.ts`, il meta `viewport` deve contenere `viewport-fit=cover`. In `altezze.test.ts`, `.barra` deve dichiarare la sua altezza come `var(--cappello)` e non come numero: è la guardia contro il ritorno del numero magico.
-- [ ] **Step 2: i due token** in `tokens.css`, con commento che dice perché `--cappello` esiste (quattro punti che devono muoversi insieme) e che senza `viewport-fit=cover` `--tacca` vale zero.
-- [ ] **Step 3: il meta** in `BaseLayout.astro:20` diventa `width=device-width, initial-scale=1, viewport-fit=cover`.
-- [ ] **Step 4: la barra del menu** (`Menu.astro:140`): `height: var(--cappello)` e `padding-top: var(--tacca)`. Il vetro sfocato copre così anche la striscia della tacca. `.barra[data-nascosta] { transform: translateY(-100%) }` continua a funzionare senza modifiche: la percentuale segue l'altezza nuova.
-- [ ] **Step 5: gli scarti che il cappello riserva**: `base.css:94` diventa `calc(var(--cappello) + 0.5rem)`, e `storia.css:11` lo stesso valore al posto di `3.75rem`. Oggi sono `3.75rem` = `3.25rem + 0.5rem`: il mezzo rem di respiro si conserva.
-- [ ] **Step 6: i due cappelli appiccicati** in `componenti.css` (`.barra-preparati-isola:987`, `.barra-slot-isola:1234`): `top: var(--cappello)`. **E i loro stati di barra ritirata**: cercare _entrambe_ le regole `top: 0` sotto `body:has(.barra[data-nascosta])` e portarle a `top: var(--tacca)`, altrimenti allo scroll il cappello di sezione scivola sotto l'orologio.
-- [ ] **Step 7: gli scarti laterali** sul `body` (`base.css`): `padding-inline` con `env(safe-area-inset-left/right, 0px)` sommati a `--spazio-2`. Trattare anche i due `body:has(...)` che oggi azzerano il `padding-inline` (la Storia) o tutto il padding (la splash): la Storia prende gli scarti laterali nudi, la splash resta a zero perché è lei a voler toccare i bordi.
-- [ ] **Step 8:** `npm run gate`, poi commit.
+- [x] **Step 1: il test che fallisce** — in `BaseLayout.test.ts`, il meta `viewport` deve contenere `viewport-fit=cover`. In `altezze.test.ts`, `.barra` deve dichiarare la sua altezza come `var(--cappello)` e non come numero: è la guardia contro il ritorno del numero magico.
+- [x] **Step 2: i due token** in `tokens.css`, con commento che dice perché `--cappello` esiste (quattro punti che devono muoversi insieme) e che senza `viewport-fit=cover` `--tacca` vale zero.
+- [x] **Step 3: il meta** in `BaseLayout.astro:20` diventa `width=device-width, initial-scale=1, viewport-fit=cover`.
+- [x] **Step 4: la barra del menu** (`Menu.astro:140`): `height: var(--cappello)` e `padding-top: var(--tacca)`. Il vetro sfocato copre così anche la striscia della tacca. `.barra[data-nascosta] { transform: translateY(-100%) }` continua a funzionare senza modifiche: la percentuale segue l'altezza nuova.
+- [x] **Step 5: gli scarti che il cappello riserva**: `base.css:94` diventa `calc(var(--cappello) + 0.5rem)`, e `storia.css:11` lo stesso valore al posto di `3.75rem`. Oggi sono `3.75rem` = `3.25rem + 0.5rem`: il mezzo rem di respiro si conserva.
+- [x] **Step 6: i due cappelli appiccicati** in `componenti.css` (`.barra-preparati-isola:987`, `.barra-slot-isola:1234`): `top: var(--cappello)`. **E i loro stati di barra ritirata**: cercare _entrambe_ le regole `top: 0` sotto `body:has(.barra[data-nascosta])` e portarle a `top: var(--tacca)`, altrimenti allo scroll il cappello di sezione scivola sotto l'orologio.
+- [x] **Step 7: gli scarti laterali** sul `body` (`base.css`): `padding-inline` con `env(safe-area-inset-left/right, 0px)` sommati a `--spazio-2`. Trattare anche i due `body:has(...)` che oggi azzerano il `padding-inline` (la Storia) o tutto il padding (la splash): la Storia prende gli scarti laterali nudi, la splash resta a zero perché è lei a voler toccare i bordi.
+- [x] **Step 8:** `npm run gate`, poi commit.
 
 ---
 

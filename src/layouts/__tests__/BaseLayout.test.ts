@@ -20,6 +20,19 @@ describe('BaseLayout', () => {
     expect(html).not.toContain('serviceWorker');
   });
 
+  it('dichiara la zona sicura, senza la quale ogni env() del sito vale zero', async () => {
+    const container = await AstroContainer.create();
+    const html = await container.renderToString(BaseLayout, {
+      props: { titolo: 'Prova', attiva: null },
+    });
+
+    // Gli `env(safe-area-inset-*)` sparsi per il progetto erano codice morto:
+    // su iOS il browser non li popola finché il viewport non dichiara di
+    // volersi prendere anche gli angoli. Senza questo valore, la tacca non
+    // esiste e la home non arriva mai sotto la dynamic island.
+    expect(html).toMatch(/name="viewport"[^>]*viewport-fit=cover/);
+  });
+
   it('scrive il tema in build, senza script che lo scelga a runtime', async () => {
     const container = await AstroContainer.create();
     const html = await container.renderToString(BaseLayout, {

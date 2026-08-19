@@ -5,10 +5,11 @@
 .storia {
   max-width: var(--misura);
   margin: 0 auto;
-  /* 3.75rem in cima quanto ogni altra pagina, per liberare il pulsante ☰
-   * fisso — vedi la nota su `body:has(.menu):not(:has(.storia)) main` in
-   * base.css: qui, non lì, perché la carta deve toccare il bordo. */
-  padding: 3.75rem 0 4rem;
+  /* In cima lo stesso scarto di ogni altra pagina — il cappello più mezzo rem
+   * di respiro — per liberare la barra fissa del menu. Vedi la nota su
+   * `body:has(.menu):not(:has(.storia)) main` in base.css: qui, non lì, perché
+   * la carta deve toccare il bordo. */
+  padding: calc(var(--cappello) + 0.5rem) 0 4rem;
   font-family: var(--font-narrativa);
   font-size: 1.12rem;
   line-height: 1.62;
@@ -107,7 +108,7 @@
   /* Stessa clearance del pulsante ☰ fisso usata altrove: un link del
    * Sommario deve scoprire il titolo del capitolo, non farlo atterrare
    * sotto il pulsante. */
-  scroll-margin-top: 3.75rem;
+  scroll-margin-top: calc(var(--cappello) + 0.5rem);
 }
 .capitolo h2 {
   font-family: var(--font-display);
