@@ -12,6 +12,7 @@ import Vitalita from '@/islands/Vitalita';
 import BarraSlot from '@/islands/BarraSlot';
 import Contatori from '@/islands/Contatori';
 import ControlliLancio from '@/islands/ControlliLancio';
+import StrisciaAnnulla from '@/islands/StrisciaAnnulla';
 import PannelloAzioni from '@/islands/PannelloAzioni';
 import { attaccoIncantesimi, cdIncantesimi, classeArmatura, iniziativa, segno } from '@/lib/derive';
 import { caricaScheda } from '@/lib/carica-scheda';
@@ -181,6 +182,12 @@ const bonusIniziativa = segno(iniziativa(pg));
     <a href="/note/">Note di sessione</a>
   </nav>
 
+  {
+    /* Una sola per pagina, e fuori da chi spende: gli slot si spendono dalla
+      modale di lancio, le capacità dalle proprie card, e due strisce che non
+      si conoscono comparirebbero sovrapposte, ognuna col suo timer. */
+  }
+  <StrisciaAnnulla client:only="preact" />
   <ControlliLancio client:only="preact" />
   <Contatori client:only="preact" />
   <PannelloAzioni client:only="preact" />

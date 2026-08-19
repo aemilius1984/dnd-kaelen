@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { h, render } from 'preact';
+import { Fragment, h, render } from 'preact';
 import ControlliLancio from '@/islands/ControlliLancio';
+import StrisciaAnnulla from '@/islands/StrisciaAnnulla';
+import { annullabile } from '@/lib/annulla';
 import { caricaPersonaggioDaFile } from '@/lib/carica-personaggio';
 import { spendiSlot } from '@/lib/sheet-state';
 import { muta, stato } from '@/lib/storage';
@@ -56,9 +58,14 @@ beforeEach(async () => {
   // l'altro, quindi svuotare localStorage non lo riporta indietro e gli slot
   // spesi da un test arrivano al successivo. Ogni test parte da slot pieni.
   muta((x) => ({ ...x, slotSpesi: {} }));
+  // Anche l'azione annullabile è un segnale di modulo: senza questa riga la
+  // striscia di un test comparirebbe già montata in quello dopo.
+  annullabile.value = null;
   radice = document.createElement('div');
   document.body.append(radice);
-  render(h(ControlliLancio, {}), radice);
+  // Le due isole insieme, come stanno nella pagina: chi lancia dichiara
+  // l'azione, e a disegnarla è la striscia, che è un'isola sua e una sola.
+  render(h(Fragment, {}, h(ControlliLancio, {}), h(StrisciaAnnulla, {})), radice);
   await giro();
 });
 

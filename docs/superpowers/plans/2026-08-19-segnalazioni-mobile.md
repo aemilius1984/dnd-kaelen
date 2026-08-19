@@ -185,11 +185,11 @@ punto di non ritorno: `SCHEMA_VERSION` sale a 4.
 
 - Produces: un signal di modulo con l'ultima azione annullabile (`{ detto, costo, disfa }`) e `DURATA_ANNULLA`. Una striscia sola, montata una volta.
 
-- [ ] **Step 1: il test che fallisce** — due azioni annullabili di seguito lasciano **una** sola voce, la seconda, e annullare chiama la funzione di disfacimento di quella. È la regola già scritta a mano dentro `ControlliLancio` («si può annullare solo l'ultima azione, non un intero storico»), spostata dove si può provare senza DOM.
-- [ ] **Step 2:** estrarre da `ControlliLancio` il signal, il timer e il markup della striscia. Il CSS (`.striscia-annulla`, `.velo-annulla`) è già globale in `componenti.css` e non si muove.
-- [ ] **Step 3:** `ControlliLancio` dichiara l'azione invece di disegnarla; `scheda.astro` monta `StrisciaAnnulla` una volta sola.
-- [ ] **Step 4:** verificare che `DURATA_ANNULLA` resti **un numero solo**, passato al CSS come proprietà personalizzata: è la ragione per cui la barra e il diritto di annullare finiscono insieme.
-- [ ] **Step 5:** `npm run gate`, poi commit.
+- [x] **Step 1: il test che fallisce** — due azioni annullabili di seguito lasciano **una** sola voce, la seconda, e annullare chiama la funzione di disfacimento di quella. È la regola già scritta a mano dentro `ControlliLancio` («si può annullare solo l'ultima azione, non un intero storico»), spostata dove si può provare senza DOM.
+- [x] **Step 2:** estrarre da `ControlliLancio` il signal, il timer e il markup della striscia. Il CSS (`.striscia-annulla`, `.velo-annulla`) è già globale in `componenti.css` e non si muove.
+- [x] **Step 3:** `ControlliLancio` dichiara l'azione invece di disegnarla; `scheda.astro` monta `StrisciaAnnulla` una volta sola.
+- [x] **Step 4:** verificare che `DURATA_ANNULLA` resti **un numero solo**, passato al CSS come proprietà personalizzata: è la ragione per cui la barra e il diritto di annullare finiscono insieme.
+- [x] **Step 5:** `npm run gate`, poi commit.
 
 ---
 
