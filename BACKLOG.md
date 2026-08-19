@@ -265,3 +265,21 @@ Se un giorno dovessero tornare come comando proprio, la primitiva
 `segnaTsMorte` basta per il primo; il secondo è `applicaCura(s, pg, 1)`. La
 funzione `tiroMorte`, che prendeva il d20 grezzo, è stata tolta insieme al suo
 unico chiamante: riscriverla è più onesto che tenerla senza nessuno che la usi.
+
+## L'obbligo di preparare non sopravvive alla chiusura della scheda
+
+Il Riposo Lungo avviene sulla Scheda, i sei preparati si scelgono su
+`/preparati/`: fra i due c'è una navigazione, e la bozza è un signal di modulo
+che una navigazione azzera. Il passaggio di consegne viaggia quindi in
+`sessionStorage` — vedi `src/lib/consegna-preparazione.ts`.
+
+Il limite: chiudendo la scheda del browser fra il riposo e la scelta, l'obbligo
+si perde. Il riposo resta compiuto (quello è stato salvato), ma la sessione di
+preparazione non si riapre da sola, e per correggere resta la strada «Modifica
+concessa dal DM» — che è l'uscita di sicurezza, non il percorso legittimo.
+
+Il rimedio giusto è portare l'obbligo dentro lo stato di sessione, per esempio
+`preparazioneDovuta: boolean`, messo da `riposoLungo` e tolto da `completa`.
+Costa un `SCHEMA_VERSION` e una migrazione, ed è il motivo per cui non è già
+lì: non valeva quel prezzo nello stesso passaggio in cui l'archivio ha
+cambiato sede.

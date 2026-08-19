@@ -16,7 +16,11 @@ import {
   SLOT_MANUALE,
   usaRisorsa,
 } from '@/lib/sheet-state';
-import { apri as apriPreparazione } from '@/lib/preparazione';
+import {
+  navigazione,
+  PERCORSO_ARCHIVIO,
+  segnalaPreparazioneDovuta,
+} from '@/lib/consegna-preparazione';
 import { assicuraInizializzato, datiIniziali, muta, stato } from '@/lib/storage';
 
 export default function PannelloAzioni() {
@@ -212,23 +216,24 @@ export default function PannelloAzioni() {
               }
               muta((x) => riposoLungo(x, pg));
               // Questo è l'unico momento in cui il manuale concede di cambiare
-              // i sei preparati: il riposo apre la sessione, e fuori di qui le
-              // spunte restano in sola lettura.
-              apriPreparazione(stato.value.preparati);
-              // Cambiare i preparati è dovuto proprio adesso: il pannello si
-              // toglie di mezzo e apre l'archivio. Cerca il dialogo per id e
-              // basta — non sa cosa ci sia dentro, e su /personaggio/ non c'è
-              // affatto, dove l'assenza non deve buttare giù il riposo.
+              // i sei preparati, e adesso l'elenco ha una sede sola: la rotta
+              // `/preparati/`. Il pannello si toglie di mezzo e ci porta.
+              //
+              // La sessione non si apre qui: fra le due pagine c'è una
+              // navigazione, e la bozza è un signal di modulo che una
+              // navigazione azzera. Si lascia detto che è dovuta, e la raccoglie
+              // l'archivio appena arriva.
+              segnalaPreparazioneDovuta(sessionStorage);
               finestra.current?.close();
-              document.querySelector<HTMLDialogElement>('#archivio')?.showModal();
+              navigazione.vai(PERCORSO_ARCHIVIO);
             }}
           >
             Riposo lungo
           </button>
         </div>
         <p class="tenue">
-          Il riposo lungo apre l'archivio degli incantesimi. Puoi aprirlo anche da solo:{' '}
-          <a href="/preparati/">vai all'archivio</a>.
+          Il riposo lungo ti porta all'archivio, dove si scelgono i sei preparati. Puoi andarci
+          anche da solo: <a href="/preparati/">vai all'archivio</a>.
         </p>
       </dialog>
     </>

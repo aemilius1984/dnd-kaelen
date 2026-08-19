@@ -299,19 +299,6 @@ dialog.archivio .testa {
   background: var(--carta);
   border-bottom: 1px solid var(--filetto);
 }
-
-/* Un bottone che si comporta da collegamento: apre l'archivio, che è una
- * finestra e non una rotta. Non deve sembrare un bottone d'azione fra quelli
- * di lancio poco sopra. */
-.apri-archivio {
-  min-height: 0;
-  min-width: 0;
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--lampo);
-  text-decoration: underline;
-}
 dialog.azioni .testa {
   display: flex;
   align-items: center;
@@ -1204,4 +1191,59 @@ body:has(.barra[data-nascosta]) .barra-slot-isola {
 .fila-grande .casella.usata svg {
   width: 18px;
   height: 18px;
+}
+
+/* La carta che porta all'archivio. Era due collegamenti in fila — «Tutti gli
+ * incantesimi · apri come pagina» — cioè due strade per lo stesso posto,
+ * scritte come una nota a piè di sezione. È una destinazione, e ha la stessa
+ * forma di tutto il resto: icona, nome, conto, freccia. */
+.verso-archivio {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: 60px;
+  margin-top: 0.6rem;
+  padding: 0.7rem var(--spazio-2);
+  background: var(--superficie);
+  border: 1px solid var(--filetto);
+  border-radius: var(--raggio-superficie);
+  box-shadow: var(--ombra-1);
+  color: var(--inchiostro);
+  text-decoration: none;
+}
+.verso-archivio > svg:first-child {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: var(--ambra);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.verso-archivio .chi {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.verso-archivio .titolo {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.02rem;
+}
+.verso-archivio .conto {
+  display: block;
+  margin-top: 1px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--inchiostro-muto);
+}
+.verso-archivio .freccia {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: var(--inchiostro-muto);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }

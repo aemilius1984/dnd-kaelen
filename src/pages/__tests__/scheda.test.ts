@@ -100,18 +100,22 @@ describe('i nomi inglesi arrivano fino alla pagina', () => {
 });
 
 describe('l’archivio', () => {
-  it('è markup statico in entrambe le sedi, non prodotto da un’isola', () => {
+  // Una sede sola. Prima ce n'erano due — un `<dialog>` sulla Scheda e la
+  // rotta `/preparati/` — e il commento del codice lo ammetteva: «questa rotta
+  // ne è la seconda sede». Scegliere sei incantesimi fra trentanove è un
+  // lavoro da pagina, e alla Scheda quell'elenco costava 35 KB e 471 nodi che
+  // durante il gioco non guarda mai.
+  it('è markup statico, non prodotto da un’isola', () => {
     // Trentanove testi di incantesimo dentro un bundle JavaScript sarebbero
     // peso iniziale su ogni pagina: l'isola governa le spunte, non l'elenco.
-    for (const rotta of ['scheda', 'preparati']) {
-      const html = dist(rotta);
-      expect(html).toContain('Individuazione del Magico');
-      expect(html).toContain('rituale · Ritual');
-    }
+    const html = dist('preparati');
+
+    expect(html).toContain('Individuazione del Magico');
+    expect(html).toContain('rituale · Ritual');
   });
 
   it('offre una spunta per ogni incantesimo preparabile, e non di più', () => {
-    const html = dist('scheda');
+    const html = dist('preparati');
     const pool = JSON.parse(/id="dati-iniziali">(.*?)<\/script>/s.exec(html)![1]).pool as {
       slug: string;
     }[];
@@ -120,12 +124,29 @@ describe('l’archivio', () => {
   });
 
   it('non offre spunte per trucchetti e dominio', () => {
-    const html = dist('scheda');
+    const html = dist('preparati');
 
     // Sono nell'elenco — si leggono — ma sempre disponibili: una spunta lì
     // sarebbe l'invito a un gesto che non serve.
     for (const slug of ['fiamma-sacra', 'frantumare', 'onda-tonante']) {
       expect(html).not.toContain(`data-preparabile="${slug}"`);
     }
+  });
+
+  it('non ha più una seconda sede dentro la Scheda', () => {
+    const html = dist('scheda');
+
+    expect(html).not.toContain('data-preparabile');
+    expect(html).not.toMatch(/<dialog[^>]*id="archivio"/);
+  });
+
+  it('dalla Scheda ci si arriva con una carta, non con due collegamenti', () => {
+    // Erano «Tutti gli incantesimi · apri come pagina»: due strade per lo
+    // stesso posto, scritte come una nota a piè di sezione.
+    const html = dist('scheda');
+
+    expect(html).toContain('href="/preparati/"');
+    expect(html).toContain('verso-archivio');
+    expect(html).not.toContain('apri come pagina');
   });
 });

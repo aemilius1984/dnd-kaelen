@@ -1,5 +1,6 @@
 import { createPortal } from 'preact/compat';
 import { useEffect, useState } from 'preact/hooks';
+import { raccogliPreparazioneDovuta } from '@/lib/consegna-preparazione';
 import { annulla, apri, bozza, commuta, completa } from '@/lib/preparazione';
 import { impostaPreparati } from '@/lib/sheet-state';
 import { assicuraInizializzato, datiIniziali, muta, stato } from '@/lib/storage';
@@ -26,6 +27,15 @@ export default function Archivio() {
   const lista = bozza.value;
   const aperta = lista !== null;
   const [bersagli, setBersagli] = useState<Bersaglio[]>([]);
+
+  // Se si arriva qui subito dopo un Riposo Lungo, la sessione si apre da sola:
+  // è l'unico momento in cui il manuale concede di cambiare i sei, e farla
+  // aprire a mano vorrebbe dire chiedere un gesto in più proprio a chi il
+  // diritto ce l'ha. Si raccoglie una volta sola, quindi ricaricare la pagina
+  // non riapre una sessione già chiusa.
+  useEffect(() => {
+    if (raccogliPreparazioneDovuta(sessionStorage)) apri(stato.value.preparati);
+  }, []);
 
   useEffect(() => {
     setBersagli(

@@ -8,12 +8,10 @@ import Sprite from '@/components/Sprite.astro';
 import DatiIniziali from '@/components/DatiIniziali.astro';
 import TestaSezione from '@/components/ui/TestaSezione.astro';
 import CapacitaEReazioni from '@/components/CapacitaEReazioni.astro';
-import ElencoArchivio from '@/components/ElencoArchivio.astro';
 import Vitalita from '@/islands/Vitalita';
 import BarraSlot from '@/islands/BarraSlot';
 import Contatori from '@/islands/Contatori';
 import ControlliLancio from '@/islands/ControlliLancio';
-import Archivio from '@/islands/Archivio';
 import PannelloAzioni from '@/islands/PannelloAzioni';
 import { attaccoIncantesimi, cdIncantesimi, classeArmatura, iniziativa, segno } from '@/lib/derive';
 import { caricaScheda } from '@/lib/carica-scheda';
@@ -44,7 +42,8 @@ const dominio = pg.dominio.map(conTesto);
 // mostra/nasconde in base allo stato.
 const preparatiPool = pool.map((m) => conTesto(m.slug));
 
-// L'archivio porta tutto: trucchetti, dominio e pool, ordinati per livello.
+// Il conto per la carta che porta all'archivio. L'elenco vero vive su
+// `/preparati/`: qui serve solo sapere quanti sono.
 // È lo stesso testo già presente nelle card di lancio, ma qui c'è anche ciò
 // che non è preparato — il motivo per cui l'archivio esiste.
 const tuttoArchivio = [...trucchetti, ...dominio, ...preparatiPool].sort(
@@ -122,12 +121,30 @@ const bonusIniziativa = segno(iniziativa(pg));
     <CarteIncantesimo incantesimi={preparatiPool} visibiliDiDefault={pg.preparatiIniziali} />
     <CarteIncantesimo incantesimi={dominio} />
 
-    <p class="tenue">
-      <button type="button" class="apri-archivio" data-apre="archivio">
-        Tutti gli incantesimi
-      </button>
-      · <a href="/preparati/">apri come pagina</a>
-    </p>
+    {
+      /* Una sede sola per l'elenco, e non è più qui. Scegliere sei incantesimi
+        fra trentanove è un lavoro da pagina: il tasto indietro la chiude, lo
+        scorrimento è quello del browser, e la Scheda si toglie di dosso
+        trentacinque kilobyte di elenco che durante il gioco non guarda mai.
+        `/preparati/` era già una voce di menu; la modale ne era la seconda
+        sede, e il commento del codice lo diceva. */
+    }
+    <a class="verso-archivio" href="/preparati/">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M5 4h9l5 5v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z"></path>
+        <path d="M14 4v5h5"></path>
+        <path d="M8 13h8M8 17h5"></path>
+      </svg>
+      <span class="chi">
+        <span class="titolo">Tutti gli incantesimi</span>
+        <span class="conto">
+          {tuttoArchivio.length} in archivio · {pg.limitePreparati} da preparare
+        </span>
+      </span>
+      <svg class="freccia" viewBox="0 0 24 24" aria-hidden="true">
+        <polyline points="9 5 16 12 9 19"></polyline>
+      </svg>
+    </a>
   </section>
 
   {
@@ -147,21 +164,7 @@ const bonusIniziativa = segno(iniziativa(pg));
     <a href="/note/">Note di sessione</a>
   </nav>
 
-  {
-    /* L'archivio: elenco statico, spunte dall'isola. Il `<dialog>` nativo va in
-      top layer, quindi fuori dallo z-index del documento — come il pannello
-      azioni. Lo apre il bottone qui sopra e, alla sua chiusura, il riposo
-      lungo dal pannello. */
-  }
-  <dialog id="archivio" class="archivio" aria-labelledby="titolo-archivio">
-    <div class="testa">
-      <strong id="titolo-archivio">Tutti gli incantesimi</strong>
-      <button type="button" data-chiude>Chiudi</button>
-    </div>
-    <ElencoArchivio incantesimi={tuttoArchivio} preparabili={pool.map((m) => m.slug)} />
-  </dialog>
   <ControlliLancio client:only="preact" />
-  <Archivio client:only="preact" />
   <Contatori client:only="preact" />
   <PannelloAzioni client:only="preact" />
 </BaseLayout>
