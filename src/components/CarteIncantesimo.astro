@@ -182,9 +182,20 @@ function riga(m: Incantesimo): string {
     padding: 0;
   }
 
-  /* Il dominio si riconosce dal bordo, non da una riga in più. */
+  /* Il dominio si riconosce da una barra sul fianco, non da una riga in più.
+     La barra è un'ombra interna sul bottone, non un bordo più spesso sulla
+     carta: un bordo partecipa alla scatola, e ingrossarlo di due pixel
+     spingeva dentro di altrettanto sigillo e nome. In un elenco dove l'occhio
+     segue una colonna di icone, quelle quattro carte stavano mezzo passo più
+     in là — misurato, 2px. L'ombra interna non tocca la scatola, e il
+     `overflow` della carta le arrotonda gli angoli sulla curva giusta invece
+     di lasciare un bordo spesso a spigolo contro un raggio di 12px. */
   .di-dominio {
-    border-left: 3px solid var(--ambra);
+    overflow: hidden;
+  }
+
+  .di-dominio .apri-incantesimo {
+    box-shadow: inset 3px 0 0 var(--ambra);
   }
 
   .apri-incantesimo {

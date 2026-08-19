@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { describe, expect, it } from 'vitest';
 import CarteIncantesimo from '@/components/CarteIncantesimo.astro';
@@ -99,4 +100,20 @@ describe('tag rituale', () => {
 
     expect(html).not.toContain('Ritual');
   });
+});
+
+it('la carta di dominio non sposta il proprio contenuto', () => {
+  // Marcarla con un bordo più spesso la faceva rientrare di due pixel: un
+  // bordo partecipa alla scatola, e in un elenco dove l'occhio segue una
+  // colonna di icone quelle quattro carte stavano mezzo passo più in là.
+  // La marcatura non deve toccare né bordo né imbottitura.
+  const sorgente = readFileSync('src/components/CarteIncantesimo.astro', 'utf8');
+  const regola = sorgente.slice(
+    sorgente.indexOf('.di-dominio {'),
+    sorgente.indexOf('}', sorgente.indexOf('.di-dominio .apri-incantesimo {')),
+  );
+
+  expect(regola).not.toMatch(/border(-left)?(-width)?:/);
+  expect(regola).not.toMatch(/padding/);
+  expect(regola).toMatch(/box-shadow:\s*inset/);
 });
