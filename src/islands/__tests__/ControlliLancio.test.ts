@@ -141,6 +141,23 @@ describe('dopo il lancio', () => {
     expect(striscia()?.textContent).toContain('Slot di 1° speso');
   });
 
+  it('il velo arriva e se ne va insieme alla striscia', async () => {
+    const velo = () => document.querySelector('.velo-annulla');
+    expect(velo()).toBeNull();
+
+    bottoneLancio().click();
+    await giro();
+    expect(velo()).not.toBeNull();
+
+    striscia()!.querySelector('button')!.click();
+    await giro();
+
+    // Un velo che sopravvive alla striscia lascia la scheda scurita e basta:
+    // non intercetta i tocchi, quindi nessuno lo scoprirebbe provando a
+    // premere qualcosa — si vedrebbe soltanto, e a lungo.
+    expect(velo()).toBeNull();
+  });
+
   it('annullare restituisce lo slot e toglie la striscia', async () => {
     bottoneLancio().click();
     await giro();

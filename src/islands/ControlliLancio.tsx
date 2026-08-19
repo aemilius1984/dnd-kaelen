@@ -143,26 +143,36 @@ export default function ControlliLancio() {
       })}
 
       {annullabile !== null && (
-        <div
-          key={lanci}
-          class="annulla"
-          role="status"
-          style={{ '--durata-annulla': `${DURATA_ANNULLA}ms` }}
-        >
-          <span class="detto">
-            <strong>{annullabile.nome}</strong>
-            <span class="costo">Slot di {annullabile.livello}° speso</span>
-          </span>
-          <button type="button" onClick={annulla}>
-            Annulla
-          </button>
-          {/* La barra non è decorazione: è il tempo che resta per disfare. Si
-              svuota, e quando è vuota la striscia sparisce e lo slot è
-              speso. */}
-          <span class="tempo" aria-hidden="true">
-            <i />
-          </span>
-        </div>
+        <>
+          {/* Il velo esiste solo per far risaltare la striscia: scurisce il
+              foglio, la barra del menu e il pulsante ⚡, che altrimenti le
+              rubano l'occhio. Non intercetta i tocchi — `pointer-events: none`
+              — perché dura cinque secondi e bloccare la scheda per cinque
+              secondi dopo *ogni* lancio sarebbe peggio del problema che
+              risolve. Sembra modale, non lo è: al massimo tocchi quel che
+              volevi toccare. */}
+          <div class="velo-annulla" aria-hidden="true" />
+          <div
+            key={lanci}
+            class="annulla"
+            role="status"
+            style={{ '--durata-annulla': `${DURATA_ANNULLA}ms` }}
+          >
+            <span class="detto">
+              <strong>{annullabile.nome}</strong>
+              <span class="costo">Slot di {annullabile.livello}° speso</span>
+            </span>
+            <button type="button" onClick={annulla}>
+              Annulla
+            </button>
+            {/* La barra non è decorazione: è il tempo che resta per disfare. Si
+                svuota, e quando è vuota la striscia sparisce e lo slot è
+                speso. */}
+            <span class="tempo" aria-hidden="true">
+              <i />
+            </span>
+          </div>
+        </>
       )}
     </>
   );

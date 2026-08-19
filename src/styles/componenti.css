@@ -220,16 +220,45 @@ button[disabled] {
   flex-wrap: wrap;
   margin-top: 0.6rem;
 }
+/* Il velo sotto la striscia di annullamento. Sta sopra tutto ciò che la
+ * scheda tiene fisso — barra del menu (20), pulsante ⚡ e barra degli slot
+ * (18) — perché sono proprio quelli a rubarle l'occhio. Non intercetta i
+ * tocchi: dura cinque secondi, e bloccare la scheda per cinque secondi dopo
+ * ogni lancio sarebbe peggio del problema che risolve. */
+.velo-annulla {
+  position: fixed;
+  inset: 0;
+  z-index: 21;
+  pointer-events: none;
+  background: rgb(0 0 0 / 0.32);
+  animation: appare-velo 0.32s var(--espo) both;
+}
+@keyframes appare-velo {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 /* La striscia di annullamento. Larga quanto il foglio meno i margini, non
  * `fit-content`: dopo il lancio la modale si chiude e questa resta l'unica
  * cosa che dice cosa è appena successo, quindi porta il nome dell'incantesimo
  * e non solo il livello dello slot. Il bottone è a destra, la barra del tempo
  * corre in fondo da bordo a bordo — `overflow: hidden` la fa finire dentro il
- * raggio invece di sporgere agli angoli. */
+ * raggio invece di sporgere agli angoli.
+ *
+ * Sale dal basso come un cassetto, e si ferma a 8rem dal bordo: sopra il
+ * pulsante ⚡, che ne occupa 76 da solo, e ancora dentro la zona del pollice.
+ * Il vetro è la stessa ricetta della barra del menu — un solo modo di fare il
+ * vetro in tutto il sito — con il ripiego a fondo quasi pieno dove il browser
+ * non lo sa fare: mezzo velo su un testo che ci scorre sotto sarebbe
+ * illeggibile, non trasparente. */
 .annulla {
   position: fixed;
-  inset: auto 1rem calc(5.5rem + env(safe-area-inset-bottom)) 1rem;
-  z-index: 15;
+  inset: auto 1rem calc(8rem + env(safe-area-inset-bottom)) 1rem;
+  z-index: 22;
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -237,9 +266,30 @@ button[disabled] {
   padding: 0.55rem 0.55rem 0.7rem 0.9rem;
   border: 1px solid var(--ambra);
   border-radius: var(--raggio);
-  background: var(--superficie-incassata);
+  background: color-mix(in srgb, var(--carta) 55%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
   box-shadow: var(--ombra-2);
   font-size: 0.9rem;
+  animation: sale-annulla 0.32s var(--espo) both;
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .annulla {
+    background: color-mix(in srgb, var(--carta) 94%, transparent);
+  }
+}
+/* La distanza da percorrere è tutta l'altezza della striscia più lo stacco dal
+ * bordo: così parte da fuori schermo davvero, invece di apparire già a metà
+ * strada. */
+@keyframes sale-annulla {
+  from {
+    transform: translateY(calc(100% + 8rem));
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 .annulla .detto {
   flex: 1 1 auto;
