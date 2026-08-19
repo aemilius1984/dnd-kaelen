@@ -56,3 +56,35 @@ describe('_middleware', () => {
     expect(await r.text()).toBe('ok');
   });
 });
+
+describe('la copertura di /api/', () => {
+  // Gli endpoint delle sessioni non hanno un'autenticazione propria: contano
+  // su questo middleware. È un'assunzione di sicurezza, e le assunzioni di
+  // sicurezza si provano — se un giorno il middleware si restringesse a una
+  // rotta, l'archivio delle sessioni resterebbe aperto senza che niente lo
+  // dica.
+  it('vale anche sulle rotte di /api/, e senza segreti risponde 401', async () => {
+    const { ctx, next } = contesto({ env: {} });
+    const richiesta = new Request('https://kaelen.example/api/sessioni', { method: 'POST' });
+    const conApi = { ...ctx, request: richiesta } as typeof ctx;
+
+    const r = await onRequest(conApi);
+
+    expect(r.status).toBe(401);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('non lascia passare /api/ con credenziali sbagliate', async () => {
+    const { ctx, next } = contesto({
+      auth: 'Basic ' + btoa('tizio:sbagliata'),
+      env: { SITE_USER: 'kaelen', SITE_PASS: 'giusta' },
+    });
+    const conApi = {
+      ...ctx,
+      request: new Request('https://kaelen.example/api/sessioni/1', { method: 'DELETE' }),
+    } as typeof ctx;
+
+    expect((await onRequest(conApi)).status).toBe(401);
+    expect(next).not.toHaveBeenCalled();
+  });
+});

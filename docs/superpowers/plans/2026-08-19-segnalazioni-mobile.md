@@ -253,13 +253,13 @@ indovinare in quale ambiente sta girando. Si imposta dalla dashboard
 (Settings → Bindings), una volta per ambiente, e **entra in vigore solo al
 deploy successivo**.
 
-- [ ] **Step 1: i test che falliscono**, con un finto `D1Database` in memoria — nessun `wrangler` nel gate. POST inserisce una riga e pota oltre la ventesima; GET elenca in ordine di data con i campi del riepilogo; DELETE toglie una riga; un corpo malformato è 400.
-- [ ] **Step 2: la tabella** come da spec (`id, creato_il, etichetta, nota, schema_v, sheet_v, stato`), in `migrations/`.
-- [ ] **Step 3: gli endpoint.** Niente autenticazione propria: il `_middleware.ts` fail-closed copre già `/api/`. Verificarlo con un test, perché è un'assunzione di sicurezza e non un dettaglio.
-- [ ] **Step 4: il `wrangler.jsonc` è solo per il locale.** Binding `DB`, `database_name: "kaelen"`, l'id di Production, e `preview_database_id: "DB"` che Pages richiede in locale. **Senza `pages_build_output_dir`**: quella chiave farebbe del file la fonte di verità del progetto, la dashboard smetterebbe di poter configurare quei campi, e un deploy porterebbe in produzione una configurazione scritta per lo sviluppo — dove ci sono anche `SITE_USER` e `SITE_PASS`.
-- [ ] **Step 5: le migrazioni si applicano a mano**, e prima del deploy: `wrangler d1 migrations apply kaelen --remote` (e `--local` per il database di sviluppo). Nessun hook le esegue: se il codice arriva in produzione prima della migrazione, l'endpoint trova la tabella che non c'è.
-- [ ] **Step 6: il binding manca in locale.** Documentare in `CLAUDE.md` come si gira con `wrangler pages dev` e la D1 locale, e che **senza binding gli endpoint devono rispondere un errore pulito**, non rompersi: il sito deve restare usabile offline e su un clone senza Cloudflare.
-- [ ] **Step 7:** `npm run gate`, poi commit.
+- [x] **Step 1: i test che falliscono**, con un finto `D1Database` in memoria — nessun `wrangler` nel gate. POST inserisce una riga e pota oltre la ventesima; GET elenca in ordine di data con i campi del riepilogo; DELETE toglie una riga; un corpo malformato è 400.
+- [x] **Step 2: la tabella** come da spec (`id, creato_il, etichetta, nota, schema_v, sheet_v, stato`), in `migrations/`.
+- [x] **Step 3: gli endpoint.** Niente autenticazione propria: il `_middleware.ts` fail-closed copre già `/api/`. Verificarlo con un test, perché è un'assunzione di sicurezza e non un dettaglio.
+- [x] **Step 4: il `wrangler.jsonc` è solo per il locale.** Binding `DB`, `database_name: "kaelen"`, l'id di Production, e `preview_database_id: "DB"` che Pages richiede in locale. **Senza `pages_build_output_dir`**: quella chiave farebbe del file la fonte di verità del progetto, la dashboard smetterebbe di poter configurare quei campi, e un deploy porterebbe in produzione una configurazione scritta per lo sviluppo — dove ci sono anche `SITE_USER` e `SITE_PASS`.
+- [x] **Step 5: le migrazioni si applicano a mano**, e prima del deploy: `wrangler d1 migrations apply kaelen --remote` (e `--local` per il database di sviluppo). Nessun hook le esegue: se il codice arriva in produzione prima della migrazione, l'endpoint trova la tabella che non c'è.
+- [x] **Step 6: il binding manca in locale.** Documentare in `CLAUDE.md` come si gira con `wrangler pages dev` e la D1 locale, e che **senza binding gli endpoint devono rispondere un errore pulito**, non rompersi: il sito deve restare usabile offline e su un clone senza Cloudflare.
+- [x] **Step 7:** `npm run gate`, poi commit.
 
 ---
 

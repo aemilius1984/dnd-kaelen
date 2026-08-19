@@ -15,3 +15,14 @@
 
 SITE_USER=ciurma
 SITE_PASS=cambiami
+
+# La nuvola delle sessioni non passa da qui: `DB` è un binding, non una
+# variabile, e lo dichiara `wrangler.jsonc`. Per provarla in locale serve la
+# D1 di sviluppo, creata una volta sola:
+#
+#   npx wrangler d1 migrations apply kaelen --local
+#   npm run build && npx wrangler pages dev ./dist
+#
+# Senza binding gli endpoint rispondono 503 con un messaggio, e la scheda
+# continua a funzionare come sempre: la nuvola è un comando, non una
+# sincronizzazione.
