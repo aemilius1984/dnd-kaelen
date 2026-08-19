@@ -125,14 +125,14 @@ button[disabled] {
   gap: 0.5rem;
 }
 
-/* Stesso motivo di .pf-pannello / .risorse-isola: con client:only="preact"
- * non c'è alcun render lato server, quindi senza altezza riservata la
- * sezione "salta" alla prima idratazione. Misurate con Chrome headless via
+/* Stesso motivo di .vitalita-isola: con client:only="preact" non c'è alcun
+ * render lato server, quindi senza altezza riservata la sezione "salta" alla
+ * prima idratazione. Misurate con Chrome headless via
  * CDP a 390px di larghezza (16 oggetti d'equipaggiamento, 3 valute, 1 nota
  * per oggetto — il simbolo sacro): .borsa-isola ~993.72px idratata →
  * riservati 996px; .note-isola ~219.19px idratata → riservati 221px
- * (entrambe con un paio di pixel di margine, come .pf-pannello). Vedi il
- * rapporto del task per il metodo e i numeri. */
+ * (entrambe con un paio di pixel di margine). Vedi il rapporto del task per
+ * il metodo e i numeri. */
 .borsa-isola {
   min-height: 996px;
 }
@@ -489,7 +489,7 @@ dialog.azioni input[type='number'] {
  * — l'unica idratata — è alta quanto loro perché condivide le stesse due
  * regole `.tenue` e `.valore`. Se in futuro l'indicatore diventasse più alto
  * del resto, questo smetterebbe di essere vero e servirebbe una `min-height`
- * come per `.pf-pannello`. */
+ * come per le altre isole. */
 .difese {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -510,61 +510,6 @@ dialog.azioni input[type='number'] {
 .attacco-inc {
   margin: 0.2rem 0 0;
   font-size: 0.85rem;
-}
-/* Stesso motivo di .pf-pannello: con client:only="preact" non c'è alcun
- * render lato server, quindi senza altezza riservata la sezione "salta" alla
- * prima idratazione — qui in mezzo alla rotta principale.
- *
- * ATTENZIONE: questo numero è CALCOLATO dal box model, non misurato con
- * Chrome headless come gli altri quattro: la sessione che l'ha scritto non
- * aveva un browser. È il primo valore da confermare nella verifica a 390×844.
- * Il calcolo: a 390px di larghezza il contenuto di `.pannello` è
- * 390 − 2×1rem (padding del body, `--spazio-2`) − 2×(1rem + 1px) (padding e
- * bordo del pannello, `--spazio-2`) = 324px. La striscia porta cinque voci
- * (2 livelli di slot + 3 risorse), ognuna alta una riga di testo a 0.85rem
- * con line-height 1.5 → 20.4px, separate da 0.4rem di row-gap → 6.4px. Le due
- * voci degli slot stanno insieme sulla prima riga (~198px con il column-gap
- * da 1rem, che ci sta ancora nei 324px); le tre risorse hanno nomi lunghi
- * ("Tuono della Tempesta") e non ne entrano due per riga nei 324px, quindi
- * prendono una riga ciascuna. Quattro righe:
- * 4×20.4 + 3×6.4 = 100.8px → riservati 101px (altezza invariata dalla
- * larghezza: il numero di righe non cambia fra 340px e 324px).
- *
- * Le altre altezze riservate del file (.preparati-isola, .borsa-isola,
- * .note-isola, sopra) restano calibrate sui 340px di contenuto di prima della
- * rinomina dei token: vedi BACKLOG.md per la nota di ri-misurazione.
- *
- * AGGIORNAMENTO fase 2: la sezione ha perso il riquadro, quindi il contenuto
- * torna a 390 − 2×1rem = 358px. Più largo significa mai più righe, quindi
- * 101px resta un tetto valido e non va alzato — ma potrebbe ora riservare più
- * del necessario se le tre risorse entrano in due righe invece di tre. Da
- * confermare nella stessa verifica. */
-/* AGGIORNAMENTO fase 2, task 6: l'isola ha perso le tre risorse — i loro
- * contatori sono dentro le card delle capacità — e le restano le due voci
- * degli slot, che stavano già insieme sulla prima riga. Delle quattro righe
- * del calcolo qui sopra ne resta una: 20.4px, riservati 24px. Anche questo è
- * CALCOLATO. */
-/* AGGIORNAMENTO fase 3: le caselle sono passate da 14px a 20px per contenere
- * un sigillo. La riga era alta quanto il testo a 0.85rem (20.4px) e adesso è
- * alta quanto la casella più il suo bordo (22px): riservati 24px, che
- * bastavano già. Nessun cambio, ma il numero ora ha due ragioni invece di
- * una. Sempre CALCOLATO, mai misurato. */
-.risorse-isola {
-  min-height: 24px;
-}
-.striscia-risorse {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem 1rem;
-}
-.striscia-risorse .risorsa {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.85rem;
-}
-.striscia-risorse .risorsa > span:first-child {
-  flex: 1;
 }
 .altrove {
   display: flex;
