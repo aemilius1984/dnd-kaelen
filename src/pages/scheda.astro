@@ -156,26 +156,10 @@ const bonusIniziativa = segno(iniziativa(pg));
   <dialog id="archivio" class="archivio" aria-labelledby="titolo-archivio">
     <div class="testa">
       <strong id="titolo-archivio">Tutti gli incantesimi</strong>
-      <button type="button" data-chiude="archivio">Chiudi</button>
+      <button type="button" data-chiude>Chiudi</button>
     </div>
     <ElencoArchivio incantesimi={tuttoArchivio} preparabili={pool.map((m) => m.slug)} />
   </dialog>
-
-  {
-    /* Aprire e chiudere un `<dialog>` non è stato: sono due chiamate al DOM.
-      Un'isola qui monterebbe Preact per due `addEventListener`, e il bottone
-      resterebbe morto finché non si idrata. Sette righe inline lo fanno
-      funzionare appena il markup esiste. */
-  }
-  <script is:inline>
-    for (const b of document.querySelectorAll('[data-apre]')) {
-      b.addEventListener('click', () => document.getElementById(b.dataset.apre)?.showModal());
-    }
-    for (const b of document.querySelectorAll('[data-chiude]')) {
-      b.addEventListener('click', () => document.getElementById(b.dataset.chiude)?.close());
-    }
-  </script>
-
   <ControlliLancio client:only="preact" />
   <Archivio client:only="preact" />
   <Contatori client:only="preact" />

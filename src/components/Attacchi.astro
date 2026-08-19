@@ -201,23 +201,6 @@ const carte = gruppi.map(({ id, modi }) => ({
     </dialog>
   ))
 }
-
-<script>
-  /* La sola riga di JavaScript di questa sezione, e concessa apposta: il
-   * contenuto delle modali è tutto statico e il selettore dei modi è CSS puro.
-   * `showModal()` è quel che porta trappola del focus, Escape e sfondo inerte —
-   * cose che una modale fatta con `:target` non ha. */
-  for (const bottone of document.querySelectorAll('[data-apre]')) {
-    const finestra = document.getElementById((bottone as HTMLElement).dataset.apre ?? '');
-    if (finestra instanceof HTMLDialogElement) {
-      bottone.addEventListener('click', () => finestra.showModal());
-    }
-  }
-  for (const chiudi of document.querySelectorAll('[data-chiude]')) {
-    chiudi.addEventListener('click', () => chiudi.closest('dialog')?.close());
-  }
-</script>
-
 <style>
   .attacchi {
     display: grid;

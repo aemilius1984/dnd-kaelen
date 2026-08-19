@@ -170,21 +170,6 @@ function riga(m: Incantesimo): string {
     </dialog>
   ))
 }
-
-<script>
-  /* Solo l'apertura, come per le armi: il contenuto è statico e i bottoni di
-   * lancio arrivano dall'isola. */
-  for (const bottone of document.querySelectorAll('[data-apre]')) {
-    const finestra = document.getElementById((bottone as HTMLElement).dataset.apre ?? '');
-    if (finestra instanceof HTMLDialogElement) {
-      bottone.addEventListener('click', () => finestra.showModal());
-    }
-  }
-  for (const chiudi of document.querySelectorAll('[data-chiude]')) {
-    chiudi.addEventListener('click', () => chiudi.closest('dialog')?.close());
-  }
-</script>
-
 <style>
   .carte-incantesimo {
     display: grid;
