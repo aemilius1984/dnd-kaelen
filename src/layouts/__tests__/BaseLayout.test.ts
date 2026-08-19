@@ -33,6 +33,27 @@ describe('BaseLayout', () => {
     expect(html).toMatch(/name="viewport"[^>]*viewport-fit=cover/);
   });
 
+  it('senza la prop, la barra del browser resta color pergamena', async () => {
+    const container = await AstroContainer.create();
+    const html = await container.renderToString(BaseLayout, {
+      props: { titolo: 'Prova', attiva: null },
+    });
+
+    // Cinque rotte su sei non passano niente: il ripiego è l'unica cosa che le
+    // tiene ferme, e se si sposta si spostano tutte insieme senza avvisare.
+    expect(html).toMatch(/name="theme-color" content="#efe7d6"/);
+  });
+
+  it('con la prop, la barra del browser prende il colore della rotta', async () => {
+    const container = await AstroContainer.create();
+    const html = await container.renderToString(BaseLayout, {
+      props: { titolo: 'Prova', attiva: null, coloreTema: '#24282c' },
+    });
+
+    expect(html).toMatch(/name="theme-color" content="#24282c"/);
+    expect(html).not.toContain('#efe7d6');
+  });
+
   it('scrive il tema in build, senza script che lo scelga a runtime', async () => {
     const container = await AstroContainer.create();
     const html = await container.renderToString(BaseLayout, {

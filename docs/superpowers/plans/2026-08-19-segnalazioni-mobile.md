@@ -77,10 +77,10 @@ Tocca cinque file perché i tre numeri del cappello sono ripetuti a mano.
 - Produces: prop `coloreTema?: string` su `BaseLayout`, valore di ripiego `#efe7d6`.
 - Consumes: `--cappello` no; è indipendente dal Task 1 e può essere eseguito in qualunque ordine rispetto a quello.
 
-- [ ] **Step 1: i due test che falliscono** — senza la prop, `theme-color` resta `#efe7d6`; con `coloreTema: '#24282c'`, il meta porta quel valore. Una rotta sola cambia colore: il ripiego protegge le altre cinque.
-- [ ] **Step 2: la prop** in `BaseLayout.astro`, con il commento esistente sul `theme-color` **riscritto**: oggi dice «il valore è il colore di fondo della pagina in pergamena», e da qui in poi non è più vero per tutte le rotte. Deve dire che la home è una fotografia e porta il colore della fotografia, e che il lampeggio del colore navigando è accettato.
-- [ ] **Step 3:** `index.astro` passa `coloreTema="#24282c"` a `BaseLayout`. Il valore è misurato sui bordi di `kaelen-splash-mobile.webp`, non scelto a occhio: dirlo nel commento, altrimenti il prossimo che ritocca l'immagine non sa che questo numero la segue.
-- [ ] **Step 4:** `npm run gate`, poi commit.
+- [x] **Step 1: i due test che falliscono** — senza la prop, `theme-color` resta `#efe7d6`; con `coloreTema: '#24282c'`, il meta porta quel valore. Una rotta sola cambia colore: il ripiego protegge le altre cinque.
+- [x] **Step 2: la prop** in `BaseLayout.astro`, con il commento esistente sul `theme-color` **riscritto**: oggi dice «il valore è il colore di fondo della pagina in pergamena», e da qui in poi non è più vero per tutte le rotte. Deve dire che la home è una fotografia e porta il colore della fotografia, e che il lampeggio del colore navigando è accettato.
+- [x] **Step 3:** `index.astro` passa `coloreTema="#24282c"` a `BaseLayout`. Il valore è misurato sui bordi di `kaelen-splash-mobile.webp`, non scelto a occhio: dirlo nel commento, altrimenti il prossimo che ritocca l'immagine non sa che questo numero la segue.
+- [x] **Step 4:** `npm run gate`, poi commit.
 
 ---
 

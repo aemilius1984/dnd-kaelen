@@ -15,7 +15,11 @@ const mob = await getImage({ src: mobile, format: 'webp' });
 const desk = await getImage({ src: desktop, format: 'webp' });
 ---
 
-<BaseLayout titolo="Kaelen" attiva={null}>
+<!-- `#24282c` non è scelto a occhio: è la media delle due strisce da 40px in
+cima e in fondo a `kaelen-splash-mobile.webp`, rgb(36, 40, 44) su entrambe.
+Serve a far sparire la barra di Safari dentro la fotografia. Chi ritocca
+l'immagine deve rimisurarla, altrimenti questo numero resta indietro. -->
+<BaseLayout titolo="Kaelen" attiva={null} coloreTema="#24282c">
   <div class="splash" id="splash">
     <picture>
       <source media="(min-width: 901px)" srcset={desk.src} />

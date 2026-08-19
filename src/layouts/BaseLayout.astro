@@ -9,8 +9,10 @@ import '@/styles/componenti.css';
 interface Props {
   titolo: string;
   attiva: 'scheda' | 'personaggio' | 'storia' | 'preparati' | 'note' | null;
+  /** Colore della barra del browser, per le rotte che non sono di pergamena. */
+  coloreTema?: string;
 }
-const { titolo, attiva } = Astro.props;
+const { titolo, attiva, coloreTema = '#efe7d6' } = Astro.props;
 ---
 
 <!doctype html>
@@ -20,10 +22,16 @@ const { titolo, attiva } = Astro.props;
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <!-- Un tema solo, scritto su <html> in build: nessuno script deve
       correggere il colore prima del primo paint, e questo meta non può
-      contraddire una scelta dell'utente che non esiste più. Il valore è il
-      colore di fondo della pagina in pergamena. Vedi BACKLOG.md per il tema
-      scuro futuro. -->
-    <meta name="theme-color" content="#efe7d6" />
+      contraddire una scelta dell'utente che non esiste più. Vedi BACKLOG.md
+      per il tema scuro futuro.
+
+      Il colore però non è più uno per tutto il sito. Cinque rotte sono carta e
+      prendono il ripiego; la home è una fotografia notturna, e la barra di
+      Safari deve sparire dentro la fotografia invece di tagliarla con una
+      striscia chiara. Navigando dalla home alle altre rotte il colore
+      lampeggia: è il prezzo, ed è accettato, perché quel lampeggio dura un
+      caricamento mentre la striscia sulla splash resterebbe lì per sempre. -->
+    <meta name="theme-color" content={coloreTema} />
     <meta name="robots" content="noindex, nofollow" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
