@@ -27,6 +27,9 @@ export default function Archivio() {
   const lista = bozza.value;
   const aperta = lista !== null;
   const [bersagli, setBersagli] = useState<Bersaglio[]>([]);
+  // Il cappello della pagina è markup statico: qui si trova solo il posto dove
+  // scrivere il conto e il comando, come per le spunte dell'elenco.
+  const [cappello, setCappello] = useState<HTMLElement | null>(null);
 
   // Se si arriva qui subito dopo un Riposo Lungo, la sessione si apre da sola:
   // è l'unico momento in cui il manuale concede di cambiare i sei, e farla
@@ -44,6 +47,7 @@ export default function Archivio() {
         slug: nodo.dataset.preparabile ?? '',
       })),
     );
+    setCappello(document.querySelector<HTMLElement>('[data-preparazione]'));
   }, []);
 
   // A sessione chiusa si mostra la verità salvata; a sessione aperta la bozza,
@@ -76,16 +80,47 @@ export default function Archivio() {
         );
       })}
 
-      {aperta ? (
+      {cappello !== null &&
+        createPortal(
+          <>
+            {/* Sotto e sopra dicono cose diverse: qui *quanti* ne hai, in fondo
+                *cosa fare* di quelli scelti. Il conto sta in alto perché si
+                legge scorrendo, e i due comandi restano in basso perché si
+                premono col pollice. */}
+            <span class="conto">
+              <strong>{scelti.length}</strong> su {pg.limitePreparati}
+              {aperta ? (
+                <span class="dritta">
+                  {' · '}
+                  {completa(scelti, pg)
+                    ? 'pronti'
+                    : `scegline ancora ${pg.limitePreparati - scelti.length}`}
+                </span>
+              ) : (
+                ' preparati'
+              )}
+            </span>
+            {aperta ? (
+              // Sbloccare due volte non vuol dire niente: aperta, il comando
+              // diventa il nome dello stato.
+              <span class="aperta">sbloccata</span>
+            ) : (
+              // Non dice più chi concede il permesso: si dà per scontato, e
+              // l'etichetta torna a dire cosa fa il tocco.
+              <button type="button" class="sblocca" onClick={() => apri(s.preparati)}>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M7 11h10v8H7z" />
+                  <path d="M9 11V7.5a3 3 0 0 1 5.7-1.3" />
+                </svg>
+                Sblocca
+              </button>
+            )}
+          </>,
+          cappello,
+        )}
+
+      {aperta && (
         <div class="barra-preparazione" role="group" aria-label="Sessione di preparazione">
-          <span class="conto">
-            <strong>{lista.length}</strong>/{pg.limitePreparati}
-          </span>
-          <span class="dritta">
-            {completa(lista, pg)
-              ? 'pronti'
-              : `scegline ancora ${pg.limitePreparati - lista.length}`}
-          </span>
           <button type="button" class="annulla" onClick={annulla}>
             Annulla
           </button>
@@ -96,16 +131,6 @@ export default function Archivio() {
             Conferma
           </button>
         </div>
-      ) : (
-        <p class="prep-chiusa tenue">
-          I sei preparati si cambiano alla fine di un Riposo Lungo.{' '}
-          {/* La via d'uscita per gli errori manuali. Si chiama così apposta:
-              correggere è legittimo, ma non deve sembrare che la regola lo
-              preveda. */}
-          <button type="button" class="concessione" onClick={() => apri(s.preparati)}>
-            Modifica concessa dal DM
-          </button>
-        </p>
       )}
     </>
   );

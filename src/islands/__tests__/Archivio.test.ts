@@ -22,7 +22,10 @@ const giro = () => new Promise((r) => setTimeout(r, 50));
 const spunta = (slug: string) =>
   document.querySelector<HTMLInputElement>(`[data-preparabile="${slug}"] input`);
 const conferma = () => radice.querySelector<HTMLButtonElement>('.conferma');
-const concessione = () => radice.querySelector<HTMLButtonElement>('.concessione');
+// Il cappello è markup statico della pagina e l'isola ci disegna dentro per
+// portale: si cerca nel documento, non nella radice dell'isola.
+const sblocca = () => document.querySelector<HTMLButtonElement>('.sblocca');
+const conto = () => document.querySelector('[data-preparazione] .conto')?.textContent ?? '';
 
 /** Apre la sessione come farebbe la fine di un Riposo Lungo. */
 const apriSessione = async () => {
@@ -39,6 +42,10 @@ beforeEach(async () => {
     `<script type="application/json" id="dati-iniziali">` +
     JSON.stringify({ pg, sheetVersion: 'v-test', pool: [] }) +
     `</script>` +
+    // Il cappello appiccicato in cima alla pagina: la X è statica, il conto e
+    // il comando li scrive l'isola qui dentro.
+    `<div class="barra-preparati"><a class="ics" href="/scheda/"></a>` +
+    `<div class="stato-preparazione" data-preparazione></div></div>` +
     contenitori;
   radice = document.createElement('div');
   document.body.append(radice);
@@ -66,7 +73,7 @@ it('fuori da una sessione le spunte sono in sola lettura', async () => {
     expect(spunta(slug)?.disabled).toBe(true);
   }
   expect(conferma()).toBeNull();
-  expect(concessione()).not.toBeNull();
+  expect(sblocca()).not.toBeNull();
 });
 
 it('aperta la sessione, le spunte si attivano', async () => {
@@ -129,15 +136,44 @@ it('annullare non lascia una lista intermedia né tocca lo stato', async () => {
   expect(stato.value.preparati).toHaveLength(pg.limitePreparati);
 });
 
-it('la modifica fuori riposo esiste, ma si chiama col suo nome', async () => {
-  // Correggere un errore manuale è legittimo; far finta che la regola lo
-  // preveda no. Il comando dichiara di essere una concessione del DM.
-  expect(concessione()!.textContent).toMatch(/concessa dal dm/i);
+it('il comando dice cosa fa il tocco, non chi lo concede', async () => {
+  // Diceva «Modifica concessa dal DM»: raccontava il permesso invece
+  // dell'azione. Il permesso si dà per scontato — al tavolo il DM è lì — e la
+  // regola vera («si cambiano alla fine di un Riposo Lungo») è salita nel
+  // cappello della pagina, dove si legge una volta invece che accanto a ogni
+  // tocco.
+  expect(sblocca()!.textContent).toMatch(/sblocca/i);
+  expect(document.body.textContent).not.toMatch(/concessa dal dm/i);
 
-  concessione()!.click();
+  sblocca()!.click();
   await giro();
 
   expect(bozza.value).not.toBeNull();
+});
+
+it('il conto sta nel cappello, e a sessione aperta dice quanti ne mancano', async () => {
+  // Stava in fondo alla pagina, cioè dopo trentanove incantesimi: scorrendo
+  // l'elenco non si sapeva mai a che punto si era.
+  expect(conto()).toMatch(/6 su 6 preparati/);
+  expect(radice.querySelector('.barra-preparazione')).toBeNull();
+
+  await apriSessione();
+  spunta(pg.preparatiIniziali[0])!.click();
+  await giro();
+
+  expect(conto()).toMatch(/5 su 6/);
+  expect(conto()).toMatch(/scegline ancora 1/);
+  // Il piede porta solo i due comandi: il conto non è scritto due volte.
+  expect(radice.querySelector('.barra-preparazione .conto')).toBeNull();
+});
+
+it('sbloccata, il comando diventa il nome dello stato', async () => {
+  await apriSessione();
+
+  // Sbloccare due volte non vuol dire niente, e un bottone che non fa niente
+  // è un bottone che si prova.
+  expect(sblocca()).toBeNull();
+  expect(document.querySelector('[data-preparazione] .aperta')?.textContent).toMatch(/sbloccata/i);
 });
 
 it('non c’è modo di preparare un trucchetto o un incantesimo di dominio', async () => {

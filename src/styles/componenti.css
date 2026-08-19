@@ -242,7 +242,13 @@ button[disabled] {
   }
 }
 
-/* La striscia di annullamento. Larga quanto il foglio meno i margini, non
+/* La striscia di annullamento. Il nome porta «striscia» perché `.annulla` da
+ * sola è un verbo, e un verbo lo rivendica chiunque: il bottone della sessione
+ * di preparazione si chiamava così, e si prendeva addosso il `position: fixed`
+ * di questa regola. Il piede lo teneva nel DOM, e lui se ne stava in mezzo
+ * all'elenco — misurato, a 672px mentre il suo piede era a 776.
+ *
+ * Larga quanto il foglio meno i margini, non
  * `fit-content`: dopo il lancio la modale si chiude e questa resta l'unica
  * cosa che dice cosa è appena successo, quindi porta il nome dell'incantesimo
  * e non solo il livello dello slot. Il bottone è a destra, la barra del tempo
@@ -255,7 +261,7 @@ button[disabled] {
  * vetro in tutto il sito — con il ripiego a fondo quasi pieno dove il browser
  * non lo sa fare: mezzo velo su un testo che ci scorre sotto sarebbe
  * illeggibile, non trasparente. */
-.annulla {
+.striscia-annulla {
   position: fixed;
   inset: auto 1rem calc(8rem + env(safe-area-inset-bottom)) 1rem;
   z-index: 22;
@@ -274,7 +280,7 @@ button[disabled] {
   animation: sale-annulla 0.32s var(--espo) both;
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .annulla {
+  .striscia-annulla {
     background: color-mix(in srgb, var(--carta) 94%, transparent);
   }
 }
@@ -291,24 +297,24 @@ button[disabled] {
     opacity: 1;
   }
 }
-.annulla .detto {
+.striscia-annulla .detto {
   flex: 1 1 auto;
   min-width: 0;
   display: flex;
   flex-direction: column;
 }
-.annulla .detto strong {
+.striscia-annulla .detto strong {
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.annulla .costo {
+.striscia-annulla .costo {
   font-family: var(--font-mono);
   font-size: 0.72rem;
   color: var(--inchiostro-muto);
 }
-.annulla button {
+.striscia-annulla button {
   flex: none;
   min-height: 44px;
 }
@@ -316,13 +322,13 @@ button[disabled] {
  * striscia è già sparita. La durata arriva dall'isola come `--durata-annulla`,
  * perché il timer che decide vive lì: due numeri scritti a mano si sarebbero
  * scollati. `scaleX` invece della larghezza per restare sul compositore. */
-.annulla .tempo {
+.striscia-annulla .tempo {
   position: absolute;
   inset: auto 0 0 0;
   height: 3px;
   background: var(--filetto);
 }
-.annulla .tempo > i {
+.striscia-annulla .tempo > i {
   display: block;
   height: 100%;
   background: var(--ambra);
@@ -341,7 +347,7 @@ button[disabled] {
  * ferma su «pieno» mentre il tempo scorre direbbe il falso: meglio non
  * mostrarla. Il diritto di annullare non cambia — scade lo stesso. */
 @media (prefers-reduced-motion: reduce) {
-  .annulla .tempo {
+  .striscia-annulla .tempo {
     display: none;
   }
 }
@@ -1023,37 +1029,140 @@ dialog.vitalita .annuncio {
 /* La sessione di preparazione. La barra è fissa perché l'elenco è lungo
  * trentanove voci: il conto e i due comandi devono restare sotto il pollice
  * mentre si scorre, non in fondo alla pagina. */
+/* Il cappello dell'archivio: via d'uscita, conto, comando. Si appiccica sotto
+ * la barra del menu e sale a filo quando quella si ritira scorrendo — la
+ * stessa regola di `.barra-slot-isola`, di cui è la sorella su questa rotta.
+ *
+ * `sticky` sta sul contenitore e non sulla barra: il contenitore è l'unico che
+ * il build scrive, quindi è l'unico che può riservare l'altezza prima che
+ * l'isola scriva conto e comando. La barra esce dall'imbottitura del body per
+ * toccare i due bordi, come farebbe un cappello vero. */
+.barra-preparati-isola {
+  position: sticky;
+  top: 3.25rem;
+  z-index: 18;
+  min-height: 49px;
+  margin: 0 calc(-1 * var(--spazio-2)) var(--spazio-2);
+  padding: 0 var(--spazio-2);
+  background: color-mix(in srgb, var(--carta) 94%, transparent);
+  border-bottom: 1px solid var(--filetto);
+  box-shadow: var(--ombra-1);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+  transition: top 0.5s var(--espo);
+}
+body:has(.barra[data-nascosta]) .barra-preparati-isola {
+  top: 0;
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .barra-preparati-isola {
+    background: color-mix(in srgb, var(--carta) 97%, transparent);
+  }
+}
+.barra-preparati {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: 49px;
+}
+/* La via d'uscita, non un comando della sessione: sta a sinistra, dove si
+ * cerca, e nello stesso posto in tutti e due gli stati. Il margine negativo
+ * riallinea il glifo al bordo del testo sotto, lasciando al dito i 44px
+ * dell'area premibile. */
+.barra-preparati .ics {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  margin-left: -0.6rem;
+  display: grid;
+  place-items: center;
+  color: var(--inchiostro-tenue);
+}
+.barra-preparati .ics svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+.stato-preparazione {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+/* Stessa forma del conto sulla barra degli slot: i due numeri sono la stessa
+ * cosa detta due volte, e a due corpi diversi litigherebbero. A distinguerli
+ * bastano colore e peso. */
+.stato-preparazione .conto {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--inchiostro-tenue);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.stato-preparazione .conto strong {
+  font-weight: 600;
+  color: var(--lampo);
+}
+/* Sotto i sei non è un allarme: è l'aspetto normale di una scelta a metà —
+ * per sostituire si toglie prima e si aggiunge dopo. Quindi lo dice a parole,
+ * in grigio, e il rosso resta a chi ha finito qualcosa davvero. */
+.stato-preparazione .dritta {
+  color: var(--inchiostro-muto);
+}
+.stato-preparazione .sblocca {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 44px;
+  border-color: var(--spento);
+  color: var(--ambra);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.stato-preparazione .sblocca svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.stato-preparazione .aperta {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ambra);
+}
+
+/* Il piede porta solo i due comandi: il conto è salito nel cappello, dove si
+ * legge scorrendo. Qui restano i due tocchi che decidono, nella zona del
+ * pollice. */
 .barra-preparazione {
   position: fixed;
   inset: auto 0 0 0;
   z-index: 30;
   display: flex;
-  align-items: center;
+  justify-content: flex-end;
   gap: var(--spazio-2);
   padding: 0.7rem var(--spazio-2) calc(0.7rem + env(safe-area-inset-bottom));
   background: var(--superficie);
   border-top: 1px solid var(--filetto);
   box-shadow: var(--ombra-2);
 }
-.barra-preparazione .conto {
-  font-family: var(--font-mono);
-  font-size: 1.1rem;
-  color: var(--inchiostro-tenue);
-}
-.barra-preparazione .conto strong {
-  color: var(--lampo);
-}
-.barra-preparazione .dritta {
-  font-size: 0.78rem;
-  color: var(--inchiostro-muto);
-}
 .barra-preparazione button {
   min-height: 44px;
-}
-/* `auto` sul primo dei due comandi spinge la coppia a destra; il secondo la
- * segue. Metterlo su entrambi richiedeva poi due regole per disfarlo. */
-.barra-preparazione .annulla {
-  margin-left: auto;
 }
 .barra-preparazione .conferma {
   border-color: var(--lampo);
@@ -1068,23 +1177,6 @@ dialog.vitalita .annuncio {
 .prepara:has(input[disabled]) .etichetta-prepara {
   opacity: 0.5;
 }
-.prep-chiusa {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: var(--spazio-2);
-  font-size: 0.85rem;
-}
-.prep-chiusa .concessione {
-  min-height: 44px;
-  border-color: var(--spento);
-  color: var(--ambra);
-  font-size: 0.72rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
 /* La via rituale non è un bottone: non c'è niente da consumare finché
  * materiali e Concentrazione non sono tracciati. È l'informazione che al
  * tavolo mancava — che l'incantesimo si può lanciare anche senza slot. */

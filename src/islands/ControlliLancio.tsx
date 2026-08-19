@@ -154,7 +154,7 @@ export default function ControlliLancio() {
           <div class="velo-annulla" aria-hidden="true" />
           <div
             key={lanci}
-            class="annulla"
+            class="striscia-annulla"
             role="status"
             style={{ '--durata-annulla': `${DURATA_ANNULLA}ms` }}
           >

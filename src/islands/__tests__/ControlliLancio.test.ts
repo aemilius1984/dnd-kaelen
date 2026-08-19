@@ -23,7 +23,7 @@ const giro = () => new Promise((r) => setTimeout(r, 50));
 const carta = () => document.querySelector<HTMLElement>('.incantesimo')!;
 const contenitore = () => document.querySelector<HTMLElement>('[data-lancio]')!;
 const modale = () => document.querySelector<HTMLDialogElement>('dialog')!;
-const striscia = () => document.querySelector<HTMLElement>('.annulla');
+const striscia = () => document.querySelector<HTMLElement>('.striscia-annulla');
 
 /** Il bottone «Lancia 1°» dentro la modale. */
 const bottoneLancio = () =>

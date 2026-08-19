@@ -267,6 +267,19 @@ it('la barra degli slot si appiccica al contenitore, non alla radice dell’isol
   expect(() => corpo('.barra-slot')).toThrow();
 });
 
+it('il cappello dell’archivio si appiccica come la barra degli slot', () => {
+  // Stessa forma e stessa ragione: `sticky` sul contenitore, che è l'unico che
+  // il build scrive e quindi l'unico che può riservare l'altezza prima che
+  // l'isola scriva conto e comando. Sulla barra fatta dall'isola non
+  // funzionerebbe — è figlia unica del contenitore e ne riempie l'altezza,
+  // quindi non ha spazio dove restare.
+  expect(corpo('.barra-preparati-isola')).toMatch(/position:\s*sticky/);
+  expect(corpo('.barra-preparati-isola')).toMatch(/min-height:\s*\d+px/);
+  expect(corpo('.barra-preparati-isola')).toMatch(/box-shadow:/);
+  expect(() => corpo('.barra-preparati')).not.toThrow();
+  expect(corpo('.barra-preparati')).not.toMatch(/position:\s*sticky/);
+});
+
 it('le file della barra degli slot partono tutte dalla stessa colonna', () => {
   // In numeri romani «I» e «VIII» sono larghi il doppio l'uno dell'altro: senza
   // una colonna dichiarata, ogni fila di caselle partirebbe da un punto suo.
