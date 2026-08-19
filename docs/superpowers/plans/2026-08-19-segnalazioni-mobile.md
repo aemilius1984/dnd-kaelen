@@ -290,10 +290,36 @@ precedenti non abbiano rotto le altre cinque rotte.
 
 - Nessuno nel repo. Lo script è usa e getta, nello scratchpad di sessione.
 
-- [ ] **Step 1:** build, poi servire `dist/` da **`localhost`** (non `127.0.0.1`), con il server avviato **dentro** la cartella e **riavviato dopo ogni build**. Vedi la memoria `browser-headless-via-cdp`: entrambe le trappole hanno già prodotto misure false su questo progetto.
-- [ ] **Step 2:** Chrome headless, `Network.setBypassServiceWorker {bypass: true}`, `Emulation.setDeviceMetricsOverride {width: 390, height: 844, mobile: true}` e `Emulation.setSafeAreaInsetsOverride` con alto 47 e basso 34. Ogni `Runtime.evaluate` in gara con un timeout.
-- [ ] **Step 3: cosa misurare**, su tutte e sei le rotte. Che `env(safe-area-inset-top)` arrivi diverso da zero (se resta zero, `viewport-fit=cover` non è arrivato e tutto il resto è teatro). Che la barra del menu sia alta 47px in più e che il suo contenuto stia sotto la tacca. Che i due cappelli appiccicati si fermino sotto la barra, nei due stati. Che nessuna barra fissa in basso finisca sotto i 34px di scarto. Che sulla home l'immagine sia alta quanto il viewport grande e le porte stiano **sopra** la linea dell'altezza piccola.
-- [ ] **Step 4:** riferire le misure. Se una non torna, si corregge e si rimisura: il gate verde non dice niente su queste.
+- [x] **Step 1:** build, poi servire `dist/` da **`localhost`** (non `127.0.0.1`), con il server avviato **dentro** la cartella e **riavviato dopo ogni build**. Vedi la memoria `browser-headless-via-cdp`: entrambe le trappole hanno già prodotto misure false su questo progetto.
+- [x] **Step 2:** Chrome headless, `Network.setBypassServiceWorker {bypass: true}`, `Emulation.setDeviceMetricsOverride {width: 390, height: 844, mobile: true}` e `Emulation.setSafeAreaInsetsOverride` con alto 47 e basso 34. Ogni `Runtime.evaluate` in gara con un timeout.
+- [x] **Step 3: cosa misurare**, su tutte e sei le rotte. Che `env(safe-area-inset-top)` arrivi diverso da zero (se resta zero, `viewport-fit=cover` non è arrivato e tutto il resto è teatro). Che la barra del menu sia alta 47px in più e che il suo contenuto stia sotto la tacca. Che i due cappelli appiccicati si fermino sotto la barra, nei due stati. Che nessuna barra fissa in basso finisca sotto i 34px di scarto. Che sulla home l'immagine sia alta quanto il viewport grande e le porte stiano **sopra** la linea dell'altezza piccola.
+- [x] **Step 4:** riferire le misure. Se una non torna, si corregge e si rimisura: il gate verde non dice niente su queste.
+
+**Le misure, prese il 2026-08-19 con Chrome headless, 390x844, inset alto 47 e
+basso 34.**
+
+| cosa                                  | atteso             | letto      |
+| ------------------------------------- | ------------------ | ---------- |
+| `env(safe-area-inset-top)`, sei rotte | 47                 | 47         |
+| `--cappello`                          | 52 + 47 = 99       | 99         |
+| barra del menu, altezza               | 99                 | 99         |
+| contenuto della barra, dal bordo      | sotto 47           | 50         |
+| cappelli appiccicati, barra visibile  | 99                 | 99         |
+| cappelli appiccicati, barra ritirata  | 47                 | 47         |
+| primo contenuto di `main`, in cima    | 99 + 8 = 107       | 107        |
+| ⚡, dal fondo                         | oltre 34           | 50         |
+| home, altezza della fotografia        | quanto il viewport | 844 su 844 |
+| home, porte e link dal fondo          | oltre 34           | 66         |
+
+La barra **si ritira da sola** allo scorrimento (`barra-scroll.ts`): la prima
+misura degli sticky sembrava sbagliata a 47 e non lo era: era già l'altro
+stato. Per leggere i due valori bisogna riportare la barra a mano senza
+toccare lo scroll.
+
+**In più, non richiesto dal piano ma toccato dal Task 1:** da telefono
+coricato (844x390, inset laterali 47) lo scarto del `body` vale 63px — i 16 di
+`--spazio-2` più i 47 dello schermo — e nessun testo entra nella tacca su
+`/scheda/`, `/storia/` e `/note/`.
 
 ---
 
