@@ -112,21 +112,24 @@ risorse:
       Breve. È il carburante comune di Scintilla Divina, Scacciare Non Morti e
       Ira Distruttiva: spenderla per una la toglie alle altre.
     usi:
-      - nome: Scintilla Divina
+      - id: scintilla-divina
+        nome: Scintilla Divina
         nomeEn: Divine Spark
         paragrafi:
           - Azione Magica, creatura visibile entro 30 ft. Puoi guarirla di 1d8 + 3 PF.
           - >-
             In alternativa la creatura effettua un TS Costituzione, subendo 1d8 + 3 danni
             radianti o necrotici al fallimento e metà al successo. Non consuma slot.
-      - nome: Scacciare Non Morti
+      - id: scacciare-non-morti
+        nome: Scacciare Non Morti
         nomeEn: Turn Undead
         paragrafi:
           - Azione Magica. I non morti scelti entro 30 ft effettuano un TS Saggezza.
           - >-
             Chi fallisce è Spaventato e Incapacitato per 1 minuto e cerca di allontanarsi.
             L'effetto termina se subisce danni o se Kaelen diventa Incapacitato o muore.
-      - nome: Ira Distruttiva
+      - id: ira-distruttiva
+        nome: Ira Distruttiva
         nomeEn: Destructive Wrath
         paragrafi:
           - >-

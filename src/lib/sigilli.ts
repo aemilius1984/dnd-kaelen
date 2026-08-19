@@ -46,3 +46,17 @@ export function sigilloProprio(slug: string): string | null {
 export function simbolo(slug: string, tag: Incantesimo['tag']): string {
   return PROPRI[slug] ?? PER_TAG[tag[0]];
 }
+
+/** Il sigillo di un uso di una risorsa — i tre di Incanalare Divinità.
+ *
+ *  Non ripiega su niente: le risorse con un uso solo non ne hanno bisogno, e
+ *  la casella consumata resta piena e basta. Chi chiama decide cosa fare del
+ *  `null`, come per `sigilloProprio`.
+ *
+ *  La convenzione lega l'id dell'uso al nome del simbolo, invece di una
+ *  seconda tabella: `usi-e-sigilli.test.ts` verifica che ogni uso nei dati
+ *  trovi il proprio glifo nello sprite, così un uso nuovo senza disegno non
+ *  passa in silenzio come casella vuota. */
+export function sigilloUso(idUso: string): string {
+  return `uso-${idUso}`;
+}

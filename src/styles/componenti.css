@@ -220,6 +220,64 @@ button[disabled] {
   flex-wrap: wrap;
   margin-top: 0.6rem;
 }
+
+/* Le capacità si spendono dalle proprie card, e i comandi arrivano per portale
+ * da `Contatori`: come per `.lancio`, uno stile ad ambito non li
+ * raggiungerebbe.
+ *
+ * `.capacita-card.spenta` attenua ma **non** toglie l'interazione, al
+ * contrario di `.incantesimo.spenta`: a secco la modale degli usi resta
+ * l'unico posto dove è scritto cosa fanno le tre capacità, e chiuderla
+ * significherebbe rendere illeggibile la scheda proprio quando si sta
+ * decidendo se conviene un Riposo Breve. Il comando dentro sparisce da sé. */
+.capacita-card.spenta {
+  opacity: 0.6;
+}
+.spendi {
+  margin-top: 0.6rem;
+}
+.spendi button {
+  min-height: 44px;
+  padding: 0 1rem;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--inchiostro);
+  background: none;
+  border: 1px solid var(--filetto);
+  border-radius: var(--raggio);
+  cursor: pointer;
+}
+/* Il comando che apre la modale degli usi. Stessa forma della riga di un
+ * incantesimo — testo a sinistra, freccia a destra — perché fa la stessa
+ * promessa: qui dentro c'è dell'altro. */
+.apri-usi {
+  width: 100%;
+  min-height: 44px;
+  margin-top: var(--spazio-2);
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--inchiostro-muto);
+  background: none;
+  border: none;
+  border-top: 1px solid var(--filetto);
+  cursor: pointer;
+}
+.apri-usi svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 /* Il velo sotto la striscia di annullamento. Sta sopra tutto ciò che la
  * scheda tiene fisso — barra del menu (20), pulsante ⚡ e barra degli slot
  * (18) — perché sono proprio quelli a rubarle l'occhio. Non intercetta i

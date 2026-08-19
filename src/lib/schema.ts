@@ -98,6 +98,9 @@ export const personaggioSchema = z.object({
       usi: z
         .array(
           z.object({
+            /* Serve alla coda di `risorseUsate`: la casella consumata porta il
+             * sigillo di *questo* uso, non un pallino qualunque. */
+            id: z.string(),
             nome: z.string(),
             nomeEn: z.string(),
             paragrafi: z.array(z.string()),

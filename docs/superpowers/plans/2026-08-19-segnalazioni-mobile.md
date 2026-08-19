@@ -200,11 +200,12 @@ punto di non ritorno: `SCHEMA_VERSION` sale a 4.
 - Modify: `src/components/CapacitaEReazioni.astro`, `src/islands/Contatori.tsx`, `src/styles/componenti.css`
 - Test: `src/islands/__tests__/Contatori.test.ts`, `src/components/__tests__/capacita-e-reazioni.test.ts`
 
-- [ ] **Step 1: Incanalare Divinità apre una modale**, gemella di quella di lancio: un blocco per uso al posto di un blocco per livello di slot, ognuno col suo testo e il suo bottone. Il contenuto statico resta statico — markup di build con un contenitore `[data-usi]` dentro, e l'isola ci disegna i comandi, esattamente come `[data-lancio]`.
-- [ ] **Step 2: Ira della Tempesta e Tuono della Tempesta si spendono con un tocco** dalla card, senza modale. Sono reazioni: si spendono nel turno di qualcun altro, e la scelta non esiste. L'errore lo copre la striscia del Task 8.
-- [ ] **Step 3: le caselle portano il sigillo** di ciò che le ha spese, per Incanalare. Per le due reazioni il sigillo è sempre lo stesso e la casella resta piena e basta.
-- [ ] **Step 4: lo stato spento.** Una capacità a secco non offre il comando, come `cartaSpenta` fa per gli incantesimi.
-- [ ] **Step 5:** `npm run gate`, poi commit.
+- [x] **Step 1: Incanalare Divinità apre una modale**, gemella di quella di lancio: un blocco per uso al posto di un blocco per livello di slot, ognuno col suo testo e il suo bottone. Il contenuto statico resta statico — markup di build con un contenitore per uso dentro (`[data-uso]`, più `[data-spendi]` sulle card senza modale: un contenitore solo non bastava, ogni comando deve stare sotto il proprio testo), e l'isola ci disegna i comandi, esattamente come `[data-lancio]`.
+- [x] **Step 2: Ira della Tempesta e Tuono della Tempesta si spendono con un tocco** dalla card, senza modale. Sono reazioni: si spendono nel turno di qualcun altro, e la scelta non esiste. L'errore lo copre la striscia del Task 8.
+- [x] **Step 3: le caselle portano il sigillo** — sono tre glifi nuovi nello sprite, e `sigilli-usi.test.ts` verifica che ogni uso nei dati trovi il proprio: un `<use>` che punta a un simbolo assente non fallisce, mostra un riquadro vuoto.
+- [x] **Step 3 (originale): le caselle portano il sigillo** di ciò che le ha spese, per Incanalare. Per le due reazioni il sigillo è sempre lo stesso e la casella resta piena e basta.
+- [x] **Step 4: lo stato spento.** Una capacità a secco non offre il comando, come `cartaSpenta` fa per gli incantesimi.
+- [x] **Step 5:** `npm run gate`, poi commit.
 
 ---
 

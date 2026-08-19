@@ -28,7 +28,7 @@ const usiPerRisorsa = new Map(pg.risorse.filter((r) => r.usi).map((r) => [r.id, 
 <div class="capacita-reazioni">
   {
     capacita.map((c) => (
-      <Superficie class="capacita-card">
+      <Superficie class="capacita-card" data-capacita={c.id}>
         <div class="testa">
           <h3 class="titolo">
             <NomeDoppio it={c.nome} en={c.nomeEn} />
@@ -57,24 +57,66 @@ const usiPerRisorsa = new Map(pg.risorse.filter((r) => r.usi).map((r) => [r.id, 
           </dl>
         )}
 
-        {c.id !== undefined && usiPerRisorsa.has(c.id) && (
-          <ul class="usi">
-            {usiPerRisorsa.get(c.id)!.map((u) => (
-              <li>
-                <strong>
-                  <NomeDoppio it={u.nome} en={u.nomeEn} />
-                </strong>
-                {u.paragrafi.map((p) => (
-                  <p>{p}</p>
-                ))}
-              </li>
-            ))}
-          </ul>
-        )}
+        {/* Chi ha più usi li sceglie in una modale, gemella di quella di
+            lancio: al tavolo si legge cosa fanno e poi si tocca, e le tre
+            descrizioni per esteso dentro la card facevano un muro di testo
+            sopra il resto della sezione. Chi ne ha uno solo — le due reazioni
+            — si spende con un tocco: si consumano nel turno di qualcun altro,
+            e una modale per un bottone sarebbe un passaggio in più nel momento
+            peggiore. In tutti e due i casi il comando lo disegna `Contatori`:
+            qui c'è solo il posto dove andrà. */}
+        {c.id !== undefined &&
+          (usiPerRisorsa.has(c.id) ? (
+            <button type="button" class="apri-usi" data-apre={`cap-${c.id}`}>
+              Come la spendi
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <polyline points="9 5 16 12 9 19" />
+              </svg>
+            </button>
+          ) : (
+            <div class="spendi" data-spendi={c.id} />
+          ))}
       </Superficie>
     ))
   }
 </div>
+
+{
+  pg.risorse
+    .filter((r) => r.usi)
+    .map((r) => (
+      <dialog class="capacita-piena" id={`cap-${r.id}`} aria-label={r.nome}>
+        <div class="testa">
+          <span class="kicker">Come la spendi</span>
+          <button type="button" class="chiudi" data-chiude aria-label="Chiudi">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 5l14 14M19 5L5 19" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="intestazione">
+          <h4>{r.nome}</h4>
+          <p class="riferimenti">{r.nomeEn}</p>
+        </div>
+
+        {r.usi!.map((u) => (
+          <section class="uso">
+            <h5>
+              <NomeDoppio it={u.nome} en={u.nomeEn} inline />
+            </h5>
+            {u.paragrafi.map((p) => (
+              <p>{p}</p>
+            ))}
+            {/* Il comando lo disegna `Contatori` per portale, come
+                `ControlliLancio` fa con i blocchi di lancio: qui non c'è
+                niente che dipenda dallo stato di sessione. */}
+            <div class="spendi" data-uso={u.id} data-risorsa={r.id} />
+          </section>
+        ))}
+      </dialog>
+    ))
+}
 
 <style>
   .capacita-reazioni {
@@ -143,21 +185,99 @@ const usiPerRisorsa = new Map(pg.risorse.filter((r) => r.usi).map((r) => [r.id, 
     margin: 0;
   }
 
-  .usi {
-    margin: var(--spazio-2) 0 0;
-    padding: 0;
-    list-style: none;
-    display: grid;
-    gap: var(--spazio-2);
+  /* La modale degli usi, gemella di quella degli incantesimi: stessa forma a
+     tutto schermo, perché è la stessa promessa — qui c'è tutto quel che serve
+     per scegliere, e poi si tocca. `display` solo da aperto, altrimenti la
+     regola base lo scavalca e il contenuto finisce dentro la pagina.
+
+     Il ripiego dentro `env()` non è ornamento: senza, dove la zona sicura non
+     è popolata l'intero `calc()` diventa non valido e l'ultimo uso finisce
+     sotto il bordo dello schermo. */
+  dialog.capacita-piena {
+    overflow-y: auto;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: none;
+    margin: 0;
+    padding: var(--spazio-2) var(--spazio-2) calc(1.2rem + env(safe-area-inset-bottom, 0px));
+    border: none;
+    background: var(--carta);
+    color: var(--inchiostro);
   }
 
-  .usi li {
-    padding-top: var(--spazio-2);
-    border-top: 1px solid var(--filetto);
+  dialog.capacita-piena[open] {
+    display: flex;
+    flex-direction: column;
   }
 
-  .usi p {
+  dialog.capacita-piena::backdrop {
+    background: rgb(0 0 0 / 0.6);
+  }
+
+  .capacita-piena .testa {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 44px;
+  }
+
+  .chiudi {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: -0.6rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+
+  .chiudi svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: var(--inchiostro);
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+
+  .intestazione {
+    padding: 0.4rem 0 var(--spazio-2);
+    border-bottom: 1px solid var(--filetto);
+  }
+
+  .intestazione h4 {
+    margin: 0;
+    font-size: 1.5rem;
+    line-height: 1.2;
+  }
+
+  .riferimenti {
     margin: 0.25rem 0 0;
-    font-size: 0.9rem;
+    font-family: var(--font-mono);
+    font-size: var(--fs-piccolo);
+    color: var(--inchiostro-muto);
+  }
+
+  /* Un uso per blocco, e il blocco è alto quanto il suo testo: sono tre, e
+     comprimerli in un elenco fitto rimetterebbe il muro di parole che la
+     modale esiste per togliere dalla card. */
+  .uso {
+    padding: var(--spazio-2) 0;
+    border-bottom: 1px solid var(--filetto);
+  }
+
+  .uso h5 {
+    margin: 0;
+    font-size: 1.05rem;
+  }
+
+  .uso p {
+    margin: 0.4rem 0 0;
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: var(--inchiostro-tenue);
   }
 </style>
