@@ -116,6 +116,260 @@ era esattamente «il `theme-color` va guardato da PWA installata».
 
 ---
 
-## Segnalazioni successive
+## Segnalazione 2 — Attacco e CD spariscono con lo scroll
 
-Da scrivere. L'elenco è aperto.
+> «Nella scheda, nella sezione incantesimi, Attacco +5 e CD 13 spariscono
+> velocemente: aggiungere nello sticky dedicato, riducendo a 6/6 la dicitura
+> degli slot.»
+
+`scheda.astro:102` mette `Attacco +5 · CD 13` in un paragrafo **sopra** la
+barra appiccicata. Due righe di scroll e i due numeri che servono a ogni
+lancio sono fuori schermo, mentre la barra che resta in vista porta solo il
+conto degli slot.
+
+### Le decisioni
+
+**I due numeri vanno nel contenitore, non nell'isola.** `BarraSlot.tsx` è
+`client:only`, e il vincolo del progetto dice che un'isola non contiene mai
+contenuto statico. `Attacco` e `CD` sono valori derivati in build da
+`derive.ts`: entrano in `.barra-slot-isola`, che è markup scritto dal build,
+sulla stessa riga dell'isola. Si vedono così anche prima dell'idratazione, che
+per due numeri immutabili è il comportamento giusto.
+
+**La riga si legge `Attacco +5 · CD 13` a sinistra, `6/6` più «dettaglio» a
+destra.** La parola «slot» cade: serviva a «4 slot su 6», che doveva
+spiegarsi da sola; accanto a `Attacco +5 · CD 13`, dentro la sezione
+Incantesimi, `6/6` non può voler dire altro. Se a 390px la riga stringe, la
+prima cosa che cade è «dettaglio», non «Attacco».
+
+**`CD` resta anche nella fascia in alto.** È l'unica duplicazione che questo
+giro di correzioni **non** toglie, e per una ragione: la fascia `CA · CD ·
+INIZ` è l'identità difensiva del personaggio, si guarda quando ti colpiscono;
+lo sticky è lo strumento della sezione, si guarda quando lanci. Il numero è
+statico, quindi le due copie non possono divergere.
+
+**Conseguenza da misurare:** `.barra-slot-isola` riserva `min-height: 49px`,
+un numero preso col browser. La riga cambia contenuto, quindi la riserva va
+rimisurata, non ricalcolata a mente.
+
+---
+
+## Segnalazione 3 — il consumo dove sta la capacità
+
+> «Sulla base del refactor fatto ad attacchi e incantesimi, proponimi un
+> refactor per capacità e reazioni.»
+
+Oggi le card delle capacità (`CapacitaEReazioni.astro`) mostrano il contatore
+e non lo toccano: `Contatori.tsx` è dichiaratamente di sola lettura, e per
+spendere una carica si apre il ⚡ e si cerca la riga giusta. È la stessa
+distanza fra il gesto e il numero che il rifacimento degli incantesimi ha già
+chiuso una volta.
+
+### Il modello
+
+Sugli incantesimi la card è muta e la modale offre **le scelte**, ognuna con
+la conseguenza già calcolata. Applicato alle capacità di Kaelen, questo divide
+in due:
+
+**Incanalare Divinità → modale, come un incantesimo.** Ha tre usi (Scintilla
+Divina, Scacciare Non Morti, Ira Distruttiva) sulle stesse due cariche: la
+scelta esiste, e la modale è il gemello esatto di quella di lancio, con un
+blocco per uso al posto di un blocco per livello di slot.
+
+**Ira della Tempesta e Tuono della Tempesta → un tocco dalla card.** Sono
+reazioni: si spendono nel turno di qualcun altro, mentre il tavolo aspetta, e
+hanno un modo solo di spendersi. Una modale che chiede conferma per una scelta
+che non esiste è una tassa su ogni innesco. L'errore lo copre la striscia di
+annullamento a 5 secondi, che è già scritta.
+
+### Le tre conseguenze strutturali
+
+**1. `risorseUsate` diventa una lista, come `slotSpesi`.** Oggi è
+`Record<string, number>`: un conteggio non sa dire _cosa_ ha speso la carica,
+e soprattutto non sa dire qual è stata **l'ultima**, che è ciò che serve per
+annullare. Diventa `Record<string, string[]>`, con lo stesso significato che
+ha per gli slot, e le caselle di Incanalare portano il sigillo dell'uso che le
+ha spese. Costo: `SCHEMA_VERSION` da 3 a 4 con migrazione, e un cambio di
+forma che tocca `Contatori`, i due riposi, il ⚡ e i loro test. Deciso come
+aut-aut: o questo **con** l'annulla, o si resta al numero **senza** annulla.
+
+**2. I tre usi di Incanalare diventano un campo vero.** Oggi vivono in
+`pg.capacita` come voci col titolo prefissato `Incanalare Divinità: `, e la
+card li ritrova con uno `startsWith` su una stringa italiana. Come chiave di
+un comando che spende risorse è una trappola che scatta il giorno in cui
+qualcuno rinomina la capacità: diventano `usi: [{ nome, nomeEn, descrizione }]`
+dentro la risorsa, nello schema Zod. **`/personaggio/` va risarcita**: legge
+`pg.capacita` e senza intervento perderebbe tre capacità in silenzio.
+
+**3. L'annulla si estrae.** La striscia a 5 secondi vive dentro
+`ControlliLancio` ed è scritta sugli incantesimi. Due isole che disegnano
+ciascuna la propria striscia potrebbero mostrarne due insieme: diventa un
+modulo solo, con un signal dell'ultima azione annullabile e una striscia sola
+montata una volta. Chi spende dichiara cosa ha speso e come si disfa.
+
+---
+
+## Segnalazione 4 — il ⚡ rifondato: sessione, riposi, nuvola
+
+> «Ristrutturare drawer con fulmine, controlla cosa è doppione, non
+> rimuoviamolo ma va migliorato nello stile. Deve essere un workaround diretto
+> in caso di corner case. Proponimi uno sketch per gestire i riposi e la
+> sessione, e la possibilità di salvare in remoto.»
+
+### Il censimento: il ⚡ è quasi tutto doppione
+
+| cosa c'è oggi nel ⚡        | chi altro lo fa già                                       |
+| --------------------------- | --------------------------------------------------------- |
+| −1/−5, Danno, Cura          | la modale **Vitalità** (rotella)                          |
+| PF temporanei, TS morte     | la modale **Vitalità**                                    |
+| Dadi vita col totale tirato | la modale **Vitalità**                                    |
+| Ispirazione Eroica          | la modale **Vitalità**, la stella                         |
+| Slot per livello: Usa / ↺   | **BarraSlot** (lettura) + la modale di **lancio** (spesa) |
+| Risorse: Usa / ↺            | **Contatori** (lettura) + le card, dopo la segnalazione 3 |
+| **Riposo breve / lungo**    | **nessuno.** È l'unica cosa che vive solo lì              |
+
+Il pannello non va ristrutturato: va **rifondato su ciò che gli resta**. Il
+governo della sessione (riposi, salvataggio, note) più una cassetta degli
+attrezzi per i corner case.
+
+### La forma
+
+A tutto schermo, nella stessa lingua delle modali di lancio e Vitalità: testa
+appiccicata, chiusura col tasto indietro, vetro sopra il velo.
+
+```
+┌──────────────────────────────────┐
+│  Sessione                 Chiudi │
+├──────────────────────────────────┤
+│  RIPOSI                          │
+│  ┌──────────────┐┌──────────────┐│
+│  │   ⏱ Breve    ││   🌙 Lungo   ││
+│  │ +1 Incanalare││ tutto, e i   ││
+│  │              ││ sei preparati││
+│  └──────────────┘└──────────────┘│
+│                                  │
+│  NUVOLA                          │
+│  ultimo salvataggio              │
+│  ieri 23:14 · «il molo di Thuun» │
+│  ┌──────────────┐┌──────────────┐│
+│  │ Salva adesso ││  Riprendi…   ││
+│  └──────────────┘└──────────────┘│
+│                                  │
+│  NOTA DI QUESTA SESSIONE         │
+│  ┌────────────────────────────┐  │
+│  │ Il capitano mente sul...   │  │
+│  └────────────────────────────┘  │
+│                                  │
+│  ▸ Correzioni a mano             │
+│    slot · risorse                │
+└──────────────────────────────────┘
+                        ( ⚡ )
+```
+
+**Il bottone** resta in basso a destra e si scosta dal bordo: da `1rem` a
+`1.5rem`. Sparisce su `/preparati/` mentre la sessione di preparazione è
+aperta, dove le uniche azioni legittime sono Annulla e Conferma.
+
+**I riposi non usano più `confirm()`.** Diventano due blocchi che dicono cosa
+recupererai **coi tuoi numeri** («PF 21 → 27, 4 slot, 2 dadi vita, tutte le
+risorse») e poi confermano: la stessa lingua della modale di lancio, dove ogni
+scelta mostra la conseguenza già applicata invece della formula. `confirm()`
+per giunta blocca il thread e non si può provare.
+
+**La cassetta «Correzioni a mano»** contiene due sole griglie, slot per
+livello e risorse, ognuna con `−` e `↺`. Tutto il resto del pannello di oggi
+viene cancellato: ha un'altra casa. Sparisce anche l'unico posto dove oggi si
+digita un numero di danno a mano, ed è voluto, perché era il secondo cruscotto
+divergente.
+
+### La nuvola
+
+```
+┌──────────────────────────────────┐
+│  Riprendi una sessione   Indietro│
+├──────────────────────────────────┤
+│  ● 19 ago · 23:14                │
+│    «il molo di Thuunvar»         │
+│    PF 21/27 · 4 slot · 1 Incan.  │
+│  ────────────────────────────────│
+│  ○ 12 ago · 01:02  scheda prec.  │
+│    «la nave dei Vaerak»          │
+│    PF 27/27 · 6 slot · 2 Incan.  │
+└──────────────────────────────────┘
+```
+
+**Il servizio è D1**, il database SQLite gestito di Cloudflare. Numeri dai
+documenti Cloudflare, non a memoria:
+
+|           | D1 gratis                  | KV gratis                   |
+| --------- | -------------------------- | --------------------------- |
+| scritture | **100.000 righe / giorno** | **1.000 chiavi / giorno**   |
+| letture   | 5 milioni righe / giorno   | 100.000 / giorno            |
+| spazio    | 5 GB                       | 1 GB                        |
+| coerenza  | **immediata**              | **eventuale** (fino a ~60s) |
+
+La coerenza è la ragione vera, non le quote: con KV si salva dall'iPad, si
+apre l'iPhone dieci secondi dopo e si può ricevere la versione **precedente**.
+Per un salvataggio di sessione è il difetto peggiore possibile. E un elenco di
+sessioni con le sue note è letteralmente una tabella.
+
+**L'autenticazione esiste già.** Il `functions/_middleware.ts` di Basic auth è
+fail-closed e copre ogni rotta, `/api/` compresa: niente login, niente token,
+niente modello utente. Il sito ha un utente solo e un personaggio solo.
+
+```
+functions/api/sessioni.ts        GET elenco · POST salva
+functions/api/sessioni/[id].ts   GET una · DELETE
+
+CREATE TABLE sessioni (
+  id        INTEGER PRIMARY KEY AUTOINCREMENT,
+  creato_il TEXT NOT NULL,     -- ISO
+  etichetta TEXT,              -- «il molo di Thuunvar»
+  nota      TEXT,              -- copia di stato.note al momento del salvataggio
+  schema_v  INTEGER NOT NULL,  -- SCHEMA_VERSION
+  sheet_v   TEXT NOT NULL,     -- sheetVersion
+  stato     TEXT NOT NULL      -- StatoSessione, JSON
+);
+```
+
+Il client manda `stato.value` così com'è: `StatoSessione` è già piatto,
+serializzabile e versionato, e `carica()` sa già migrare. Al ripristino si
+riusa quella stessa funzione, quindi un salvataggio di due versioni fa si apre
+lo stesso.
+
+### Le regole della nuvola
+
+**Facoltativa.** È la prima dipendenza da un servizio esterno in un progetto
+finora statico e offline-first. Se D1 non risponde, o si è senza rete, tutto
+continua a funzionare in locale come oggi e il comando dice soltanto che non è
+riuscito. Il locale resta la verità: la nuvola è un comando, non una
+sincronizzazione.
+
+**Venti salvataggi, poi si pota.** Un archivio che cresce per sempre è un
+archivio che nessuno rilegge. Dall'elenco si può anche eliminare a mano.
+
+**Il ripristino chiede prima.** Sovrascrive lo stato del dispositivo: il
+pannello mostra **le due date affiancate** («questo dispositivo: oggi 21:40 ·
+il salvataggio: ieri 23:14») e offre «salva prima di riprendere» con un tocco.
+Chi riprende il salvataggio sbagliato al tavolo perde una serata di gioco, e
+il rimedio deve costare un tocco prima, non un rimpianto dopo.
+
+**La regola di `sheetVersion` non ha eccezioni.** Se la scheda è cambiata,
+`carica()` azzera, come già fa in locale. L'elenco **marca** quei salvataggi
+(«scheda precedente») e avvisa prima, invece di lasciare scoprire
+l'azzeramento dopo. La riga porta `sheet_v`, quindi il confronto è gratuito.
+
+**La nota è una sola.** Il campo dentro il ⚡ scrive `stato.note`, la stessa di
+`/note/`; il salvataggio ne congela una **copia** nella riga. Così il diario
+conserva quello che avevi scritto allora, e non nasce un secondo posto dove
+scrivere la stessa frase. L'unica cosa che si digita al momento di salvare è
+l'etichetta breve, che è un titolo.
+
+**Il nome del dispositivo non si registra.** Era nel primo mockup, è stato
+tolto: nessuna API di browser lo dà in modo affidabile, indovinarlo dallo user
+agent dà «iPhone» anche all'iPad, e non interessa saperlo.
+
+**Il gate resta offline.** L'endpoint si prova con un finto `D1Database` in
+memoria, come `basic-auth.test.ts` prova il middleware. Nessun `wrangler` nel
+gate: un gate che ha bisogno della rete è un gate che prima o poi si salta. La
+prova vera contro D1 si fa a mano sul deploy di preview.

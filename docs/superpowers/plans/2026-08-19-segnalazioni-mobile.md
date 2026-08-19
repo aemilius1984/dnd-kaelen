@@ -2,32 +2,40 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Far arrivare la home al bordo fisico dello schermo su Safari iOS e nella PWA installata, accendendo per la prima volta la zona sicura su tutto il sito.
+**Goal:** Quattro segnalazioni raccolte a voce il 2026-08-19: la home a schermo pieno su iOS, i due numeri di lancio che restano in vista, il consumo delle capacità dove sta la capacità, e il ⚡ rifondato su ciò che gli resta — riposi, nuvola, correzioni a mano.
 
-**Architecture:** Nessun JavaScript nuovo, nessuna isola nuova. Tre leve: un valore in più nel meta `viewport`, due token che portano la tacca dentro le altezze già esistenti, un `theme-color` che diventa proprietà del layout invece che costante. La splash smette di misurarsi su `inset: 0` e si misura su `lvh`, mentre i suoi comandi restano ancorati all'altezza piccola.
+**Architecture:** Tre movimenti indipendenti e uno che dipende dagli altri. (1) La zona sicura si accende per la prima volta su tutto il sito: un valore in più nel meta `viewport`, due token che portano la tacca dentro le altezze già esistenti. (2) Le capacità prendono il modello degli incantesimi — card muta, comando che spende, annulla a 5 secondi — e per farlo `risorseUsate` diventa una lista come `slotSpesi`. (3) La nuvola è una tabella D1 dietro il Basic auth che esiste già, comandata a mano, facoltativa per costruzione. (4) Il ⚡ si pota di tutto ciò che ha trovato un'altra casa, e questo si può fare solo dopo (2).
 
-**Tech Stack:** Astro 7 statico, CSS a mano con i token di `tokens.css`, vitest + jsdom, Chrome 151 via CDP per la prova con gli inset simulati.
+**Tech Stack:** Astro 7 statico, isole Preact (`client:only`), `@preact/signals`, CSS a mano con i token di `tokens.css`, vitest + jsdom, Pages Functions + D1, Chrome 151 via CDP per la prova con gli inset simulati.
 
 **Spec:** `docs/superpowers/specs/2026-08-19-segnalazioni-mobile.md`
 
-## Stato
+## Ordine di esecuzione
 
-**Elenco aperto.** Questo piano copre la segnalazione 1 e la sua conseguenza
-obbligata sul cromo. Le segnalazioni successive aggiungono task in coda, e
-l'esecuzione parte solo quando l'elenco è dichiarato chiuso: due segnalazioni
-che toccano `BaseLayout.astro` vanno scritte in un colpo, non una sopra
-l'altra.
+I task **non** sono tutti indipendenti:
+
+- **1 → 4** sono la segnalazione 1 e vanno in ordine fra loro (il Task 1 è il fondamento: senza `viewport-fit=cover` il 3 non si vede).
+- **5** è isolato: si può fare in qualunque momento.
+- **6 → 7 → 8 → 9** sono la segnalazione 3 e la catena è stretta: i dati, poi la forma dello stato, poi l'annulla condiviso, poi il consumo dalle card.
+- **10** dipende dal **9**: potare il ⚡ prima che le capacità si spendano dalle card lascerebbe Kaelen senza modo di spendere Incanalare Divinità.
+- **11 → 12** sono la nuvola e stanno in fondo perché il Task 12 vive dentro il pannello che il Task 10 ha appena rifatto.
+- **13** chiude: è la misura, e misura tutto.
 
 ## Global Constraints
 
 - Tutta la prosa visibile e i commenti sono **in italiano**; i soggetti dei commit in inglese.
-- HTML statico: il JavaScript è un'eccezione che deve chiedere permesso. **Questo piano non ne aggiunge.**
+- HTML statico: il JavaScript è un'eccezione che deve chiedere permesso. I Task 1–5 non ne aggiungono; dal 6 in poi ogni riga nuova sta dentro un'isola che esisteva già o dentro una funzione pura provabile in vitest.
+- **Un'isola non contiene mai contenuto statico.** Vale in particolare per il Task 5, dove i due numeri derivati vanno nel contenitore e non dentro `BarraSlot`.
+- I valori derivati si calcolano in `src/lib/derive.ts`, non si scrivono nei dati.
 - Nessun numero magico nuovo: `3.25rem` e `3.75rem` sono già ripetuti in quattro punti e in questo piano diventano un token solo.
 - Ogni `env()` porta il suo valore di ripiego (`env(safe-area-inset-top, 0px)`): su desktop e su Android senza tacca deve valere zero, non «non definito».
-- Verifica visiva sempre a **390×844**.
+- Ogni altezza riservata si **misura** col browser, non si calcola a mente. Vale per la riserva della barra degli slot del Task 5.
+- La nuvola è **facoltativa**: senza rete, senza binding o con D1 muto, il sito resta quello di oggi e nessun comando tocca lo stato locale.
+- Il gate resta **offline**: nessun `wrangler`, nessuna rete. L'endpoint si prova con un finto `D1Database`.
+- Ogni bersaglio da toccare è alto almeno **44px**. Verifica visiva sempre a **390×844**.
 - Prima di dichiarare finito: `npm run gate` (check + test + build).
 - Ogni task finisce con un commit.
-- **Il merge su `develop` avviene dopo il controllo sul telefono**, non prima. Metà di questa correzione vive in comportamenti che headless non riproduce.
+- **Il merge su `develop` avviene dopo il controllo sul telefono**, non prima. Buona parte di queste correzioni vive in comportamenti che headless non riproduce.
 
 ---
 
@@ -109,7 +117,149 @@ Dipende dal Task 1: senza `viewport-fit=cover` niente di questo si vede.
 
 ---
 
-### Task 5: la prova con gli inset simulati
+### Task 5: Attacco e CD nello sticky degli incantesimi
+
+Indipendente da tutti gli altri: si può eseguire in qualunque momento.
+
+**Files:**
+
+- Modify: `src/pages/scheda.astro`, `src/islands/BarraSlot.tsx`, `src/styles/componenti.css`
+- Test: `src/styles/__tests__/altezze.test.ts`
+
+- [ ] **Step 1:** togliere `<p class="tenue attacco-inc">` da `scheda.astro:102` e portare i due valori **dentro `.barra-slot-isola`**, come markup statico accanto all'isola. Non dentro `BarraSlot.tsx`: è `client:only`, e un'isola non contiene mai contenuto statico. Rimuovere anche la regola `.attacco-inc` da `componenti.css`, che resta senza markup.
+- [ ] **Step 2:** in `BarraSlot.tsx` il riassunto passa da «4 slot su 6» a `4/6`. La parola «slot» cade: dentro la sezione Incantesimi, accanto a `Attacco +5 · CD 13`, non può voler dire altro.
+- [ ] **Step 3:** disporre la riga: `Attacco +5 · CD 13` a sinistra, `4/6` e «dettaglio» a destra, dentro i 390px. Se stringe, la prima cosa che cade è «dettaglio».
+- [ ] **Step 4: rimisurare la riserva.** `.barra-slot-isola` dichiara `min-height: 49px`, un numero preso col browser: il contenuto della riga è cambiato, quindi va **misurato di nuovo** con CDP, non ricalcolato a mente. Aggiornare il test delle altezze.
+- [ ] **Step 5:** `npm run gate`, poi commit.
+
+---
+
+### Task 6: i tre usi di Incanalare Divinità diventano un campo
+
+Primo dei quattro task della segnalazione 3, che vanno in ordine: 6 → 7 → 8 → 9.
+
+**Files:**
+
+- Modify: `src/lib/schema.ts`, `src/content/character/kaelen.md`, `src/components/CapacitaEReazioni.astro`, `src/components/Capacita.astro`, `src/pages/personaggio.astro`
+- Test: `src/lib/__tests__/schema.test.ts`
+
+- [ ] **Step 1: il test che fallisce** — una risorsa può portare `usi: [{ nome, nomeEn, descrizione }]`, e nessuna capacità ha più un titolo che comincia per `Incanalare Divinità: `.
+- [ ] **Step 2:** campo `usi` opzionale nello schema Zod, dentro `risorse`.
+- [ ] **Step 3:** spostare le tre voci in `kaelen.md` da `capacita` a `risorse[incanalare].usi`. Migrazione meccanica di dati, nessuna parola riscritta.
+- [ ] **Step 4:** `CapacitaEReazioni.astro` perde il `PREFISSO_INCANALARE` e lo `startsWith`, e legge il campo.
+- [ ] **Step 5: risarcire `/personaggio/`.** Quella pagina stampa `pg.capacita` e senza intervento **perde tre capacità in silenzio** — il tipo di regressione che nessuno nota per due sessioni. Ricostruire lì le tre voci dal campo nuovo.
+- [ ] **Step 6:** `npm run gate`, poi commit.
+
+---
+
+### Task 7: `risorseUsate` diventa una lista
+
+Il cambio di forma che rende possibile l'annulla sulle capacità. È anche il
+punto di non ritorno: `SCHEMA_VERSION` sale a 4.
+
+**Files:**
+
+- Modify: `src/lib/sheet-state.ts`, `src/islands/Contatori.tsx`, `src/islands/PannelloAzioni.tsx`, `src/lib/caselle.ts` se serve
+- Test: `src/lib/__tests__/sheet-state.test.ts`, `src/lib/__tests__/sheet-version.test.ts`
+
+**Interfaces:**
+
+- Produces: `risorseUsate: Record<string, string[]>`, con lo stesso significato che `slotSpesi` ha per gli slot: chi ha speso, in ordine cronologico.
+
+- [ ] **Step 1: il test che fallisce** — uno stato v3 con `risorseUsate: { incanalare: 1 }` migra a v4 in una lista di un elemento, e la migrazione non perde il conteggio. Il segnaposto per «speso senza dire da cosa» è lo stesso `SLOT_MANUALE` già usato dagli slot, o il suo gemello.
+- [ ] **Step 2:** cambiare il tipo e la migrazione, `SCHEMA_VERSION` da 3 a 4.
+- [ ] **Step 3: i tre consumatori.** `usaRisorsa`/`recuperaRisorsa` prendono e tolgono dalla coda; `riposoBreve` toglie **un** elemento alle risorse a recupero breve (la regola di oggi, che è giusta); `riposoLungo` svuota. `Contatori.tsx` legge `.length` dove leggeva il numero.
+- [ ] **Step 4:** `npm run gate`, poi commit.
+
+---
+
+### Task 8: l'annulla diventa condiviso
+
+**Files:**
+
+- Create: `src/lib/annulla.ts`, `src/islands/StrisciaAnnulla.tsx`
+- Modify: `src/islands/ControlliLancio.tsx`, `src/pages/scheda.astro`
+- Test: `src/lib/__tests__/annulla.test.ts`
+
+**Interfaces:**
+
+- Produces: un signal di modulo con l'ultima azione annullabile (`{ detto, costo, disfa }`) e `DURATA_ANNULLA`. Una striscia sola, montata una volta.
+
+- [ ] **Step 1: il test che fallisce** — due azioni annullabili di seguito lasciano **una** sola voce, la seconda, e annullare chiama la funzione di disfacimento di quella. È la regola già scritta a mano dentro `ControlliLancio` («si può annullare solo l'ultima azione, non un intero storico»), spostata dove si può provare senza DOM.
+- [ ] **Step 2:** estrarre da `ControlliLancio` il signal, il timer e il markup della striscia. Il CSS (`.striscia-annulla`, `.velo-annulla`) è già globale in `componenti.css` e non si muove.
+- [ ] **Step 3:** `ControlliLancio` dichiara l'azione invece di disegnarla; `scheda.astro` monta `StrisciaAnnulla` una volta sola.
+- [ ] **Step 4:** verificare che `DURATA_ANNULLA` resti **un numero solo**, passato al CSS come proprietà personalizzata: è la ragione per cui la barra e il diritto di annullare finiscono insieme.
+- [ ] **Step 5:** `npm run gate`, poi commit.
+
+---
+
+### Task 9: il consumo dalle card delle capacità
+
+**Files:**
+
+- Modify: `src/components/CapacitaEReazioni.astro`, `src/islands/Contatori.tsx`, `src/styles/componenti.css`
+- Test: `src/islands/__tests__/Contatori.test.ts`, `src/components/__tests__/capacita-e-reazioni.test.ts`
+
+- [ ] **Step 1: Incanalare Divinità apre una modale**, gemella di quella di lancio: un blocco per uso al posto di un blocco per livello di slot, ognuno col suo testo e il suo bottone. Il contenuto statico resta statico — markup di build con un contenitore `[data-usi]` dentro, e l'isola ci disegna i comandi, esattamente come `[data-lancio]`.
+- [ ] **Step 2: Ira della Tempesta e Tuono della Tempesta si spendono con un tocco** dalla card, senza modale. Sono reazioni: si spendono nel turno di qualcun altro, e la scelta non esiste. L'errore lo copre la striscia del Task 8.
+- [ ] **Step 3: le caselle portano il sigillo** di ciò che le ha spese, per Incanalare. Per le due reazioni il sigillo è sempre lo stesso e la casella resta piena e basta.
+- [ ] **Step 4: lo stato spento.** Una capacità a secco non offre il comando, come `cartaSpenta` fa per gli incantesimi.
+- [ ] **Step 5:** `npm run gate`, poi commit.
+
+---
+
+### Task 10: il ⚡ rifondato
+
+Dipende dal Task 9: la potatura ha senso solo quando le risorse si spendono
+dalle card.
+
+**Files:**
+
+- Modify: `src/islands/PannelloAzioni.tsx`, `src/styles/componenti.css`
+- Test: `src/islands/__tests__/PannelloAzioni.test.ts`
+
+- [ ] **Step 1: la potatura.** Cancellare dal pannello tutto ciò che ha un'altra casa: danno/cura, PF temporanei, TS morte, dadi vita, ispirazione (tutti nella Vitalità), le righe «Usa» di slot e risorse (lancio e card). Restano **due griglie**, slot e risorse, con `−` e `↺`, sotto «Correzioni a mano», chiuse di default.
+- [ ] **Step 2: a tutto schermo**, nella lingua delle altre due modali: testa appiccicata, chiusura col tasto indietro, vetro sopra il velo. `dialog.azioni` perde la forma a foglio che sale dal basso.
+- [ ] **Step 3: i riposi diventano due blocchi con la conseguenza già calcolata** — «PF 21 → 27, 4 slot, 2 dadi vita, tutte le risorse» — e conferma dentro il pannello. Via `confirm()`: blocca il thread e non si può provare. Il riposo lungo continua a segnalare la preparazione dovuta e a portare all'archivio.
+- [ ] **Step 4: il bottone** da `1rem` a `1.5rem` dal bordo destro, e **nascosto su `/preparati/`** mentre la sessione di preparazione è aperta.
+- [ ] **Step 5:** `npm run gate`, poi commit.
+
+---
+
+### Task 11: D1 e l'endpoint delle sessioni
+
+**Files:**
+
+- Create: `migrations/0001_sessioni.sql`, `functions/api/sessioni.ts`, `functions/api/sessioni/[id].ts`, `functions/__tests__/sessioni.test.ts`
+- Modify: `.dev.vars.example`, `.env.example`, `CLAUDE.md`
+
+- [ ] **Step 1: i test che falliscono**, con un finto `D1Database` in memoria — nessun `wrangler` nel gate. POST inserisce una riga e pota oltre la ventesima; GET elenca in ordine di data con i campi del riepilogo; DELETE toglie una riga; un corpo malformato è 400.
+- [ ] **Step 2: la tabella** come da spec (`id, creato_il, etichetta, nota, schema_v, sheet_v, stato`), in `migrations/`.
+- [ ] **Step 3: gli endpoint.** Niente autenticazione propria: il `_middleware.ts` fail-closed copre già `/api/`. Verificarlo con un test, perché è un'assunzione di sicurezza e non un dettaglio.
+- [ ] **Step 4: il binding manca in locale.** Documentare in `CLAUDE.md` come si gira con `wrangler pages dev` e la D1 locale, e che **senza binding gli endpoint devono rispondere un errore pulito**, non rompersi: il sito deve restare usabile offline e su un clone senza Cloudflare.
+- [ ] **Step 5:** `npm run gate`, poi commit.
+
+---
+
+### Task 12: il pannello nuvola dentro il ⚡
+
+**Files:**
+
+- Create: `src/lib/nuvola.ts`, `src/islands/Nuvola.tsx`
+- Modify: `src/islands/PannelloAzioni.tsx`
+- Test: `src/lib/__tests__/nuvola.test.ts`
+
+- [ ] **Step 1: i test che falliscono** su funzioni pure: il riepilogo di una riga («PF 21/27 · 4 slot · 1 Incan.») calcolato da uno stato; il confronto fra `sheet_v` salvata e corrente che marca «scheda precedente»; la decisione di cosa mostrare quando la rete non c'è.
+- [ ] **Step 2: «Salva adesso»** manda `stato.value` intero più l'etichetta breve digitata lì. La nota **non** si digita al salvataggio: è `stato.note`, la stessa di `/note/`, e la riga ne conserva una copia.
+- [ ] **Step 3: «Riprendi…»** apre l'elenco. Ogni riga porta data, etichetta, riepilogo, e il marchio «scheda precedente» dove `sheet_v` non combacia.
+- [ ] **Step 4: la doppia data e il salvataggio di cortesia.** Prima di sovrascrivere, il pannello mostra le due date affiancate e offre «salva prima di riprendere» con un tocco. Il ripristino passa da `carica()`, quindi la regola di `sheetVersion` vale identica: se la scheda è cambiata, azzera, e l'avviso è quello di sempre.
+- [ ] **Step 5: il fallimento è normale.** Nessuna rete, nessun binding, D1 muto: il comando dice che non è riuscito e **non tocca niente in locale**. La nuvola è un comando, non una sincronizzazione.
+- [ ] **Step 6: la nota nel pannello** scrive `stato.note` — un campo, non un secondo posto dove scrivere la stessa frase.
+- [ ] **Step 7:** `npm run gate`, poi commit.
+
+---
+
+### Task 13: la prova con gli inset simulati
 
 Non produce codice del sito: produce la certezza che i quattro task
 precedenti non abbiano rotto le altre cinque rotte.
@@ -132,3 +282,5 @@ Da fare sul telefono vero, prima del merge su `develop`:
 - la tinta della barra di Safari sulla home e il passaggio di colore navigando verso la Scheda;
 - l'immagine sotto la dynamic island in una scheda di Safari;
 - la PWA **disinstallata e reinstallata** (`start_url` e `background_color` non cambiano da soli in un'app già installata): il lampo d'avvio, dove atterra, e la barra di stato. Chiude la verifica 3 rimasta in sospeso dal rilascio 1.1.0.
+- **il salvataggio in nuvola da due dispositivi**: salvare da uno, riprendere dall'altro, e provare il caso brutto — riprendere un salvataggio di una scheda precedente e vedere che l'avviso arriva **prima**, non dopo.
+- **il ⚡ potato al tavolo**: che non manchi niente durante una sessione vera. È la potatura più grossa di questo giro e l'unica prova che conta è una serata di gioco.
