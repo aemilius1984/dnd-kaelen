@@ -410,9 +410,12 @@ button[disabled] {
   }
 }
 
+/* Un pollice e mezzo dal bordo, non uno: a `1rem` il pulsante stava
+ * praticamente sulla curvatura dello schermo, dove il palmo lo sfiora
+ * reggendo il telefono. */
 .apri-azioni {
   position: fixed;
-  inset: auto 1rem calc(1rem + env(safe-area-inset-bottom)) auto;
+  inset: auto 1.5rem calc(1rem + env(safe-area-inset-bottom, 0px)) auto;
   z-index: 18;
   width: 60px;
   height: 60px;
@@ -423,16 +426,22 @@ button[disabled] {
   border: none;
   box-shadow: 0 6px 18px rgb(0 0 0 / 0.45);
 }
+/* A tutto schermo come l'archivio e le due modali delle carte, non più una
+ * tendina che sale dal basso. Era la forma giusta finché dentro c'erano due
+ * bottoni; adesso ci sono due riposi con la loro conseguenza scritta e le
+ * correzioni che si aprono, e una finestra alta 85vh su quel contenuto
+ * chiedeva due scorrimenti annidati. A tutto schermo si chiude anche col
+ * tasto indietro, che su un telefono è il gesto che si fa per primo. */
 dialog.azioni {
   width: 100%;
-  max-width: 34rem;
-  margin: auto auto 0;
-  padding: var(--spazio-2) var(--spazio-2) calc(1.5rem + env(safe-area-inset-bottom));
-  border: 1px solid var(--filetto);
-  border-radius: var(--raggio) var(--raggio) 0 0;
-  background: var(--superficie);
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: var(--spazio-2) var(--spazio-2) calc(2rem + env(safe-area-inset-bottom, 0px));
+  border: none;
+  background: var(--carta);
   color: var(--inchiostro);
-  max-height: 85vh;
   overflow-y: auto;
 }
 dialog.azioni::backdrop {
@@ -473,11 +482,69 @@ dialog.archivio .testa {
   background: var(--carta);
   border-bottom: 1px solid var(--filetto);
 }
+/* La testa resta visibile mentre si scorre, come nell'archivio: senza, per
+ * chiudere si torna in cima. */
 dialog.azioni .testa {
+  position: sticky;
+  top: calc(var(--spazio-2) * -1);
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.5rem;
+  margin: calc(var(--spazio-2) * -1) 0 0.5rem;
+  padding: var(--spazio-2) 0 0.5rem;
+  background: var(--carta);
+  border-bottom: 1px solid var(--filetto);
+}
+/* I due riposi: il blocco è la cosa che si legge, non il bottone. Prima si
+ * leggeva il bottone e si scopriva la conseguenza dopo aver premuto. */
+.riposo {
+  padding: var(--spazio-2) 0;
+  border-bottom: 1px solid var(--filetto);
+}
+.riposo h4 {
+  margin-top: 0;
+}
+.riposo p {
+  margin: 0.3rem 0 0;
+  font-size: 0.9rem;
+}
+/* La conseguenza calcolata su questa sessione. In mono perché sono numeri, e
+ * i numeri di questa scheda si leggono in mono ovunque. */
+.riposo .conseguenza {
+  font-family: var(--font-mono);
+  color: var(--lampo);
+}
+.riposo button {
+  min-height: 44px;
+  margin-top: 0.6rem;
+  padding: 0 1rem;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--inchiostro);
+  background: none;
+  border: 1px solid var(--filetto);
+  border-radius: var(--raggio);
+  cursor: pointer;
+}
+.riposo button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+/* Il caso d'angolo, e si vede che lo è. */
+.correzioni {
+  padding-top: var(--spazio-2);
+}
+.correzioni summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--inchiostro-tenue);
+  cursor: pointer;
 }
 dialog.azioni h4 {
   font-family: var(--font-display);

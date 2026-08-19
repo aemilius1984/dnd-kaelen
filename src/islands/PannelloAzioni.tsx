@@ -1,21 +1,15 @@
 import { useRef, useState } from 'preact/hooks';
 import {
-  applicaCura,
-  applicaDanno,
-  impostaIspirazione,
-  impostaPfTemporanei,
   puoSpendereSlot,
-  puoUsareRisorsa,
   recuperaRisorsa,
   recuperaSlot,
   riposoBreve,
   riposoLungo,
-  segnaTsMorte,
-  spendiDadoVitaConCura,
   spendiSlot,
   SPESA_MANUALE,
   usaRisorsa,
 } from '@/lib/sheet-state';
+import { conseguenzaRiposo } from '@/lib/riposi';
 import {
   navigazione,
   PERCORSO_ARCHIVIO,
@@ -23,25 +17,87 @@ import {
 } from '@/lib/consegna-preparazione';
 import { assicuraInizializzato, datiIniziali, muta, stato } from '@/lib/storage';
 
+type Riposo = 'breve' | 'lungo';
+
+/** Il pannello ⚡: i due riposi, e la via d'uscita quando qualcosa è andato
+ *  storto.
+ *
+ *  Era il doppione di mezza scheda. Danno, cura, PF temporanei, tiri contro
+ *  morte, dadi vita e ispirazione stanno nella Vitalità; slot e risorse si
+ *  spendono dove sono scritti — la modale di lancio, le card delle capacità.
+ *  Qui restavano le stesse cose dette una seconda volta, e due posti dove
+ *  cambiare lo stesso numero sono il motivo per cui la scheda si era gonfiata.
+ *
+ *  Quel che resta non ha un'altra casa: i riposi, che non appartengono a
+ *  nessuna sezione perché le toccano tutte, e le correzioni a mano, che sono
+ *  il caso d'angolo — il DM concede una carica, si è premuto due volte, si è
+ *  segnato uno slot che non andava speso. Chiuse di default: si aprono quando
+ *  qualcosa è andato storto, non a ogni turno. */
 export default function PannelloAzioni() {
   // `client:only="preact"`: nessun pre-render lato server, come le altre isole.
   assicuraInizializzato();
   const { pg } = datiIniziali();
   const s = stato.value;
   const finestra = useRef<HTMLDialogElement>(null);
-  const [quanto, setQuanto] = useState(0);
-  // Testo e non numero: il campo ha `min="1"` e deve poter restare vuoto
-  // mentre lo si ridigita, senza passare per lo 0 che quel minimo rifiuta.
-  // Vale 1 all'apertura, il più piccolo totale che si possa tirare.
-  const [tirato, setTirato] = useState('1');
-  // La bozza del campo dei PF temporanei, che è l'unico controllato su un
-  // valore salvato: `null` significa "mostra quello che dice lo stato",
-  // stringa vuota "l'utente lo sta cancellando, non toccare niente". Senza
-  // questo, `onInput` riscriveva lo stato a ogni battuta e cancellare il
-  // contenuto faceva ricomparire uno 0 sotto le dita.
-  const [bozzaTemporanei, setBozzaTemporanei] = useState<string | null>(null);
+  // Quale riposo sta chiedendo conferma. Dentro il pannello e non in un
+  // `confirm()`: quello blocca il thread, non si può provare senza un browser
+  // vero, e mostra il testo del browser invece del testo della scheda.
+  const [conferma, setConferma] = useState<Riposo | null>(null);
 
   const dadiRimasti = pg.numeroDadiVita - s.dadiVitaSpesi;
+
+  function chiudi() {
+    setConferma(null);
+    finestra.current?.close();
+  }
+
+  function compi(tipo: Riposo) {
+    if (tipo === 'breve') {
+      muta((x) => riposoBreve(x, pg));
+      setConferma(null);
+      return;
+    }
+    muta((x) => riposoLungo(x, pg));
+    // Questo è l'unico momento in cui il manuale concede di cambiare i sei
+    // preparati, e l'elenco ha una sede sola: la rotta `/preparati/`. Il
+    // pannello si toglie di mezzo e ci porta.
+    //
+    // La sessione non si apre qui: fra le due pagine c'è una navigazione, e la
+    // bozza è un signal di modulo che una navigazione azzera. Si lascia detto
+    // che è dovuta, e la raccoglie l'archivio appena arriva.
+    segnalaPreparazioneDovuta(sessionStorage);
+    chiudi();
+    navigazione.vai(PERCORSO_ARCHIVIO);
+  }
+
+  function blocco(tipo: Riposo, titolo: string, sotto: string) {
+    const righe = conseguenzaRiposo(s, pg, tipo);
+    const inutile = righe.length === 0;
+    return (
+      <section class="riposo">
+        <h4>{titolo}</h4>
+        <p class="tenue">{sotto}</p>
+        {/* La conseguenza calcolata su *questa* sessione, non il manuale
+            ripetuto: chi è a punti pieni e con tutti gli slot leggeva lo
+            stesso avviso di chi è ridotto a tre PF. */}
+        <p class="conseguenza">{inutile ? 'Non c’è niente da recuperare.' : righe.join(' · ')}</p>
+        {conferma === tipo ? (
+          <div class="riga">
+            <button type="button" class="pericoloso" onClick={() => compi(tipo)}>
+              Sì, riposa
+            </button>
+            <button type="button" onClick={() => setConferma(null)}>
+              Annulla
+            </button>
+          </div>
+        ) : (
+          <button type="button" disabled={inutile} onClick={() => setConferma(tipo)}>
+            Concludi {titolo.toLowerCase()}
+          </button>
+        )}
+      </section>
+    );
+  }
 
   return (
     <>
@@ -57,184 +113,76 @@ export default function PannelloAzioni() {
       <dialog class="azioni" ref={finestra} aria-labelledby="titolo-azioni">
         <div class="testa">
           <strong id="titolo-azioni">Azioni</strong>
-          <button type="button" onClick={() => finestra.current?.close()}>
+          <button type="button" onClick={chiudi}>
             Chiudi
           </button>
         </div>
 
-        <h4>In combattimento</h4>
-        <div class="riga">
-          <button type="button" onClick={() => muta((x) => applicaDanno(x, pg, 1))}>
-            −1
-          </button>
-          <button type="button" onClick={() => muta((x) => applicaDanno(x, pg, 5))}>
-            −5
-          </button>
-          <input
-            type="number"
-            min="0"
-            aria-label="Quantità"
-            value={quanto}
-            onInput={(e) => setQuanto(Number(e.currentTarget.value))}
-          />
-          <button type="button" onClick={() => muta((x) => applicaDanno(x, pg, quanto))}>
-            Danno
-          </button>
-          <button type="button" onClick={() => muta((x) => applicaCura(x, pg, quanto))}>
-            Cura
-          </button>
-        </div>
-
-        <label class="riga">
-          PF temporanei
-          <input
-            type="number"
-            min="0"
-            value={bozzaTemporanei ?? String(s.pfTemporanei)}
-            onInput={(e) => {
-              const grezzo = e.currentTarget.value;
-              // Un campo vuoto non è "zero PF temporanei", è una cifra a
-              // metà: lo stato non si tocca finché non arriva un numero.
-              if (grezzo === '') {
-                setBozzaTemporanei('');
-                return;
-              }
-              setBozzaTemporanei(null);
-              muta((x) => impostaPfTemporanei(x, Number(grezzo)));
-            }}
-            onBlur={() => setBozzaTemporanei(null)}
-          />
-        </label>
-
-        {s.pf === 0 && (
-          <div class="riga">
-            <span>
-              TS morte {s.tsMorte.successi}✓ {s.tsMorte.fallimenti}✗
-            </span>
-            <button type="button" onClick={() => muta((x) => segnaTsMorte(x, 'successo'))}>
-              Successo
-            </button>
-            <button type="button" onClick={() => muta((x) => segnaTsMorte(x, 'fallimento'))}>
-              Fallimento
-            </button>
-          </div>
+        {blocco('breve', 'Riposo breve', 'Un’ora. Rende una carica alle risorse che tornano così.')}
+        {blocco(
+          'lungo',
+          'Riposo lungo',
+          `Otto ore. Rimette tutto, e porta all’archivio per scegliere i sei preparati. Dadi vita: ${dadiRimasti}/${pg.numeroDadiVita}.`,
         )}
 
-        {pg.slot.map((slot) => (
-          <div class="riga" key={`slot-${slot.livello}`}>
-            <span>
-              Slot {slot.livello}° — {slot.max - (s.slotSpesi[slot.livello] ?? []).length}/
-              {slot.max}
-            </span>
-            <button
-              type="button"
-              aria-label={`Usa uno slot di ${slot.livello}° livello`}
-              disabled={!puoSpendereSlot(s, pg, slot.livello)}
-              onClick={() => muta((x) => spendiSlot(x, pg, slot.livello, SPESA_MANUALE))}
-            >
-              Usa
-            </button>
-            <button
-              type="button"
-              aria-label={`Recupera uno slot di ${slot.livello}° livello`}
-              disabled={(s.slotSpesi[slot.livello] ?? []).length === 0}
-              onClick={() => muta((x) => recuperaSlot(x, slot.livello))}
-            >
-              ↺
-            </button>
-          </div>
-        ))}
+        {/* Il caso d'angolo, e si vede che lo è: chiuso finché non serve. Il
+            DM concede una carica, si preme due volte, si segna uno slot che
+            non andava speso. Non è il modo normale di spendere — quello è
+            lanciare l'incantesimo e toccare la capacità. */}
+        <details class="correzioni">
+          <summary>Correzioni a mano</summary>
 
-        {pg.risorse.map((r) => (
-          <div class="riga" key={r.id}>
-            <span>
-              {r.nome} — {r.max - (s.risorseUsate[r.id] ?? []).length}/{r.max}
-            </span>
-            <button
-              type="button"
-              aria-label={`Usa ${r.nome}`}
-              disabled={!puoUsareRisorsa(s, pg, r.id)}
-              onClick={() => muta((x) => usaRisorsa(x, pg, r.id))}
-            >
-              Usa
-            </button>
-            <button
-              type="button"
-              aria-label={`Recupera ${r.nome}`}
-              disabled={(s.risorseUsate[r.id] ?? []).length === 0}
-              onClick={() => muta((x) => recuperaRisorsa(x, r.id))}
-            >
-              ↺
-            </button>
-          </div>
-        ))}
+          <h4>Slot</h4>
+          {pg.slot.map((slot) => (
+            <div class="riga" key={`slot-${slot.livello}`}>
+              <span>
+                Slot {slot.livello}° — {slot.max - (s.slotSpesi[slot.livello] ?? []).length}/
+                {slot.max}
+              </span>
+              <button
+                type="button"
+                aria-label={`Segna speso uno slot di ${slot.livello}° livello`}
+                disabled={!puoSpendereSlot(s, pg, slot.livello)}
+                onClick={() => muta((x) => spendiSlot(x, pg, slot.livello, SPESA_MANUALE))}
+              >
+                −
+              </button>
+              <button
+                type="button"
+                aria-label={`Recupera uno slot di ${slot.livello}° livello`}
+                disabled={(s.slotSpesi[slot.livello] ?? []).length === 0}
+                onClick={() => muta((x) => recuperaSlot(x, slot.livello))}
+              >
+                ↺
+              </button>
+            </div>
+          ))}
 
-        <h4>Fuori dal combattimento</h4>
-        <div class="riga">
-          <span>
-            Dadi vita {dadiRimasti}/{pg.numeroDadiVita} ({pg.dadoVita})
-          </span>
-          <input
-            type="number"
-            min="1"
-            aria-label="Totale tirato al tavolo"
-            value={tirato}
-            onInput={(e) => setTirato(e.currentTarget.value)}
-          />
-          <button
-            type="button"
-            disabled={dadiRimasti === 0}
-            onClick={() => muta((x) => spendiDadoVitaConCura(x, pg, Number(tirato)))}
-          >
-            Spendi
-          </button>
-        </div>
-        <label class="riga">
-          <input
-            type="checkbox"
-            checked={s.ispirazione}
-            onChange={(e) => muta((x) => impostaIspirazione(x, e.currentTarget.checked))}
-          />
-          Ispirazione Eroica <span class="tenue">Heroic Inspiration</span>
-        </label>
-
-        <div class="riga">
-          <button type="button" onClick={() => muta((x) => riposoBreve(x, pg))}>
-            Concludi riposo breve
-          </button>
-          <button
-            type="button"
-            class="pericoloso"
-            onClick={() => {
-              if (
-                !confirm(
-                  'Riposo lungo: PF al massimo, tutti i dadi vita recuperati, slot e risorse ' +
-                    'ripristinati. Procedere?',
-                )
-              ) {
-                return;
-              }
-              muta((x) => riposoLungo(x, pg));
-              // Questo è l'unico momento in cui il manuale concede di cambiare
-              // i sei preparati, e adesso l'elenco ha una sede sola: la rotta
-              // `/preparati/`. Il pannello si toglie di mezzo e ci porta.
-              //
-              // La sessione non si apre qui: fra le due pagine c'è una
-              // navigazione, e la bozza è un signal di modulo che una
-              // navigazione azzera. Si lascia detto che è dovuta, e la raccoglie
-              // l'archivio appena arriva.
-              segnalaPreparazioneDovuta(sessionStorage);
-              finestra.current?.close();
-              navigazione.vai(PERCORSO_ARCHIVIO);
-            }}
-          >
-            Riposo lungo
-          </button>
-        </div>
-        <p class="tenue">
-          Il riposo lungo ti porta all'archivio, dove si scelgono i sei preparati. Puoi andarci
-          anche da solo: <a href="/preparati/">vai all'archivio</a>.
-        </p>
+          <h4>Risorse</h4>
+          {pg.risorse.map((r) => (
+            <div class="riga" key={r.id}>
+              <span>
+                {r.nome} — {r.max - (s.risorseUsate[r.id] ?? []).length}/{r.max}
+              </span>
+              <button
+                type="button"
+                aria-label={`Segna usata una carica di ${r.nome}`}
+                disabled={(s.risorseUsate[r.id] ?? []).length >= r.max}
+                onClick={() => muta((x) => usaRisorsa(x, pg, r.id))}
+              >
+                −
+              </button>
+              <button
+                type="button"
+                aria-label={`Recupera una carica di ${r.nome}`}
+                disabled={(s.risorseUsate[r.id] ?? []).length === 0}
+                onClick={() => muta((x) => recuperaRisorsa(x, r.id))}
+              >
+                ↺
+              </button>
+            </div>
+          ))}
+        </details>
       </dialog>
     </>
   );

@@ -219,11 +219,11 @@ dalle card.
 - Modify: `src/islands/PannelloAzioni.tsx`, `src/styles/componenti.css`
 - Test: `src/islands/__tests__/PannelloAzioni.test.ts`
 
-- [ ] **Step 1: la potatura.** Cancellare dal pannello tutto ciò che ha un'altra casa: danno/cura, PF temporanei, TS morte, dadi vita, ispirazione (tutti nella Vitalità), le righe «Usa» di slot e risorse (lancio e card). Restano **due griglie**, slot e risorse, con `−` e `↺`, sotto «Correzioni a mano», chiuse di default.
-- [ ] **Step 2: a tutto schermo**, nella lingua delle altre due modali: testa appiccicata, chiusura col tasto indietro, vetro sopra il velo. `dialog.azioni` perde la forma a foglio che sale dal basso.
-- [ ] **Step 3: i riposi diventano due blocchi con la conseguenza già calcolata** — «PF 21 → 27, 4 slot, 2 dadi vita, tutte le risorse» — e conferma dentro il pannello. Via `confirm()`: blocca il thread e non si può provare. Il riposo lungo continua a segnalare la preparazione dovuta e a portare all'archivio.
-- [ ] **Step 4: il bottone** da `1rem` a `1.5rem` dal bordo destro, e **nascosto su `/preparati/`** mentre la sessione di preparazione è aperta.
-- [ ] **Step 5:** `npm run gate`, poi commit.
+- [x] **Step 1: la potatura.** Cancellare dal pannello tutto ciò che ha un'altra casa: danno/cura, PF temporanei, TS morte, dadi vita, ispirazione (tutti nella Vitalità), le righe «Usa» di slot e risorse (lancio e card). Restano **due griglie**, slot e risorse, con `−` e `↺`, sotto «Correzioni a mano», chiuse di default.
+- [x] **Step 2: a tutto schermo**, nella lingua delle altre due modali: testa appiccicata, chiusura col tasto indietro, vetro sopra il velo. `dialog.azioni` perde la forma a foglio che sale dal basso.
+- [x] **Step 3: i riposi diventano due blocchi con la conseguenza già calcolata** — «PF 21 → 27, 4 slot, 2 dadi vita, tutte le risorse» — e conferma dentro il pannello. Via `confirm()`: blocca il thread e non si può provare. Il riposo lungo continua a segnalare la preparazione dovuta e a portare all'archivio.
+- [x] **Step 4: il bottone** da `1rem` a `1.5rem` dal bordo destro, e **nascosto su `/preparati/`** mentre la sessione di preparazione è aperta. **Scostamento:** la seconda metà non si applica — `PannelloAzioni` è montato solo da `scheda.astro`, e il ⚡ su `/preparati/` non c'è mai stato (verificato sulle sei rotte costruite).
+- [x] **Step 5:** `npm run gate`, poi commit.
 
 ---
 
