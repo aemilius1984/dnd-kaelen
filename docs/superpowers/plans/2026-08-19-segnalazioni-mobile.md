@@ -230,14 +230,35 @@ dalle card.
 
 **Files:**
 
-- Create: `migrations/0001_sessioni.sql`, `functions/api/sessioni.ts`, `functions/api/sessioni/[id].ts`, `functions/__tests__/sessioni.test.ts`
+- Create: `wrangler.jsonc`, `migrations/0001_sessioni.sql`, `functions/api/sessioni.ts`, `functions/api/sessioni/[id].ts`, `functions/__tests__/sessioni.test.ts`
 - Modify: `.dev.vars.example`, `.env.example`, `CLAUDE.md`
+
+**Le risorse, create sull'account il 2026-08-19:**
+
+| ambiente   | database         | `database_id`                          |
+| ---------- | ---------------- | -------------------------------------- |
+| Production | `kaelen`         | `a90cff0d-ef6e-4bb0-9ece-b14cb955b5f4` |
+| Preview    | `kaelen-preview` | `c269bb09-519a-49aa-b6c1-10509d990bf8` |
+
+Due database e non uno perché la potatura tiene venti salvataggi: con un
+database solo, un pomeriggio di prove dal ramo può buttare fuori una sessione
+di gioco vera.
+
+**Il binding si chiama `DB` in tutti e due gli ambienti.** Cambia il database
+dietro, mai il nome davanti: `wrangler d1 create` suggerisce come binding il
+nome del database, e prendere quel suggerimento alla lettera darebbe `kaelen`
+in Production e `kaelen_preview` in Preview, costringendo la funzione a
+indovinare in quale ambiente sta girando. Si imposta dalla dashboard
+(Settings → Bindings), una volta per ambiente, e **entra in vigore solo al
+deploy successivo**.
 
 - [ ] **Step 1: i test che falliscono**, con un finto `D1Database` in memoria — nessun `wrangler` nel gate. POST inserisce una riga e pota oltre la ventesima; GET elenca in ordine di data con i campi del riepilogo; DELETE toglie una riga; un corpo malformato è 400.
 - [ ] **Step 2: la tabella** come da spec (`id, creato_il, etichetta, nota, schema_v, sheet_v, stato`), in `migrations/`.
 - [ ] **Step 3: gli endpoint.** Niente autenticazione propria: il `_middleware.ts` fail-closed copre già `/api/`. Verificarlo con un test, perché è un'assunzione di sicurezza e non un dettaglio.
-- [ ] **Step 4: il binding manca in locale.** Documentare in `CLAUDE.md` come si gira con `wrangler pages dev` e la D1 locale, e che **senza binding gli endpoint devono rispondere un errore pulito**, non rompersi: il sito deve restare usabile offline e su un clone senza Cloudflare.
-- [ ] **Step 5:** `npm run gate`, poi commit.
+- [ ] **Step 4: il `wrangler.jsonc` è solo per il locale.** Binding `DB`, `database_name: "kaelen"`, l'id di Production, e `preview_database_id: "DB"` che Pages richiede in locale. **Senza `pages_build_output_dir`**: quella chiave farebbe del file la fonte di verità del progetto, la dashboard smetterebbe di poter configurare quei campi, e un deploy porterebbe in produzione una configurazione scritta per lo sviluppo — dove ci sono anche `SITE_USER` e `SITE_PASS`.
+- [ ] **Step 5: le migrazioni si applicano a mano**, e prima del deploy: `wrangler d1 migrations apply kaelen --remote` (e `--local` per il database di sviluppo). Nessun hook le esegue: se il codice arriva in produzione prima della migrazione, l'endpoint trova la tabella che non c'è.
+- [ ] **Step 6: il binding manca in locale.** Documentare in `CLAUDE.md` come si gira con `wrangler pages dev` e la D1 locale, e che **senza binding gli endpoint devono rispondere un errore pulito**, non rompersi: il sito deve restare usabile offline e su un clone senza Cloudflare.
+- [ ] **Step 7:** `npm run gate`, poi commit.
 
 ---
 
