@@ -17,14 +17,22 @@ import NomeDoppio from '@/components/ui/NomeDoppio.astro';
  *  di simboli restano riquadri vuoti, senza alcun errore che lo dica. */
 interface Props {
   incantesimi: (Incantesimo & { slug: string; testo: string })[];
-  /** Se presente, ogni card porta `data-slug` e parte nascosta (attributo
-   *  `hidden` scritto qui, a tempo di build) a meno che lo slug non sia in
-   *  questo elenco: così i 32 incantesimi del pool sono tutti presenti in
-   *  HTML statico, ma solo i preparati sono visibili al primo caricamento,
+  /** Se presente, ogni card *preparabile* porta `data-slug` e parte nascosta
+   *  (attributo `hidden` scritto qui, a tempo di build) a meno che lo slug non
+   *  sia in questo elenco: così i 32 incantesimi del pool sono tutti presenti
+   *  in HTML statico, ma solo i preparati sono visibili al primo caricamento,
    *  senza attendere JavaScript. L'isola ControlliLancio corregge poi la
    *  visibilità se lo stato salvato si è discostato da questo elenco iniziale
    *  (scambio di preparati dopo un Riposo Lungo). Quando omesso la card è
-   *  sempre visibile. */
+   *  sempre visibile.
+   *
+   *  «Preparabile» esclude il dominio: quei quattro sono *sempre preparati* e
+   *  non occupano uno dei sei posti, quindi non si nascondono mai e non
+   *  portano `data-slug` — l'isola non deve poterli spegnere. La regola sta
+   *  qui e non nel chiamante perché `m.dominio` è già nel dato: farla scegliere
+   *  fuori costringeva a passare due elenchi separati, e due elenchi di fila
+   *  lasciavano una cucitura senza distacco fra l'ultima carta del primo e la
+   *  prima del secondo. */
   visibiliDiDefault?: string[];
 }
 const { incantesimi, visibiliDiDefault } = Astro.props;
@@ -45,8 +53,8 @@ function riga(m: Incantesimo): string {
       <Superficie
         class:list={['incantesimo', m.dominio && 'di-dominio']}
         data-carta={m.slug}
-        data-slug={visibiliDiDefault ? m.slug : undefined}
-        hidden={visibiliDiDefault ? !visibiliDiDefault.includes(m.slug) : undefined}
+        data-slug={visibiliDiDefault && !m.dominio ? m.slug : undefined}
+        hidden={visibiliDiDefault && !m.dominio ? !visibiliDiDefault.includes(m.slug) : undefined}
       >
         <button type="button" class="apri-incantesimo" data-apre={`inc-${m.slug}`}>
           <svg class="sigillo" viewBox="0 0 24 24" aria-hidden="true">
@@ -171,6 +179,12 @@ function riga(m: Incantesimo): string {
   ))
 }
 <style>
+  /* Una griglia sola sotto un titolo solo. Quando preparati e dominio erano
+     due chiamate del componente, la `gap` non attraversava il confine fra le
+     due griglie: l'ultima carta del primo elenco toccava la prima del secondo
+     — misurato, 0px contro i 9,6px di ogni altra coppia — e le due carte
+     incollate leggevano come un errore di imbottitura della seconda. Il
+     confine non c'è più. */
   .carte-incantesimo {
     display: grid;
     gap: 0.6rem;

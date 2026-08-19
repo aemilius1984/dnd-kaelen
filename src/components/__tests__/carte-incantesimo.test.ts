@@ -83,6 +83,28 @@ it('parte nascosto solo ciò che non è preparato, e solo se glielo si chiede', 
   expect(html).toContain(`data-slug="${diLivello.slug}"`);
 });
 
+it('il dominio resta visibile anche in un elenco che nasconde i non preparati', async () => {
+  // Preparati e dominio erano due chiamate separate del componente proprio per
+  // evitare questo: la seconda non riceveva `visibiliDiDefault`, quindi le sue
+  // card non si nascondevano. Il prezzo era una cucitura fra due griglie —
+  // l'ultima carta della prima toccava la prima della seconda, senza distacco.
+  // Ora l'elenco è uno solo e la regola sta qui: chi è del dominio è *sempre
+  // preparato*, non occupa uno dei sei posti e non si nasconde mai.
+  const container = await AstroContainer.create();
+  const html = await container.renderToString(CarteIncantesimo, {
+    props: { incantesimi: [con('nube-di-nebbia')], visibiliDiDefault: [] },
+  });
+
+  // Il tag di apertura della card, non tutta la pagina: `aria-hidden` sui
+  // sigilli farebbe passare un `toContain('hidden')` senza dire niente.
+  const apertura = html.match(/<div[^>]*data-carta="nube-di-nebbia"[^>]*>/)?.[0];
+  expect(apertura).toBeDefined();
+  expect(apertura).not.toMatch(/\shidden/);
+  // Nemmeno `data-slug`: è la maniglia con cui ControlliLancio commuta la
+  // visibilità, e su una card di dominio non deve esistere presa.
+  expect(apertura).not.toContain('data-slug=');
+});
+
 describe('tag rituale', () => {
   it('l’etichetta compare su un rituale', async () => {
     const html = await rendi([con('presagio')]);

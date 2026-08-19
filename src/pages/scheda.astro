@@ -117,9 +117,18 @@ const bonusIniziativa = segno(iniziativa(pg));
     <TestaSezione as="h3">Trucchetti</TestaSezione>
     <CarteIncantesimo incantesimi={trucchetti} />
 
+    {
+      /* Un elenco solo, non due: il dominio si riconosce dalla barra ambra sul
+        fianco, non da una griglia a parte. Il componente sa già da `m.dominio`
+        che quelle quattro card non si nascondono mai — vedi `visibiliDiDefault`
+        — e i due `pool` sono disgiunti per costruzione (`carica-scheda.ts`
+        filtra via il dominio). */
+    }
     <TestaSezione as="h3">Incantesimi</TestaSezione>
-    <CarteIncantesimo incantesimi={preparatiPool} visibiliDiDefault={pg.preparatiIniziali} />
-    <CarteIncantesimo incantesimi={dominio} />
+    <CarteIncantesimo
+      incantesimi={[...preparatiPool, ...dominio]}
+      visibiliDiDefault={pg.preparatiIniziali}
+    />
 
     {
       /* Una sede sola per l'elenco, e non è più qui. Scegliere sei incantesimi
