@@ -166,10 +166,10 @@ punto di non ritorno: `SCHEMA_VERSION` sale a 4.
 
 - Produces: `risorseUsate: Record<string, string[]>`, con lo stesso significato che `slotSpesi` ha per gli slot: chi ha speso, in ordine cronologico.
 
-- [ ] **Step 1: il test che fallisce** — uno stato v3 con `risorseUsate: { incanalare: 1 }` migra a v4 in una lista di un elemento, e la migrazione non perde il conteggio. Il segnaposto per «speso senza dire da cosa» è lo stesso `SLOT_MANUALE` già usato dagli slot, o il suo gemello.
-- [ ] **Step 2:** cambiare il tipo e la migrazione, `SCHEMA_VERSION` da 3 a 4.
-- [ ] **Step 3: i tre consumatori.** `usaRisorsa`/`recuperaRisorsa` prendono e tolgono dalla coda; `riposoBreve` toglie **un** elemento alle risorse a recupero breve (la regola di oggi, che è giusta); `riposoLungo` svuota. `Contatori.tsx` legge `.length` dove leggeva il numero.
-- [ ] **Step 4:** `npm run gate`, poi commit.
+- [x] **Step 1: il test che fallisce** — uno stato v3 con `risorseUsate: { incanalare: 1 }` migra a v4 in una lista di un elemento, e la migrazione non perde il conteggio. Il segnaposto per «speso senza dire da cosa» è lo stesso già usato dagli slot: `SLOT_MANUALE` è stato rinominato `SPESA_MANUALE`, perché adesso le code sono due e il nome vecchio ne nominava una sola.
+- [x] **Step 2:** cambiare il tipo e la migrazione, `SCHEMA_VERSION` da 3 a 4.
+- [x] **Step 3: i tre consumatori.** `usaRisorsa`/`recuperaRisorsa` prendono e tolgono dalla coda; `riposoBreve` toglie **un** elemento alle risorse a recupero breve (la regola di oggi, che è giusta); `riposoLungo` svuota. `Contatori.tsx` legge `.length` dove leggeva il numero.
+- [x] **Step 4:** `npm run gate`, poi commit.
 
 ---
 

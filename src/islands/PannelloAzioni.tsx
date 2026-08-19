@@ -13,7 +13,7 @@ import {
   segnaTsMorte,
   spendiDadoVitaConCura,
   spendiSlot,
-  SLOT_MANUALE,
+  SPESA_MANUALE,
   usaRisorsa,
 } from '@/lib/sheet-state';
 import {
@@ -130,7 +130,7 @@ export default function PannelloAzioni() {
               type="button"
               aria-label={`Usa uno slot di ${slot.livello}° livello`}
               disabled={!puoSpendereSlot(s, pg, slot.livello)}
-              onClick={() => muta((x) => spendiSlot(x, pg, slot.livello, SLOT_MANUALE))}
+              onClick={() => muta((x) => spendiSlot(x, pg, slot.livello, SPESA_MANUALE))}
             >
               Usa
             </button>
@@ -148,7 +148,7 @@ export default function PannelloAzioni() {
         {pg.risorse.map((r) => (
           <div class="riga" key={r.id}>
             <span>
-              {r.nome} — {r.max - (s.risorseUsate[r.id] ?? 0)}/{r.max}
+              {r.nome} — {r.max - (s.risorseUsate[r.id] ?? []).length}/{r.max}
             </span>
             <button
               type="button"
@@ -161,7 +161,7 @@ export default function PannelloAzioni() {
             <button
               type="button"
               aria-label={`Recupera ${r.nome}`}
-              disabled={(s.risorseUsate[r.id] ?? 0) === 0}
+              disabled={(s.risorseUsate[r.id] ?? []).length === 0}
               onClick={() => muta((x) => recuperaRisorsa(x, r.id))}
             >
               ↺

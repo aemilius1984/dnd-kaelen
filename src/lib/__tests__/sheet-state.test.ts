@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { caricaPersonaggioDaFile } from '@/lib/carica-personaggio';
 import {
   SCHEMA_VERSION,
-  SLOT_MANUALE,
+  SPESA_MANUALE,
   applicaCura,
   applicaDanno,
   carica,
@@ -11,6 +11,7 @@ import {
   impostaPreparati,
   puoSpendereSlot,
   puoUsareRisorsa,
+  recuperaRisorsa,
   recuperaSlot,
   riposoBreve,
   riposoLungo,
@@ -37,7 +38,7 @@ describe('stato iniziale', () => {
     expect(s.pfTemporanei).toBe(0);
     expect(s.dadiVitaSpesi).toBe(0);
     expect(s.slotSpesi).toEqual({ 1: [], 2: [] });
-    expect(s.risorseUsate).toEqual({ incanalare: 0, 'ira-tempesta': 0, 'tuono-tempesta': 0 });
+    expect(s.risorseUsate).toEqual({ incanalare: [], 'ira-tempesta': [], 'tuono-tempesta': [] });
   });
 
   it('parte dai preparati dichiarati nella scheda', () => {
@@ -110,7 +111,7 @@ describe('slot e risorse', () => {
 
   it('non usa una risorsa oltre il massimo', () => {
     for (let i = 0; i < 5; i++) s = usaRisorsa(s, pg, 'incanalare');
-    expect(s.risorseUsate['incanalare']).toBe(2);
+    expect(s.risorseUsate['incanalare']).toHaveLength(2);
   });
 
   it('puoSpendereSlot è vero lontano dal confine e falso al confine, in accordo con spendiSlot', () => {
@@ -126,9 +127,37 @@ describe('slot e risorse', () => {
   it('puoUsareRisorsa è vero lontano dal confine e falso al confine, in accordo con usaRisorsa', () => {
     expect(puoUsareRisorsa(s, pg, 'incanalare')).toBe(true);
     for (let i = 0; i < 2; i++) s = usaRisorsa(s, pg, 'incanalare');
-    expect(s.risorseUsate['incanalare']).toBe(2);
+    expect(s.risorseUsate['incanalare']).toHaveLength(2);
     expect(puoUsareRisorsa(s, pg, 'incanalare')).toBe(false);
     expect(usaRisorsa(s, pg, 'incanalare')).toBe(s);
+  });
+});
+
+describe('la coda delle risorse spese', () => {
+  it('ricorda chi ha speso, in ordine, come già faceva per gli slot', () => {
+    // Un conteggio non dice *cosa* è stato speso, e senza quello «Annulla»
+    // non ha niente da togliere: toglierebbe un'unità anonima all'ultima
+    // risorsa toccata, che non è la stessa cosa che disfare l'ultimo gesto.
+    s = usaRisorsa(s, pg, 'incanalare', 'scintilla-divina');
+    s = usaRisorsa(s, pg, 'incanalare', 'ira-distruttiva');
+
+    expect(s.risorseUsate['incanalare']).toEqual(['scintilla-divina', 'ira-distruttiva']);
+  });
+
+  it('senza un colpevole scrive il segnaposto, non una stringa vuota', () => {
+    // Il pannello azioni consuma senza sapere da cosa: è il caso d'angolo per
+    // cui esiste. La casella si occupa lo stesso, e si vede che è manuale.
+    s = usaRisorsa(s, pg, 'incanalare');
+
+    expect(s.risorseUsate['incanalare']).toEqual([SPESA_MANUALE]);
+  });
+
+  it('recuperare toglie l’ultimo, non uno qualsiasi', () => {
+    s = usaRisorsa(s, pg, 'incanalare', 'scintilla-divina');
+    s = usaRisorsa(s, pg, 'incanalare', 'ira-distruttiva');
+    s = recuperaRisorsa(s, 'incanalare');
+
+    expect(s.risorseUsate['incanalare']).toEqual(['scintilla-divina']);
   });
 });
 
@@ -140,8 +169,8 @@ describe('riposi', () => {
     s = spendiSlot(s, pg, 1, 'comando');
     s = applicaDanno(s, pg, 5);
     s = riposoBreve(s, pg);
-    expect(s.risorseUsate['incanalare']).toBe(1);
-    expect(s.risorseUsate['ira-tempesta']).toBe(1);
+    expect(s.risorseUsate['incanalare']).toHaveLength(1);
+    expect(s.risorseUsate['ira-tempesta']).toHaveLength(1);
     expect(s.slotSpesi[1]).toEqual(['comando']);
     expect(s.pf).toBe(16);
   });
@@ -158,7 +187,7 @@ describe('riposi', () => {
     expect(s.pf).toBe(21);
     expect(s.pfTemporanei).toBe(0);
     expect(s.slotSpesi).toEqual({ 1: [], 2: [] });
-    expect(s.risorseUsate['ira-tempesta']).toBe(0);
+    expect(s.risorseUsate['ira-tempesta']).toHaveLength(0);
     // Erano tre spesi e ne tornava uno solo: `Math.floor(3 / 2)` è la regola
     // dei *livelli*, non dei dadi vita. Il Riposo Lungo li rimette tutti.
     expect(s.dadiVitaSpesi).toBe(0);
@@ -281,12 +310,12 @@ describe('slot che ricordano cosa hanno bruciato', () => {
   });
 
   it('la spesa manuale dal pannello scrive una costante che nessuno slug può essere', () => {
-    expect(spendiSlot(s, pg, 1, SLOT_MANUALE).slotSpesi[1]).toEqual([SLOT_MANUALE]);
+    expect(spendiSlot(s, pg, 1, SPESA_MANUALE).slotSpesi[1]).toEqual([SPESA_MANUALE]);
     // Gli slug vengono dai nomi dei file in content/spells/: un carattere che
     // un nome di file non può contenere non può collidere.
-    expect(SLOT_MANUALE).toContain(':');
+    expect(SPESA_MANUALE).toContain(':');
     for (const slug of [...pg.trucchetti, ...pg.dominio, ...pg.preparatiIniziali]) {
-      expect(slug).not.toBe(SLOT_MANUALE);
+      expect(slug).not.toBe(SPESA_MANUALE);
     }
   });
 
@@ -406,6 +435,31 @@ describe('la macchina a stati della vitalità', () => {
     const giu = applicaDanno(vivo(), pg, pg.pfMax);
 
     expect(spendiDadoVitaConCura(giu, pg, 5)).toBe(giu);
+  });
+});
+
+describe('la migrazione dallo schema 3', () => {
+  const v3 = (risorseUsate: Record<string, number>) =>
+    JSON.stringify({ ...statoIniziale(pg, 'v'), schemaVersion: 3, risorseUsate });
+
+  it('conta quanto contava prima, senza sapere chi aveva speso', () => {
+    // Lo stato vecchio sapeva solo «due». Chi le ha spese non è ricostruibile
+    // e non si inventa: entrano due segnaposto, e le caselle restano piene
+    // come il giocatore le ha lasciate.
+    const { stato, azzerato } = carica(v3({ incanalare: 2, 'ira-tempesta': 0 }), pg, 'v');
+
+    expect(azzerato).toBe(false);
+    expect(stato.risorseUsate['incanalare']).toEqual([SPESA_MANUALE, SPESA_MANUALE]);
+    expect(stato.risorseUsate['ira-tempesta']).toEqual([]);
+    expect(stato.schemaVersion).toBe(SCHEMA_VERSION);
+  });
+
+  it('non lascia indietro una risorsa che lo stato vecchio non nominava', () => {
+    // Una risorsa aggiunta ai dati dopo l'ultimo salvataggio non c'è nella
+    // mappa vecchia: senza una casella sua, `Contatori` leggerebbe undefined.
+    const { stato } = carica(v3({ incanalare: 1 }), pg, 'v');
+
+    for (const r of pg.risorse) expect(Array.isArray(stato.risorseUsate[r.id])).toBe(true);
   });
 });
 

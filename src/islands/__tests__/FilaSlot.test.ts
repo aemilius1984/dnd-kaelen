@@ -3,7 +3,7 @@ import { afterEach, beforeEach, expect, it } from 'vitest';
 import { h, render } from 'preact';
 import BarraSlot from '@/islands/BarraSlot';
 import { caricaPersonaggioDaFile } from '@/lib/carica-personaggio';
-import { SLOT_MANUALE, spendiSlot, statoIniziale } from '@/lib/sheet-state';
+import { SPESA_MANUALE, spendiSlot, statoIniziale } from '@/lib/sheet-state';
 import { muta } from '@/lib/storage';
 
 // Guardando la scheda si deve poter capire *dove* sono finiti gli slot: due
@@ -77,7 +77,7 @@ it('la casella consumata porta il sigillo dell’incantesimo che l’ha spesa', 
 
 it('lo slot speso a mano porta un segno neutro, non un sigillo altrui', async () => {
   await apri();
-  muta((x) => spendiSlot(x, pg, 1, SLOT_MANUALE));
+  muta((x) => spendiSlot(x, pg, 1, SPESA_MANUALE));
   await giro();
 
   const casella = fila(1).find((c) => c.classList.contains('manuale'));

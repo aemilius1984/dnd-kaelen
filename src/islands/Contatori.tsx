@@ -33,7 +33,7 @@ export default function Contatori() {
       {bersagli.map((b) => {
         const risorsa = pg.risorse.find((r) => r.id === b.id);
         if (!risorsa) return null;
-        const usate = s.risorseUsate[b.id] ?? 0;
+        const usate = (s.risorseUsate[b.id] ?? []).length;
         return createPortal(
           <span class="caselle" aria-label={`${risorsa.max - usate} di ${risorsa.max} usi`}>
             {caselle(usate, risorsa.max).map((piena, i) => (

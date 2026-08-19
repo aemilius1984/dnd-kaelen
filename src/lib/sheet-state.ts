@@ -1,17 +1,20 @@
 import type { Personaggio } from './schema';
 
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 /** Dove sta Kaelen rispetto alla morte. È un campo suo e non una deduzione dai
  *  PF, perché a 0 PF ci sono tre situazioni diverse — si tira, si è stabili, si
  *  è morti — e i punti ferita sono zero in tutte e tre. */
 export type StatoVitale = 'cosciente' | 'incosciente' | 'stabile' | 'morto';
 
-/** Lo slot speso a mano dal pannello azioni non ha un incantesimo dietro, ma
- *  occupa comunque una casella. Il carattere `:` non può comparire in uno
- *  slug, che viene dal nome di un file in `content/spells/`: la collisione è
- *  impossibile per costruzione, non per fortuna. */
-export const SLOT_MANUALE = ':manuale';
+/** La spesa fatta a mano dal pannello azioni non ha un incantesimo né un uso
+ *  dietro, ma occupa comunque una casella. Vale per le due code, slot e
+ *  risorse: si chiamava `SLOT_MANUALE` quando la coda era una sola.
+ *
+ *  Il carattere `:` non può comparire in uno slug, che viene dal nome di un
+ *  file in `content/spells/`: la collisione è impossibile per costruzione,
+ *  non per fortuna. */
+export const SPESA_MANUALE = ':manuale';
 
 export interface StatoSessione {
   schemaVersion: number;
@@ -28,7 +31,12 @@ export interface StatoSessione {
    *  casella consumata porta il sigillo di ciò che l'ha spesa, e perché
    *  «Annulla» deve poter togliere *l'ultimo* lancio, non uno qualsiasi. */
   slotSpesi: Record<number, string[]>;
-  risorseUsate: Record<string, number>;
+  /** Per ogni risorsa, chi ne ha consumato una carica, in ordine cronologico.
+   *  Stessa forma e stessa ragione di `slotSpesi`: un conteggio non dice
+   *  *cosa* è stato speso, e senza quello «Annulla» toglierebbe un'unità
+   *  anonima invece di disfare l'ultimo gesto. Chi ha speso è lo slug di un
+   *  uso della risorsa, oppure `SPESA_MANUALE`. */
+  risorseUsate: Record<string, string[]>;
   preparati: string[];
   monete: { mo: number; ma: number; mr: number };
   oggetti: Record<string, number>;
@@ -51,7 +59,7 @@ export function statoIniziale(pg: Personaggio, sheetVersion: string): StatoSessi
     statoVitale: 'cosciente',
     tsMorte: { successi: 0, fallimenti: 0 },
     slotSpesi: Object.fromEntries(pg.slot.map((s) => [s.livello, []])),
-    risorseUsate: Object.fromEntries(pg.risorse.map((r) => [r.id, 0])),
+    risorseUsate: Object.fromEntries(pg.risorse.map((r) => [r.id, []])),
     preparati: [...pg.preparatiIniziali],
     monete: { ...pg.monete },
     oggetti: Object.fromEntries(pg.equipaggiamento.map((e) => [e.id, e.quantita])),
@@ -82,7 +90,27 @@ function migraDa2(v2: StatoSessione): StatoSessione {
     }
   }
 
-  return { ...v2, schemaVersion: SCHEMA_VERSION, statoVitale, tsMorte, aggiornatoIl: adesso() };
+  // Non si ferma qui: da 2 si passa da 3, e la 3 ha una forma che la 4 non
+  // capisce più. Una catena e non due strade, altrimenti ogni versione nuova
+  // raddoppierebbe i percorsi da tenere in piedi.
+  return { ...v2, schemaVersion: 3, statoVitale, tsMorte };
+}
+
+/** Dallo schema 3 al 4: `risorseUsate` era un conteggio, adesso è la coda di
+ *  chi ha speso. Chi fosse non è ricostruibile — lo stato vecchio sapeva solo
+ *  «due» — e non si inventa: entrano tanti segnaposto quante erano le cariche
+ *  spese, così le caselle restano piene come il giocatore le ha lasciate. */
+function migraDa3(v3: StatoSessione, pg: Personaggio): StatoSessione {
+  const vecchie = v3.risorseUsate as unknown as Record<string, number | string[]>;
+  const risorseUsate: Record<string, string[]> = {};
+  for (const r of pg.risorse) {
+    const usate = vecchie?.[r.id];
+    // Una risorsa aggiunta ai dati dopo l'ultimo salvataggio non compare nella
+    // mappa vecchia: senza una casella sua, `Contatori` leggerebbe undefined.
+    if (Array.isArray(usate)) risorseUsate[r.id] = [...usate];
+    else risorseUsate[r.id] = Array.from({ length: Math.max(0, usate ?? 0) }, () => SPESA_MANUALE);
+  }
+  return { ...v3, schemaVersion: SCHEMA_VERSION, risorseUsate };
 }
 
 export function carica(
@@ -102,8 +130,13 @@ export function carica(
     // La forma dello stato è cambiata, i dati no: si migra ciò che è
     // inequivocabile e si azzera solo dove non lo è. Aggiungere un campo non
     // deve costare PF, slot e note a metà campagna.
-    if (salvato.schemaVersion === 2) return { stato: migraDa2(salvato), azzerato: false };
-    return { stato: statoIniziale(pg, sheetVersion), azzerato: true };
+    let stato = salvato;
+    if (stato.schemaVersion === 2) stato = migraDa2(stato);
+    if (stato.schemaVersion === 3) stato = migraDa3(stato, pg);
+    if (stato.schemaVersion !== SCHEMA_VERSION) {
+      return { stato: statoIniziale(pg, sheetVersion), azzerato: true };
+    }
+    return { stato: { ...stato, aggiornatoIl: adesso() }, azzerato: false };
   } catch {
     return { stato: statoIniziale(pg, sheetVersion), azzerato: true };
   }
@@ -224,19 +257,29 @@ export function recuperaSlot(s: StatoSessione, livello: number): StatoSessione {
 
 export function puoUsareRisorsa(s: StatoSessione, pg: Personaggio, id: string): boolean {
   const max = pg.risorse.find((r) => r.id === id)?.max ?? 0;
-  return (s.risorseUsate[id] ?? 0) < max;
+  return (s.risorseUsate[id] ?? []).length < max;
 }
 
-export function usaRisorsa(s: StatoSessione, pg: Personaggio, id: string): StatoSessione {
+/** `da` è lo slug dell'uso che ha bruciato la carica — Scintilla Divina, Ira
+ *  Distruttiva — oppure il segnaposto quando a spendere è il pannello azioni,
+ *  che consuma senza sapere da cosa. */
+export function usaRisorsa(
+  s: StatoSessione,
+  pg: Personaggio,
+  id: string,
+  da: string = SPESA_MANUALE,
+): StatoSessione {
   if (!puoUsareRisorsa(s, pg, id)) return s;
   return aggiorna(s, {
-    risorseUsate: { ...s.risorseUsate, [id]: (s.risorseUsate[id] ?? 0) + 1 },
+    risorseUsate: { ...s.risorseUsate, [id]: [...(s.risorseUsate[id] ?? []), da] },
   });
 }
 
 export function recuperaRisorsa(s: StatoSessione, id: string): StatoSessione {
   return aggiorna(s, {
-    risorseUsate: { ...s.risorseUsate, [id]: Math.max(0, (s.risorseUsate[id] ?? 0) - 1) },
+    // L'ultimo, non uno qualsiasi: come per gli slot, è ciò che «Annulla»
+    // promette a chi ha appena speso.
+    risorseUsate: { ...s.risorseUsate, [id]: (s.risorseUsate[id] ?? []).slice(0, -1) },
   });
 }
 
@@ -287,7 +330,9 @@ export function riposoBreve(s: StatoSessione, pg: Personaggio): StatoSessione {
   if (!puoRiposare(s)) return s;
   const risorseUsate = { ...s.risorseUsate };
   for (const r of pg.risorse) {
-    if (r.recupero === 'breve') risorseUsate[r.id] = Math.max(0, (risorseUsate[r.id] ?? 0) - 1);
+    // Una carica sola, la più recente: la regola del Riposo Breve è quella, e
+    // toglierne di più farebbe di un riposo corto un riposo lungo.
+    if (r.recupero === 'breve') risorseUsate[r.id] = (risorseUsate[r.id] ?? []).slice(0, -1);
   }
   return aggiorna(s, { risorseUsate });
 }
@@ -306,6 +351,6 @@ export function riposoLungo(s: StatoSessione, pg: Personaggio): StatoSessione {
     tsMorte: { successi: 0, fallimenti: 0 },
     dadiVitaSpesi: 0,
     slotSpesi: Object.fromEntries(pg.slot.map((x) => [x.livello, []])),
-    risorseUsate: Object.fromEntries(pg.risorse.map((r) => [r.id, 0])),
+    risorseUsate: Object.fromEntries(pg.risorse.map((r) => [r.id, []])),
   });
 }
