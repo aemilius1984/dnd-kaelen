@@ -43,8 +43,28 @@ function valore(nome: string): string {
   return m[1];
 }
 
+/** Le proprietà personalizzate che un'isola dichiara nel proprio `style={{…}}`.
+ *
+ *  Nascono in un file e vivono in un altro: `ControlliLancio` passa al CSS la
+ *  durata del proprio timer, così il numero della finestra per annullare è
+ *  scritto una volta sola invece che una in TypeScript e una in CSS — due
+ *  numeri che si sarebbero scollati alla prima modifica, lasciando una barra
+ *  che finisce prima o dopo il diritto che racconta.
+ *
+ *  Restano comunque coperte: rinominarne una da un lato solo lascia l'altro
+ *  lato orfano, e il test qui sotto se ne accorge. */
+function daIsole(): Set<string> {
+  const nomi = new Set<string>();
+  for (const p of file('src', ['.tsx'])) {
+    for (const m of readFileSync(p, 'utf8').matchAll(/['"](--[a-z0-9-]+)['"]\s*:/g)) {
+      nomi.add(m[1]);
+    }
+  }
+  return nomi;
+}
+
 it('ogni token usato è un token dichiarato', () => {
-  const dichiarati = definiti();
+  const dichiarati = new Set([...definiti(), ...daIsole()]);
   const orfani = new Set<string>();
 
   for (const p of file('src', ['.css', '.astro', '.tsx'])) {

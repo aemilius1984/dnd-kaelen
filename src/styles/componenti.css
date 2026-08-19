@@ -220,20 +220,80 @@ button[disabled] {
   flex-wrap: wrap;
   margin-top: 0.6rem;
 }
+/* La striscia di annullamento. Larga quanto il foglio meno i margini, non
+ * `fit-content`: dopo il lancio la modale si chiude e questa resta l'unica
+ * cosa che dice cosa è appena successo, quindi porta il nome dell'incantesimo
+ * e non solo il livello dello slot. Il bottone è a destra, la barra del tempo
+ * corre in fondo da bordo a bordo — `overflow: hidden` la fa finire dentro il
+ * raggio invece di sporgere agli angoli. */
 .annulla {
   position: fixed;
-  inset: auto 0 calc(5.5rem + env(safe-area-inset-bottom)) 0;
+  inset: auto 1rem calc(5.5rem + env(safe-area-inset-bottom)) 1rem;
   z-index: 15;
-  margin: 0 auto;
-  width: fit-content;
+  overflow: hidden;
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  padding: 0.4rem 0.5rem 0.4rem 0.9rem;
+  padding: 0.55rem 0.55rem 0.7rem 0.9rem;
   border: 1px solid var(--ambra);
   border-radius: var(--raggio);
   background: var(--superficie-incassata);
+  box-shadow: var(--ombra-2);
   font-size: 0.9rem;
+}
+.annulla .detto {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.annulla .detto strong {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.annulla .costo {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--inchiostro-muto);
+}
+.annulla button {
+  flex: none;
+  min-height: 44px;
+}
+/* Il tempo che resta per disfare, non un ornamento: si svuota, e a vuoto la
+ * striscia è già sparita. La durata arriva dall'isola come `--durata-annulla`,
+ * perché il timer che decide vive lì: due numeri scritti a mano si sarebbero
+ * scollati. `scaleX` invece della larghezza per restare sul compositore. */
+.annulla .tempo {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 3px;
+  background: var(--filetto);
+}
+.annulla .tempo > i {
+  display: block;
+  height: 100%;
+  background: var(--ambra);
+  transform-origin: left center;
+  animation: scarica-annulla var(--durata-annulla, 5000ms) linear forwards;
+}
+@keyframes scarica-annulla {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+/* `base.css` spegne ogni animazione sotto `prefers-reduced-motion`. Una barra
+ * ferma su «pieno» mentre il tempo scorre direbbe il falso: meglio non
+ * mostrarla. Il diritto di annullare non cambia — scade lo stesso. */
+@media (prefers-reduced-motion: reduce) {
+  .annulla .tempo {
+    display: none;
+  }
 }
 
 .apri-azioni {
