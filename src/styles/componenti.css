@@ -1307,6 +1307,23 @@ body:has(.barra[data-nascosta]) .barra-slot-isola {
  * incantesimi · apri come pagina» — cioè due strade per lo stesso posto,
  * scritte come una nota a piè di sezione. È una destinazione, e ha la stessa
  * forma di tutto il resto: icona, nome, conto, freccia. */
+/* Il sigillo: cerchio inciso più glifo, sempre ambra, sempre 24px. Stava
+ * scritto uguale dentro due componenti con stile ad ambito, e la carta verso
+ * l'archivio ne avrebbe fatta una terza copia. Il colore è `color` e non
+ * `stroke` perché le forme dentro i <symbol> disegnano in `currentColor`. */
+.sigillo {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  color: var(--ambra);
+}
+
+/* La carta verso l'archivio vive in fondo all'elenco degli incantesimi, quindi
+ * si veste come loro: stessa altezza minima, stesso passo, sigillo a sinistra,
+ * nome, riga tecnica, un numero a destra e la freccia. Prima si distingueva
+ * per tre cose sbagliate — il titolo nel font dei titoli invece che in quello
+ * delle carte, un'icona senza cerchio inciso, e nessun numero nella colonna
+ * dove tutte le vicine ne hanno uno. */
 .verso-archivio {
   display: flex;
   align-items: center;
@@ -1321,23 +1338,12 @@ body:has(.barra[data-nascosta]) .barra-slot-isola {
   color: var(--inchiostro);
   text-decoration: none;
 }
-.verso-archivio > svg:first-child {
-  flex: none;
-  width: 24px;
-  height: 24px;
-  fill: none;
-  stroke: var(--ambra);
-  stroke-width: 1.6;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
 .verso-archivio .chi {
   flex: 1 1 auto;
   min-width: 0;
 }
 .verso-archivio .titolo {
   display: block;
-  font-family: var(--font-display);
   font-size: 1.02rem;
 }
 .verso-archivio .conto {
@@ -1346,6 +1352,14 @@ body:has(.barra[data-nascosta]) .barra-slot-isola {
   font-family: var(--font-mono);
   font-size: 0.72rem;
   color: var(--inchiostro-muto);
+}
+/* Dove le carte di incantesimo portano il livello dello slot, questa porta
+ * quanti ne contiene: stessa colonna, stesso mono, stesso blu. */
+.verso-archivio .quanti {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  color: var(--lampo);
 }
 .verso-archivio .freccia {
   flex: none;

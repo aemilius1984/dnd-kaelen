@@ -140,6 +140,36 @@ describe('l’archivio', () => {
     expect(html).not.toMatch(/<dialog[^>]*id="archivio"/);
   });
 
+  it('ogni sigillo puntato esiste davvero nel foglio dei simboli', () => {
+    // Un `<use href="#sig-…">` verso un simbolo assente non disegna niente e
+    // non protesta: resta un riquadro vuoto di 24px, e ci si accorge del buco
+    // solo guardando la pagina giusta. È il modo in cui la carta verso
+    // l'archivio poteva perdere l'icona appena presa, ma vale per tutti e
+    // quaranta i sigilli.
+    for (const rotta of ['scheda', 'preparati']) {
+      const html = dist(rotta);
+      const dichiarati = new Set(
+        [...html.matchAll(/<symbol id="(sig-[a-z-]+)"/g)].map((m) => m[1]),
+      );
+      const puntati = new Set([...html.matchAll(/href="#(sig-[a-z-]+)"/g)].map((m) => m[1]));
+      const vuoti = [...puntati].filter((id) => !dichiarati.has(id));
+
+      expect({ rotta, vuoti }).toEqual({ rotta, vuoti: [] });
+      expect(puntati.size).toBeGreaterThan(0);
+    }
+  });
+
+  it('la carta verso l’archivio porta un numero, come le carte accanto', () => {
+    // Le vicine hanno tutte un valore fra il nome e la freccia — il livello
+    // dello slot. Questa non ne aveva nessuno, e diceva il proprio conto due
+    // volte nella riga sotto per rimediare.
+    const html = dist('scheda');
+
+    expect(html).toContain('href="#sig-archivio"');
+    expect(html).toMatch(/class="quanti">\d+</);
+    expect(html).not.toContain('in archivio ·');
+  });
+
   it('dalla Scheda ci si arriva con una carta, non con due collegamenti', () => {
     // Erano «Tutti gli incantesimi · apri come pagina»: due strade per lo
     // stesso posto, scritte come una nota a piè di sezione.
