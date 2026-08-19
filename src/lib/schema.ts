@@ -90,6 +90,20 @@ export const personaggioSchema = z.object({
       max: z.number().int().positive(),
       recupero: z.enum(['breve', 'lungo']),
       descrizione: z.string(),
+      /* Le cose che quella risorsa compra. Incanalare Divinità ne ha tre, e
+       * stavano fra le capacità con il titolo prefissato dal nome della
+       * risorsa: il legame era una stringa, e chi rinominava la risorsa lo
+       * spezzava senza che niente se ne accorgesse. Opzionale perché la
+       * maggior parte delle risorse è carburante di una cosa sola. */
+      usi: z
+        .array(
+          z.object({
+            nome: z.string(),
+            nomeEn: z.string(),
+            paragrafi: z.array(z.string()),
+          }),
+        )
+        .optional(),
     }),
   ),
   slot: z.array(z.object({ livello: z.number().int(), max: z.number().int() })),

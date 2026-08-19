@@ -11,8 +11,10 @@ import NomeDoppio from '@/components/ui/NomeDoppio.astro';
  *  senza niente che dicesse che erano la stessa cosa. Il numero di usi e la
  *  condizione che li consuma si guardano nello stesso istante.
  *
- *  Incanalare Divinità elenca dentro i propri usi, che stanno in `pg.capacita`
- *  come voci con il prefisso del suo nome. */
+ *  Una risorsa può elencare dentro le cose che compra: Incanalare Divinità ha
+ *  i suoi tre usi. Stavano in `pg.capacita` col titolo prefissato dal nome
+ *  della risorsa, e il legame fra le due cose era uno `startsWith` — cioè
+ *  viveva in una stringa, e si spezzava rinominando la risorsa. */
 interface Props {
   pg: Personaggio;
 }
@@ -20,10 +22,7 @@ const { pg } = Astro.props;
 
 const capacita = fondiCapacita(pg);
 
-const PREFISSO_INCANALARE = 'Incanalare Divinità: ';
-const usiDiIncanalare = pg.capacita
-  .filter((c) => c.titolo.startsWith(PREFISSO_INCANALARE))
-  .map((c) => ({ titolo: c.titolo.slice(PREFISSO_INCANALARE.length), paragrafi: c.paragrafi }));
+const usiPerRisorsa = new Map(pg.risorse.filter((r) => r.usi).map((r) => [r.id, r.usi!]));
 ---
 
 <div class="capacita-reazioni">
@@ -58,11 +57,13 @@ const usiDiIncanalare = pg.capacita
           </dl>
         )}
 
-        {c.id === 'incanalare' && (
+        {c.id !== undefined && usiPerRisorsa.has(c.id) && (
           <ul class="usi">
-            {usiDiIncanalare.map((u) => (
+            {usiPerRisorsa.get(c.id)!.map((u) => (
               <li>
-                <strong>{u.titolo}</strong>
+                <strong>
+                  <NomeDoppio it={u.nome} en={u.nomeEn} />
+                </strong>
                 {u.paragrafi.map((p) => (
                   <p>{p}</p>
                 ))}

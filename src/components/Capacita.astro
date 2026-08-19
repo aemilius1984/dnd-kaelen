@@ -1,14 +1,26 @@
 ---
 import type { Personaggio } from '@/lib/schema';
 
+/** L'elenco lungo delle capacità, per la pagina del Personaggio: qui si legge
+ *  fuori dal tavolo, quindi c'è tutto e non c'è niente da spendere.
+ *
+ *  Gli usi delle risorse rientrano da qui. Vivevano in `capacita` come voci
+ *  col titolo prefissato, e portarli dentro la risorsa che li paga li avrebbe
+ *  tolti a questa pagina in silenzio: la Scheda avrebbe continuato a
+ *  mostrarli, e nessuno si sarebbe accorto del buco per due sessioni. */
 interface Props {
   pg: Personaggio;
 }
 const { pg } = Astro.props;
+
+const dagliUsi = pg.risorse.flatMap((r) =>
+  (r.usi ?? []).map((u) => ({ titolo: `${r.nome}: ${u.nome}`, paragrafi: u.paragrafi })),
+);
+const voci = [...pg.capacita, ...dagliUsi];
 ---
 
 {
-  pg.capacita.map((c) => (
+  voci.map((c) => (
     <section class="capacita">
       <h3>{c.titolo}</h3>
       {c.paragrafi.map((p) => (

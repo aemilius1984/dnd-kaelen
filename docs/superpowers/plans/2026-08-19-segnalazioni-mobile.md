@@ -143,12 +143,12 @@ Primo dei quattro task della segnalazione 3, che vanno in ordine: 6 → 7 → 8 
 - Modify: `src/lib/schema.ts`, `src/content/character/kaelen.md`, `src/components/CapacitaEReazioni.astro`, `src/components/Capacita.astro`, `src/pages/personaggio.astro`
 - Test: `src/lib/__tests__/schema.test.ts`
 
-- [ ] **Step 1: il test che fallisce** — una risorsa può portare `usi: [{ nome, nomeEn, descrizione }]`, e nessuna capacità ha più un titolo che comincia per `Incanalare Divinità: `.
-- [ ] **Step 2:** campo `usi` opzionale nello schema Zod, dentro `risorse`.
-- [ ] **Step 3:** spostare le tre voci in `kaelen.md` da `capacita` a `risorse[incanalare].usi`. Migrazione meccanica di dati, nessuna parola riscritta.
-- [ ] **Step 4:** `CapacitaEReazioni.astro` perde il `PREFISSO_INCANALARE` e lo `startsWith`, e legge il campo.
-- [ ] **Step 5: risarcire `/personaggio/`.** Quella pagina stampa `pg.capacita` e senza intervento **perde tre capacità in silenzio** — il tipo di regressione che nessuno nota per due sessioni. Ricostruire lì le tre voci dal campo nuovo.
-- [ ] **Step 6:** `npm run gate`, poi commit.
+- [x] **Step 1: il test che fallisce** — una risorsa può portare `usi: [{ nome, nomeEn, paragrafi }]` (`paragrafi` e non `descrizione`: le tre voci ne avevano due a testa, e fonderli sarebbe stato riscrivere), e nessuna capacità ha più un titolo che comincia per `Incanalare Divinità: `.
+- [x] **Step 2:** campo `usi` opzionale nello schema Zod, dentro `risorse`.
+- [x] **Step 3:** spostare le tre voci in `kaelen.md` da `capacita` a `risorse[incanalare].usi`. Migrazione meccanica di dati, nessuna parola riscritta.
+- [x] **Step 4:** `CapacitaEReazioni.astro` perde il `PREFISSO_INCANALARE` e lo `startsWith`, e legge il campo.
+- [x] **Step 5: risarcire `/personaggio/`.** Quella pagina stampa `pg.capacita` e senza intervento **perde tre capacità in silenzio** — il tipo di regressione che nessuno nota per due sessioni. Ricostruire lì le tre voci dal campo nuovo.
+- [x] **Step 6:** `npm run gate`, poi commit.
 
 ---
 
