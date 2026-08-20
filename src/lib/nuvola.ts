@@ -85,6 +85,14 @@ export type Esito<T> = { ok: true; dato: T } | { ok: false; detto: string };
 
 const SENZA_RETE = 'Nessuna risposta: sei senza rete, o la nuvola non è configurata qui.';
 
+/** Il 404 non è un errore della nuvola: è il segno che gli endpoint non
+ *  esistono affatto, e in sviluppo succede sempre — `astro dev` e `astro
+ *  preview` servono i file ma non eseguono le Pages Functions. «La nuvola ha
+ *  risposto 404» mandava a cercare un guasto dove non c'era. */
+const SENZA_FUNZIONI =
+  'Gli endpoint non ci sono. In sviluppo serve `wrangler pages dev ./dist`: ' +
+  '`astro dev` e `astro preview` non eseguono le Pages Functions.';
+
 /** Il messaggio da mostrare per una risposta andata storta. Sta qui e non
  *  nell'isola perché è la stessa frase per tutti e tre i comandi, e perché
  *  così si può provare senza montare niente. */
@@ -93,6 +101,7 @@ export async function esitoDi<T>(r: Response): Promise<Esito<T>> {
     if (r.status === 204) return { ok: true, dato: undefined as T };
     return { ok: true, dato: (await r.json()) as T };
   }
+  if (r.status === 404) return { ok: false, detto: SENZA_FUNZIONI };
   try {
     const corpo = (await r.json()) as { errore?: string };
     if (typeof corpo.errore === 'string') return { ok: false, detto: corpo.errore };

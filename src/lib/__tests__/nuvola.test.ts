@@ -69,6 +69,18 @@ describe('quando la nuvola non risponde', () => {
     expect(await esitoDi(r)).toEqual({ ok: false, detto: 'La nuvola non è configurata.' });
   });
 
+  it('il 404 manda a wrangler, non a cercare un guasto', async () => {
+    // È il caso di ogni sviluppo: `astro dev` e `astro preview` servono i file
+    // ma non eseguono le Pages Functions, quindi `/api/sessioni` non esiste
+    // proprio. «La nuvola ha risposto 404» faceva sembrare rotta la nuvola.
+    const esito = await esitoDi(new Response('non trovato', { status: 404 }));
+
+    expect(esito).toMatchObject({
+      ok: false,
+      detto: expect.stringContaining('wrangler pages dev'),
+    });
+  });
+
   it('una risposta che non è nostra si riconosce dal codice', async () => {
     // Un proxy, una pagina d'errore, il captive portal di un albergo.
     const r = new Response('<html>Accedi alla rete</html>', { status: 511 });
