@@ -1672,3 +1672,218 @@ body:has(.barra[data-nascosta]) .barra-slot-isola {
   margin: 0.2rem 0 0;
   font-size: 0.85rem;
 }
+
+/* La striscia degli effetti.
+ *
+ * L'altezza sta sul contenitore statico e non sulla striscia disegnata da
+ * Preact: con `client:only` quella non esiste finché il JavaScript non gira, e
+ * una riserva dichiarata lì varrebbe per un elemento assente — la pagina
+ * salterebbe lo stesso. Stessa trappola già documentata su `.vitalita-isola`.
+ *
+ * 44px e non i 28 dello sketch: il × su un chip è un bersaglio per un dito
+ * come tutti gli altri, e un chip alto 28 lo rende impossibile da centrare.
+ * Il pallino visivo resta più basso, ci pensa l'imbottitura. */
+.striscia-effetti-isola {
+  min-height: 44px;
+  margin-bottom: var(--spazio-2);
+}
+
+.striscia-effetti {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spazio-1);
+}
+
+.chip-effetto,
+.chip-aggiungi {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--lampo);
+  background: var(--lampo-fondo);
+  color: var(--lampo-cupo);
+  font-size: var(--fs-piccolo);
+}
+
+/* La concentrazione ha un colore suo e un cerchio pieno: è la sola cosa che
+ * questa striscia esiste per non far dimenticare, e distinguerla per parola
+ * vorrebbe dire farla leggere. */
+.chip-effetto.concentrazione {
+  border-color: var(--ambra);
+  background: transparent;
+  color: var(--ambra);
+}
+
+.chip-effetto.concentrazione .segno {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ambra);
+}
+
+.chip-effetto.esaurimento {
+  border-color: var(--allerta);
+  background: transparent;
+  color: var(--allerta);
+}
+
+.chip-effetto .durata {
+  font-family: var(--font-mono);
+}
+
+.chip-effetto .spegni {
+  min-width: 44px;
+  min-height: 44px;
+  margin-right: -0.6rem;
+  border: none;
+  background: none;
+  color: inherit;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.chip-aggiungi {
+  min-width: 44px;
+  justify-content: center;
+  border-style: dashed;
+  border-color: var(--filetto);
+  background: transparent;
+  color: var(--inchiostro-muto);
+  cursor: pointer;
+}
+
+.promemoria-voci {
+  margin: 0 0 var(--spazio-1);
+  font-size: var(--fs-piccolo);
+}
+
+/* Il valore di base non sparisce: barrato accanto a quello nuovo, così si vede
+ * *da dove* viene il numero che stai leggendo. Se a 390px risulti solo sporco
+ * lo dirà l'occhio, non un test. */
+.difese s.base,
+.attacco-inc s.base {
+  margin-left: 0.3rem;
+  font-size: var(--fs-piccolo);
+  color: var(--ambra);
+}
+
+/* `display` solo da aperto: la regola base lo scavalcherebbe e il modulo
+ * finirebbe dentro la pagina. C'è una guardia in altezze.test.ts. */
+dialog.modulo-effetto {
+  width: min(28rem, 100%);
+  margin: auto;
+  padding: var(--spazio-2) var(--spazio-2) calc(var(--spazio-2) + env(safe-area-inset-bottom, 0px));
+  border: 1px solid var(--filetto);
+  border-radius: var(--raggio-superficie);
+  background: var(--carta);
+  color: var(--inchiostro);
+}
+
+dialog.modulo-effetto[open] {
+  display: block;
+}
+
+dialog.modulo-effetto::backdrop {
+  background: rgb(0 0 0 / 0.6);
+}
+
+dialog.modulo-effetto label {
+  display: grid;
+  gap: 0.2rem;
+  margin-bottom: var(--spazio-2);
+  font-size: var(--fs-piccolo);
+  color: var(--inchiostro-tenue);
+}
+
+dialog.modulo-effetto label.riga,
+dialog.modulo-effetto .riga {
+  display: flex;
+  align-items: center;
+  gap: var(--spazio-1);
+}
+
+dialog.modulo-effetto input,
+dialog.modulo-effetto select {
+  min-height: 44px;
+  padding: 0 0.5rem;
+  border: 1px solid var(--filetto);
+  border-radius: var(--raggio);
+  background: var(--superficie);
+  color: var(--inchiostro);
+  font: inherit;
+}
+
+dialog.modulo-effetto input[type='checkbox'] {
+  min-height: 0;
+  width: 22px;
+  height: 22px;
+}
+
+.avviso-concentrazione {
+  margin: 0 0 var(--spazio-2);
+  font-size: var(--fs-piccolo);
+  color: var(--ambra);
+}
+
+dialog.modulo-effetto .numeri summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-size: var(--fs-piccolo);
+  color: var(--inchiostro-muto);
+  cursor: pointer;
+}
+
+dialog.modulo-effetto .comandi {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spazio-1);
+  margin-top: var(--spazio-2);
+}
+
+dialog.modulo-effetto .comandi button {
+  min-height: 44px;
+  padding: 0 var(--spazio-2);
+  border: 1px solid var(--filetto);
+  border-radius: var(--raggio);
+  background: var(--superficie);
+  color: var(--inchiostro);
+  cursor: pointer;
+}
+
+/* Sta sotto i comandi e staccato da un filetto: è l'unica cosa in questa
+ * modale che non riguarda l'effetto che stai scrivendo. */
+.esaurimento-passi {
+  display: flex;
+  align-items: center;
+  gap: var(--spazio-1);
+  margin-top: var(--spazio-2);
+  padding-top: var(--spazio-2);
+  border-top: 1px solid var(--filetto);
+}
+
+.esaurimento-passi .k {
+  flex: 1;
+  font-size: var(--fs-piccolo);
+  color: var(--inchiostro-muto);
+}
+
+.esaurimento-passi button {
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--filetto);
+  border-radius: var(--raggio);
+  background: var(--superficie);
+  color: var(--inchiostro);
+  cursor: pointer;
+}
+
+.esaurimento-passi .valore {
+  min-width: 1.5rem;
+  text-align: center;
+  font-family: var(--font-mono);
+}

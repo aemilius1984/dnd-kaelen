@@ -63,7 +63,9 @@ describe('le sezioni non stanno più dentro un riquadro', () => {
     const html = dist('scheda');
     const isola = html.slice(html.indexOf('class="barra-slot-isola"'));
 
-    expect(isola.slice(0, 400)).toMatch(/Attacco \+\d+ · CD \d+/);
+    // I due numeri portano l'innesto `data-adesso` — dipendono dalla Saggezza —
+    // ma restano stampati dal build: è quello che questo test guarda.
+    expect(isola.slice(0, 400)).toMatch(/Attacco <span[^>]*>\+\d+<\/span> · CD <span[^>]*>\d+</);
     // Dentro il cappello ma fuori dall'isola: `BarraSlot` è `client:only`, e
     // due numeri che il build conosce già non aspettano il JavaScript.
     expect(isola.indexOf('Attacco')).toBeLessThan(isola.indexOf('astro-island'));
@@ -191,5 +193,26 @@ describe('l’archivio', () => {
     expect(html).toContain('href="/preparati/"');
     expect(html).toContain('verso-archivio');
     expect(html).not.toContain('apri come pagina');
+  });
+});
+
+describe('la fascia delle difese resta statica', () => {
+  it('i numeri li stampa il build, non l’isola', () => {
+    const html = dist('scheda');
+    // Senza JavaScript la CA si legge lo stesso, ed è giusta: è il caso normale.
+    expect(html).toMatch(/data-adesso="ca"[^>]*>\d+</);
+    expect(html).toMatch(/data-adesso="iniz"[^>]*>[+−-]\d+</);
+  });
+
+  it('la CD ha due innesti: la fascia e la barra appiccicata', () => {
+    // Lasciarne uno fuori significherebbe un numero stantio nel punto della
+    // pagina che si guarda mentre si sceglie cosa lanciare.
+    const html = dist('scheda');
+    expect([...html.matchAll(/data-adesso="cd"/g)]).toHaveLength(2);
+    expect(html).toContain('data-adesso="attacco-inc"');
+  });
+
+  it('il contenitore della striscia riserva la sua altezza', () => {
+    expect(dist('scheda')).toContain('class="striscia-effetti-isola"');
   });
 });

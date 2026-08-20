@@ -14,6 +14,7 @@ import Contatori from '@/islands/Contatori';
 import ControlliLancio from '@/islands/ControlliLancio';
 import StrisciaAnnulla from '@/islands/StrisciaAnnulla';
 import PannelloAzioni from '@/islands/PannelloAzioni';
+import StrisciaEffetti from '@/islands/StrisciaEffetti';
 import { attaccoIncantesimi, cdIncantesimi, classeArmatura, iniziativa, segno } from '@/lib/derive';
 import { caricaScheda } from '@/lib/carica-scheda';
 import ritrattoSrc from '@/assets/kaelen-home.webp';
@@ -88,9 +89,22 @@ const bonusIniziativa = segno(iniziativa(pg));
     statica: niente più da riservare. */
   }
   <div class="difese">
-    <div><span class="tenue">CA</span><span class="valore">{ca}</span></div>
-    <div><span class="tenue">CD</span><span class="valore">{cd}</span></div>
-    <div><span class="tenue">INIZ</span><span class="valore">{bonusIniziativa}</span></div>
+    <div><span class="tenue">CA</span><span class="valore" data-adesso="ca">{ca}</span></div>
+    <div><span class="tenue">CD</span><span class="valore" data-adesso="cd">{cd}</span></div>
+    <div>
+      <span class="tenue">INIZ</span><span class="valore" data-adesso="iniz">{bonusIniziativa}</span
+      >
+    </div>
+  </div>
+
+  {
+    /* I chip stanno sotto i numeri che modificano, non dentro una modale: la
+      concentrazione la si rispetta solo se la si vede senza aprire niente. Il
+      contenitore è statico e porta lui l'altezza riservata, come per la
+      Vitalità — con `client:only` l'isola non rende nulla lato server. */
+  }
+  <div class="striscia-effetti-isola">
+    <StrisciaEffetti client:only="preact" />
   </div>
 
   <section>
@@ -113,7 +127,11 @@ const bonusIniziativa = segno(iniziativa(pg));
         JavaScript. */
     }
     <div class="barra-slot-isola">
-      <p class="tenue attacco-inc">Attacco {bonusIncantesimi} · CD {cd}</p>
+      <p class="tenue attacco-inc">
+        Attacco <span data-adesso="attacco-inc">{bonusIncantesimi}</span> · CD <span
+          data-adesso="cd">{cd}</span
+        >
+      </p>
       <BarraSlot client:only="preact" />
     </div>
 
