@@ -388,7 +388,10 @@ export function riposoBreve(s: StatoSessione, pg: Personaggio): StatoSessione {
     // toglierne di più farebbe di un riposo corto un riposo lungo.
     if (r.recupero === 'breve') risorseUsate[r.id] = (risorseUsate[r.id] ?? []).slice(0, -1);
   }
-  return aggiorna(s, { risorseUsate });
+  // Entrambi i riposi spengono tutti gli effetti temporanei: un riposo breve
+  // dura un'ora, e l'effetto più lungo che Kaelen sa produrre ne dura dieci
+  // minuti. L'esaurimento non è un effetto e non sta in quella lista.
+  return aggiorna(s, { risorseUsate, effetti: [] });
 }
 
 export function riposoLungo(s: StatoSessione, pg: Personaggio): StatoSessione {
@@ -406,5 +409,9 @@ export function riposoLungo(s: StatoSessione, pg: Personaggio): StatoSessione {
     dadiVitaSpesi: 0,
     slotSpesi: Object.fromEntries(pg.slot.map((x) => [x.livello, []])),
     risorseUsate: Object.fromEntries(pg.risorse.map((r) => [r.id, []])),
+    effetti: [],
+    // Un livello, non tutti: è la regola, e toglierne di più farebbe di una
+    // notte una cura.
+    esaurimento: Math.max(0, (s.esaurimento ?? 0) - 1),
   });
 }

@@ -31,18 +31,28 @@ export function conseguenzaRiposo(
     if (s.dadiVitaSpesi > 0) righe.push(quanti(s.dadiVitaSpesi, 'dado vita', 'dadi vita'));
     const cariche = pg.risorse.reduce((a, r) => a + (s.risorseUsate[r.id] ?? []).length, 0);
     if (cariche > 0) righe.push(quanti(cariche, 'carica', 'cariche'));
+    if ((s.esaurimento ?? 0) > 0) righe.push(`Esaurimento ${s.esaurimento} → ${s.esaurimento - 1}`);
+    const effetti = (s.effetti ?? []).length;
+    if (effetti > 0) righe.push(quanti(effetti, 'effetto attivo', 'effetti attivi'));
     return righe;
   }
 
   // Il Riposo Breve rende una carica per risorsa, non tutte: dirlo per
   // risorsa e non in totale, perché con due risorse a recupero breve «2
   // cariche» si legge come «due della stessa».
-  return pg.risorse
+  const righe = pg.risorse
     .filter((r) => r.recupero === 'breve' && (s.risorseUsate[r.id] ?? []).length > 0)
     .map((r) => {
       const usate = (s.risorseUsate[r.id] ?? []).length;
       return `${r.nome} ${r.max - usate}/${r.max} → ${r.max - usate + 1}/${r.max}`;
     });
+
+  // Anche il riposo breve spegne gli effetti, quindi anche lui deve dirlo: un
+  // «niente da recuperare» seguito da Benedizione che sparisce è il consenso
+  // informato al contrario.
+  const effetti = (s.effetti ?? []).length;
+  if (effetti > 0) righe.push(quanti(effetti, 'effetto attivo', 'effetti attivi'));
+  return righe;
 }
 
 /** Il riposo che non cambierebbe niente. Non si nasconde il comando — si dice

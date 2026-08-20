@@ -3,11 +3,16 @@ import { caricaPersonaggioDaFile } from '@/lib/carica-personaggio';
 import { conseguenzaRiposo, riposoInutile } from '@/lib/riposi';
 import {
   applicaDanno,
+  riposoBreve,
+  riposoLungo,
   spendiDadoVitaConCura,
   spendiSlot,
   statoIniziale,
   usaRisorsa,
+  type StatoSessione,
 } from '@/lib/sheet-state';
+import { accendiEffetto, impostaEsaurimento, nuovoIdEffetto } from '@/lib/effetti';
+import { aggiungiOggetto, commutaIndossato } from '@/lib/oggetti';
 
 const pg = caricaPersonaggioDaFile();
 let s = statoIniziale(pg, 'v-test');
@@ -55,5 +60,108 @@ describe('cosa cambia a riposare', () => {
 
     expect(conseguenzaRiposo(s, pg, 'breve')).toEqual([]);
     expect(conseguenzaRiposo(s, pg, 'lungo')).toContain('1 carica');
+  });
+});
+
+describe('i riposi e quel che è acceso', () => {
+  const acceso = (s: StatoSessione, nome: string, concentrazione = false) =>
+    accendiEffetto(s, {
+      id: nuovoIdEffetto(),
+      nome,
+      durata: '10 minuti',
+      concentrazione,
+      modifiche: [],
+      accesoIl: new Date().toISOString(),
+    });
+
+  it('il riposo breve spegne tutti gli effetti', () => {
+    // Non è una semplificazione: un riposo breve dura un'ora, e l'effetto più
+    // lungo che Kaelen sa produrre ne dura dieci minuti.
+    const s = acceso(acceso(statoIniziale(pg, 'v'), 'Benedizione', true), 'Santuario');
+    expect(riposoBreve(s, pg).effetti).toEqual([]);
+  });
+
+  it('il riposo lungo li spegne allo stesso modo', () => {
+    const s = acceso(statoIniziale(pg, 'v'), 'Benedizione', true);
+    expect(riposoLungo(s, pg).effetti).toEqual([]);
+  });
+
+  it('il riposo breve non tocca l’esaurimento', () => {
+    const s = impostaEsaurimento(statoIniziale(pg, 'v'), 2);
+    expect(riposoBreve(s, pg).esaurimento).toBe(2);
+  });
+
+  it('il riposo lungo ne toglie uno solo', () => {
+    const s = impostaEsaurimento(statoIniziale(pg, 'v'), 3);
+    expect(riposoLungo(s, pg).esaurimento).toBe(2);
+  });
+
+  it('a zero il riposo lungo non scende sotto', () => {
+    expect(riposoLungo(statoIniziale(pg, 'v'), pg).esaurimento).toBe(0);
+  });
+
+  it('gli oggetti aggiunti e gli indossati non sono temporanei: i riposi non li guardano', () => {
+    let s = aggiungiOggetto(statoIniziale(pg, 'v'), {
+      nome: 'Cintura di Forza',
+      quantita: 1,
+      consumabile: false,
+      modifiche: [{ genere: 'punteggio', bersaglio: 'for', valore: 20 }],
+    });
+    s = commutaIndossato(s, 'mio:1');
+    const dopo = riposoLungo(s, pg);
+    expect(dopo.oggettiAggiunti).toHaveLength(1);
+    expect(dopo.indossati).toEqual(['mio:1']);
+  });
+});
+
+describe('cosa dice il riposo prima di premere', () => {
+  it('conta gli effetti che si stanno per spegnere', () => {
+    let s = statoIniziale(pg, 'v');
+    s = accendiEffetto(s, {
+      id: nuovoIdEffetto(),
+      nome: 'Benedizione',
+      durata: '1 minuto',
+      concentrazione: true,
+      modifiche: [],
+      accesoIl: new Date().toISOString(),
+    });
+    expect(conseguenzaRiposo(s, pg, 'breve')).toContain('1 effetto attivo');
+    expect(conseguenzaRiposo(s, pg, 'lungo')).toContain('1 effetto attivo');
+  });
+
+  it('al plurale dice «effetti attivi»', () => {
+    let s = statoIniziale(pg, 'v');
+    for (const nome of ['Avvelenato', 'Spaventato']) {
+      s = accendiEffetto(s, {
+        id: nuovoIdEffetto(),
+        nome,
+        durata: '1 minuto',
+        concentrazione: false,
+        modifiche: [],
+        accesoIl: new Date().toISOString(),
+      });
+    }
+    expect(conseguenzaRiposo(s, pg, 'breve')).toContain('2 effetti attivi');
+  });
+
+  it('il riposo lungo annuncia il livello di esaurimento che se ne va', () => {
+    const s = impostaEsaurimento(statoIniziale(pg, 'v'), 2);
+    expect(conseguenzaRiposo(s, pg, 'lungo')).toContain('Esaurimento 2 → 1');
+    expect(conseguenzaRiposo(s, pg, 'breve')).not.toContain('Esaurimento 2 → 1');
+  });
+
+  it('un riposo breve con solo un effetto acceso non è più inutile', () => {
+    // Prima diceva «niente da recuperare» e poi spegneva Benedizione: il
+    // consenso informato al contrario.
+    let s = statoIniziale(pg, 'v');
+    s = accendiEffetto(s, {
+      id: nuovoIdEffetto(),
+      nome: 'Benedizione',
+      durata: '1 minuto',
+      concentrazione: true,
+      modifiche: [],
+      accesoIl: new Date().toISOString(),
+    });
+    expect(riposoInutile(s, pg, 'breve')).toBe(false);
   });
 });
