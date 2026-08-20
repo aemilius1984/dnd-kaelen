@@ -136,6 +136,10 @@ function riga(m: Incantesimo): string {
             data-nome={m.nome}
             data-livello={m.livello}
             data-rituale={m.rituale ? '' : undefined}
+            data-durata={m.durata}
+            data-concentrazione={m.concentrazione ? '' : undefined}
+            data-promemoria={m.effetto?.promemoria}
+            data-modifiche={m.effetto ? JSON.stringify(m.effetto.modifiche) : undefined}
           />
         </>
       ) : (

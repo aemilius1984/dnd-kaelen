@@ -1,6 +1,8 @@
 import { createPortal } from 'preact/compat';
 import { useEffect, useState } from 'preact/hooks';
 import { dichiara } from '@/lib/annulla';
+import { accendiEffetto, nuovoIdEffetto, spentoDa } from '@/lib/effetti';
+import type { Modifica } from '@/lib/modifiche';
 import { recuperaSlot, spendiSlot } from '@/lib/sheet-state';
 import { cartaSpenta, livelliLanciabili } from '@/lib/lancio';
 import { assicuraInizializzato, datiIniziali, muta, stato } from '@/lib/storage';
@@ -11,6 +13,11 @@ type Bersaglio = {
   nome: string;
   livello: number;
   rituale: boolean;
+  /** Assente quando l'incantesimo non lascia niente addosso. */
+  durata?: string;
+  concentrazione: boolean;
+  promemoria?: string;
+  modifiche?: Modifica[];
 };
 
 export default function ControlliLancio() {
@@ -19,6 +26,8 @@ export default function ControlliLancio() {
   const { pg } = datiIniziali();
   const s = stato.value;
   const [bersagli, setBersagli] = useState<Bersaglio[]>([]);
+  // L'ultimo lancio per cui c'è qualcosa da proporre.
+  const [daAccendere, setDaAccendere] = useState<string | null>(null);
 
   // I contenitori sono markup statico generato in build: li troviamo una
   // volta sola e ci disegniamo dentro, così le regole degli incantesimi
@@ -30,6 +39,14 @@ export default function ControlliLancio() {
       nome: nodo.dataset.nome ?? '',
       livello: Number(nodo.dataset.livello ?? '0'),
       rituale: nodo.dataset.rituale !== undefined,
+      durata: nodo.dataset.durata,
+      concentrazione: nodo.dataset.concentrazione !== undefined,
+      promemoria: nodo.dataset.promemoria,
+      // Assente se l'incantesimo non lascia niente: è la sola bandiera che
+      // serve, e senza di lei non si propone nulla.
+      modifiche: nodo.dataset.modifiche
+        ? (JSON.parse(nodo.dataset.modifiche) as Modifica[])
+        : undefined,
     }));
     setBersagli(trovati);
   }, []);
@@ -83,6 +100,28 @@ export default function ControlliLancio() {
       costo: `Slot di ${livello}° speso`,
       disfa: () => muta((x) => recuperaSlot(x, livello)),
     });
+    // Proposto, mai automatico: si lancia Benedizione su un compagno e
+    // l'effetto non è su Kaelen. Lanciare e accendere sono due gesti, e il
+    // secondo è una scelta.
+    setDaAccendere(b.modifiche === undefined ? null : b.slug);
+  }
+
+  function tieniAcceso(b: Bersaglio) {
+    muta((x) =>
+      accendiEffetto(x, {
+        id: nuovoIdEffetto(),
+        nome: b.nome,
+        // Lo slug: rilanciare rinnova la durata invece di accendere un secondo
+        // Scudo della Fede.
+        origine: b.slug,
+        durata: b.durata ?? 'finché non finisce',
+        concentrazione: b.concentrazione,
+        promemoria: b.promemoria,
+        modifiche: b.modifiche ?? [],
+        accesoIl: new Date().toISOString(),
+      }),
+    );
+    setDaAccendere(null);
   }
 
   return (
@@ -108,6 +147,12 @@ export default function ControlliLancio() {
                 slot finiti, dove prima la carta si spegneva. */}
             {b.rituale && (
               <span class="via-rituale tenue">Oppure come rituale: senza slot, +10 minuti.</span>
+            )}
+            {daAccendere === b.slug && b.modifiche !== undefined && (
+              <button type="button" class="tieni-acceso" onClick={() => tieniAcceso(b)}>
+                Tienilo acceso
+                {spentoDa(s, b) && <span class="tenue"> — spegne «{spentoDa(s, b)!.nome}»</span>}
+              </button>
             )}
           </>,
           b.nodo,

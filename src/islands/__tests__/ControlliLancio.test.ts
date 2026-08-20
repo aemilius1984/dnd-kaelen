@@ -6,6 +6,7 @@ import StrisciaAnnulla from '@/islands/StrisciaAnnulla';
 import { annullabile } from '@/lib/annulla';
 import { caricaPersonaggioDaFile } from '@/lib/carica-personaggio';
 import { spendiSlot } from '@/lib/sheet-state';
+import { accendiEffetto, nuovoIdEffetto } from '@/lib/effetti';
 import { muta, stato } from '@/lib/storage';
 
 // La card che non si può più lanciare deve dirlo *restando dov'è*, spenta:
@@ -27,6 +28,22 @@ const contenitore = () => document.querySelector<HTMLElement>('[data-lancio]')!;
 const modale = () => document.querySelector<HTMLDialogElement>('dialog')!;
 const striscia = () => document.querySelector<HTMLElement>('.striscia-annulla');
 
+/** Un blocco di lancio come lo scrive `CarteIncantesimo.astro` per un
+ *  incantesimo che lascia qualcosa addosso. */
+const bloccoConEffetto = (slug: string, nome: string) =>
+  `<div data-lancio="${slug}" data-nome="${nome}" data-livello="1" ` +
+  `data-durata="10 minuti" data-concentrazione ` +
+  `data-modifiche='[{"genere":"voce","bersaglio":"ca","valore":2}]'></div>`;
+
+/** Preme «Lancia N°» dentro il blocco di quello slug e aspetta il giro. */
+const lancia = async (slug: string, livello: number) => {
+  const blocco = document.querySelector<HTMLElement>(`[data-lancio="${slug}"]`)!;
+  [...blocco.querySelectorAll('button')]
+    .find((b) => b.textContent?.includes(`${livello}°`))!
+    .click();
+  await giro();
+};
+
 /** Il bottone «Lancia 1°» dentro la modale. */
 const bottoneLancio = () =>
   [...contenitore().querySelectorAll('button')].find((b) => b.textContent?.includes('1°'))!;
@@ -47,7 +64,8 @@ beforeEach(async () => {
     `</div>` +
     `<dialog class="incantesimo-pieno">` +
     `<div class="lancio" data-lancio="cura-ferite" data-nome="Cura Ferite" data-livello="1"></div>` +
-    `</dialog>`;
+    `</dialog>` +
+    bloccoConEffetto('scudo-della-fede', 'Scudo della Fede');
   // jsdom dichiara `HTMLDialogElement` ma non implementa `close()`: senza
   // questo rimpiazzo il lancio esploderebbe qui e in nessun browser. Fa la sola
   // cosa che al test interessa — l'attributo `open` cade.
@@ -57,7 +75,7 @@ beforeEach(async () => {
   // `stato` è un segnale di modulo: `inizializzato` resta vero fra un test e
   // l'altro, quindi svuotare localStorage non lo riporta indietro e gli slot
   // spesi da un test arrivano al successivo. Ogni test parte da slot pieni.
-  muta((x) => ({ ...x, slotSpesi: {} }));
+  muta((x) => ({ ...x, slotSpesi: {}, effetti: [] }));
   // Anche l'azione annullabile è un segnale di modulo: senza questa riga la
   // striscia di un test comparirebbe già montata in quello dopo.
   annullabile.value = null;
@@ -208,5 +226,64 @@ describe('dopo il lancio', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe('l’effetto dopo il lancio', () => {
+  it('non si accende da solo', async () => {
+    // Si lancia Benedizione su un compagno e l'effetto non è su Kaelen.
+    // Lanciare e accendere sono due gesti, e il secondo è una scelta.
+    await lancia('scudo-della-fede', 1);
+    expect(stato.value.effetti).toEqual([]);
+  });
+
+  it('appare un comando per tenerlo acceso', async () => {
+    await lancia('scudo-della-fede', 1);
+    expect(document.querySelector('.tieni-acceso')).not.toBeNull();
+  });
+
+  it('premendolo, l’effetto entra con l’origine del lancio', async () => {
+    await lancia('scudo-della-fede', 1);
+    document.querySelector<HTMLButtonElement>('.tieni-acceso')!.click();
+    await giro();
+
+    expect(stato.value.effetti).toHaveLength(1);
+    expect(stato.value.effetti[0].origine).toBe('scudo-della-fede');
+    expect(stato.value.effetti[0].durata).toBe('10 minuti');
+    expect(stato.value.effetti[0].concentrazione).toBe(true);
+    expect(stato.value.effetti[0].modifiche).toEqual([
+      { genere: 'voce', bersaglio: 'ca', valore: 2 },
+    ]);
+  });
+
+  it('un incantesimo che non lascia niente non propone niente', async () => {
+    await lancia('cura-ferite', 1);
+    expect(document.querySelector('.tieni-acceso')).toBeNull();
+  });
+
+  it('dice cosa spegnerà, prima che tu prema', async () => {
+    muta((x) =>
+      accendiEffetto(x, {
+        id: nuovoIdEffetto(),
+        nome: 'Benedizione',
+        durata: '1 minuto',
+        concentrazione: true,
+        modifiche: [],
+        accesoIl: '2026-08-20T10:00:00.000Z',
+      }),
+    );
+    await lancia('scudo-della-fede', 1);
+    expect(document.querySelector('.tieni-acceso')!.textContent).toContain('Benedizione');
+  });
+
+  it('rilanciarlo rinnova invece di accenderne due', async () => {
+    await lancia('scudo-della-fede', 1);
+    document.querySelector<HTMLButtonElement>('.tieni-acceso')!.click();
+    await giro();
+    await lancia('scudo-della-fede', 1);
+    document.querySelector<HTMLButtonElement>('.tieni-acceso')!.click();
+    await giro();
+
+    expect(stato.value.effetti).toHaveLength(1);
   });
 });

@@ -1887,3 +1887,17 @@ dialog.modulo-effetto .comandi button {
   text-align: center;
   font-family: var(--font-mono);
 }
+
+/* La proposta sta dove è appena avvenuto il lancio, non in una striscia sua:
+ * il gesto è lo stesso, e il pollice è già lì. */
+.tieni-acceso {
+  min-height: 44px;
+  margin-top: var(--spazio-1);
+  padding: 0 var(--spazio-2);
+  border: 1px solid var(--ambra);
+  border-radius: var(--raggio);
+  background: transparent;
+  color: var(--ambra);
+  font-size: var(--fs-piccolo);
+  cursor: pointer;
+}
