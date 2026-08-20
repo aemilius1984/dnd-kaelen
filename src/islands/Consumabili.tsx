@@ -2,7 +2,7 @@ import { createPortal } from 'preact/compat';
 import { useEffect, useState } from 'preact/hooks';
 import { dichiara } from '@/lib/annulla';
 import { caselle } from '@/lib/caselle';
-import { aggiungiOggetto, consuma, consumabili, restituisci } from '@/lib/oggetti';
+import { aggiungiOggettoIndossandolo, consuma, consumabili, restituisci } from '@/lib/oggetti';
 import { assicuraInizializzato, datiIniziali, muta, stato } from '@/lib/storage';
 import ModuloOggetto from '@/islands/parti/ModuloOggetto';
 
@@ -111,7 +111,8 @@ export default function Consumabili() {
       {modulo &&
         createPortal(
           <ModuloOggetto
-            onSalva={(dati) => muta((x) => aggiungiOggetto(x, dati))}
+            onSalva={(dati) => muta((x) => aggiungiOggettoIndossandolo(x, dati))}
+            caratteristiche={pg.caratteristiche}
             onChiudi={() => document.querySelector<HTMLDialogElement>('#aggiungi-oggetto')?.close()}
           />,
           modulo,

@@ -43,6 +43,21 @@ export function aggiungiOggetto(
   return aggiorna(s, { oggettiAggiunti: [...s.oggettiAggiunti, oggetto] });
 }
 
+/** Un oggetto che sposta un numero nasce **addosso**. Chi trova un anello se
+ *  lo infila, e un oggetto magico riposto nello zaino è indistinguibile da un
+ *  oggetto che non è stato salvato: i numeri non si muovono e non c'è niente da
+ *  vedere. Gli altri no — una corda «indossata» non vuol dire niente. */
+export function aggiungiOggettoIndossandolo(
+  s: StatoSessione,
+  dati: Omit<OggettoAggiunto, 'id'>,
+): StatoSessione {
+  // L'id va letto **prima**: `aggiungiOggetto` lo genera dentro di sé, e
+  // rileggerlo dopo vorrebbe dire fidarsi che sia rimasto l'ultimo.
+  const id = prossimoIdOggetto(s);
+  const dopo = aggiungiOggetto(s, dati);
+  return dati.modifiche.length > 0 ? commutaIndossato(dopo, id) : dopo;
+}
+
 export function impostaQuantitaAggiunta(
   s: StatoSessione,
   id: string,

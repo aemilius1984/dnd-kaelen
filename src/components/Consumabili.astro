@@ -40,6 +40,16 @@ const consumabili = pg.equipaggiamento.filter((e) => e.consumabile);
 <button type="button" class="aggiungi-oggetto" data-apre="aggiungi-oggetto">
   + aggiungi oggetto
 </button>
+{
+  /* Detto qui perché è qui che si sbaglia: da questo bottone si aggiunge
+    qualunque cosa, ma in questa sezione ci sta solo quel che si spende. Un
+    oggetto che non si consuma e non sposta numeri, senza questa riga,
+    sparirebbe senza una parola. */
+}
+<p class="tenue dove-finisce">
+  Quel che non si consuma va nella <a href="/personaggio/">Borsa</a>. Se sposta un numero, te lo
+  ritrovi addosso qui sopra.
+</p>
 
 <dialog id="aggiungi-oggetto" aria-label="Aggiungi un oggetto">
   <div class="testa">

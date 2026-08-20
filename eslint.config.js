@@ -4,7 +4,11 @@ import astro from 'eslint-plugin-astro';
 import globals from 'globals';
 
 export default [
-  { ignores: ['dist/', '.astro/', 'node_modules/', 'public/'] },
+  // `.wrangler/` è la cartella temporanea di `wrangler pages dev`: bundle
+  // generati, non codice del repo. È già in `.gitignore`, ma eslint non lo
+  // legge — e chi aveva lanciato il server locale si ritrovava il cancello
+  // rosso per centonovantuno errori in file che non ha scritto.
+  { ignores: ['dist/', '.astro/', '.wrangler/', 'node_modules/', 'public/'] },
   js.configs.recommended,
   ...ts.configs.recommended,
   ...astro.configs.recommended,

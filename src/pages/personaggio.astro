@@ -57,8 +57,14 @@ const interpretazione = [
     <TestaSezione kicker="i numeri">Caratteristiche e abilità</TestaSezione>
     <Statistiche pg={pg} />
     <p class="tenue">
-      Percezione passiva {percezionePassiva(pg)} · Velocità {pg.velocita} ft · Capacità di trasporto
-      {capacitaTrasporto(pg)} lb
+      {
+        /* Lo spazio dentro l'espressione e non fuori: Astro mangia quello a
+        fine riga prima di una parentesi graffa, e prettier manda a capo qui.
+        Il risultato era «trasporto480 lb». */
+      }
+      Percezione passiva {percezionePassiva(pg)} · Velocità {pg.velocita} ft · Capacità di trasporto{
+        ` ${capacitaTrasporto(pg)} lb`
+      }
     </p>
   </section>
 

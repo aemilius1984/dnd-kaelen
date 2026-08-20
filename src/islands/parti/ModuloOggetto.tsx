@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
 import { caratteristicheModificabili, vociFinali, type Modifica } from '@/lib/modifiche';
 import type { OggettoAggiunto } from '@/lib/oggetti';
+import type { Caratteristica } from '@/lib/schema';
 
 /** Il modulo «aggiungi oggetto», usato da due sedi: la scheda e la Borsa. Non è
  *  un'isola — non lo monta Astro, lo importa chi ne ha bisogno — e sta in
@@ -19,11 +20,30 @@ import type { OggettoAggiunto } from '@/lib/oggetti';
 export default function ModuloOggetto({
   onSalva,
   onChiudi,
+  caratteristiche,
 }: {
   onSalva: (dati: Omit<OggettoAggiunto, 'id'>) => void;
   onChiudi: () => void;
+  /** I punteggi di adesso, per dire accanto al campo quanto vale già quello che
+   *  si sta per riscrivere. Facoltativo: il modulo funziona anche senza, solo
+   *  in silenzio. */
+  caratteristiche?: Record<Caratteristica, number>;
 }) {
   const [magico, setMagico] = useState(false);
+  const [bersaglio, setBersaglio] = useState('');
+  const [valore, setValore] = useState(0);
+
+  // «FOR diventa 21» è assoluto, ed è la regola del manuale per la Cintura di
+  // Forza del Gigante: vince il più alto fra il punteggio dichiarato e quello
+  // di base. Un valore più basso quindi non fa niente — e non farebbe niente
+  // *in silenzio*, che è il modo peggiore. Il punteggio attuale sta scritto
+  // accanto al campo perché la parola «diventa» in un menù a tendina, al
+  // tavolo, non la legge nessuno.
+  const attuale =
+    caratteristiche && (caratteristicheModificabili as readonly string[]).includes(bersaglio)
+      ? caratteristiche[bersaglio as Caratteristica]
+      : null;
+  const inutile = attuale !== null && valore !== 0 && valore <= attuale;
 
   function salva(e: Event) {
     e.preventDefault();
@@ -77,7 +97,11 @@ export default function ModuloOggetto({
       <details class="numeri" onToggle={(e) => setMagico(e.currentTarget.open)}>
         <summary>È un oggetto magico?</summary>
         <div class="riga">
-          <select name="bersaglio" aria-label="Cosa modifica">
+          <select
+            name="bersaglio"
+            aria-label="Cosa modifica"
+            onChange={(e) => setBersaglio(e.currentTarget.value)}
+          >
             <option value="">niente</option>
             {caratteristicheModificabili.map((c) => (
               <option key={c} value={c}>
@@ -90,8 +114,21 @@ export default function ModuloOggetto({
               </option>
             ))}
           </select>
-          <input type="number" name="valore" aria-label="Di quanto" value="0" />
+          <input
+            type="number"
+            name="valore"
+            aria-label="Di quanto"
+            value="0"
+            onInput={(e) => setValore(Number(e.currentTarget.value))}
+          />
+          {attuale !== null && <span class="tenue attuale">ora {attuale}</span>}
         </div>
+        {inutile && (
+          <p class="avviso-inutile">
+            {bersaglio.toUpperCase()} vale già {attuale}: vince il più alto, quindi così non cambia
+            niente.
+          </p>
+        )}
         {/* Il vincolo detto dove si sbaglia. `pg.armatura` porta già cotta di
             maglia e scudo: uno scudo +1 dichiarato come «CA 2» conterebbe due
             volte, e il totale sarebbe plausibile. */}

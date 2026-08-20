@@ -257,3 +257,53 @@ describe('accendere dalla striscia', () => {
     expect(document.querySelector('.avviso-concentrazione')!.textContent).toContain('Benedizione');
   });
 });
+
+describe('un oggetto magico addosso si vede, e non solo nel numero', () => {
+  // Al primo giro col telefono la CA passava a 20 col 18 barrato accanto e
+  // niente diceva perché: gli oggetti indossati muovevano i numeri senza
+  // comparire nella striscia. Un numero che cambia senza una causa visibile è
+  // un numero di cui al tavolo non ci si fida.
+  const anello = {
+    id: 'mio:1',
+    nome: 'Anello di protezione',
+    quantita: 1,
+    consumabile: false,
+    modifiche: [{ genere: 'voce' as const, bersaglio: 'ca' as const, valore: 2 }],
+  };
+
+  it('ha il suo chip, e dice «addosso»', async () => {
+    muta((x) => ({ ...x, oggettiAggiunti: [anello], indossati: ['mio:1'] }));
+    await giro();
+    expect(chip('Anello di protezione')?.textContent).toContain('addosso');
+    expect(valore('ca')).toBe(`${CA + 2}${CA}`);
+  });
+
+  it('nello zaino non compare, e non muove niente', async () => {
+    muta((x) => ({ ...x, oggettiAggiunti: [anello], indossati: [] }));
+    await giro();
+    expect(chip('Anello di protezione')).toBeUndefined();
+    expect(valore('ca')).toBe(`${CA}`);
+  });
+
+  it('un oggetto che non sposta numeri non affolla la striscia', async () => {
+    // La striscia risponde a una domanda sola: perché quel numero non è quello
+    // stampato. Una corda addosso non la risponde.
+    muta((x) => ({
+      ...x,
+      oggettiAggiunti: [{ ...anello, nome: 'Corda', modifiche: [] }],
+      indossati: ['mio:1'],
+    }));
+    await giro();
+    expect(chip('Corda')).toBeUndefined();
+  });
+
+  it('la × lo sfila senza buttarlo via', async () => {
+    muta((x) => ({ ...x, oggettiAggiunti: [anello], indossati: ['mio:1'] }));
+    await giro();
+    document.querySelector<HTMLButtonElement>('[data-sfila="mio:1"]')!.click();
+    await giro();
+    expect(stato.value.indossati).toEqual([]);
+    expect(stato.value.oggettiAggiunti).toHaveLength(1);
+    expect(valore('ca')).toBe(`${CA}`);
+  });
+});

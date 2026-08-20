@@ -4,6 +4,7 @@ import { statoIniziale, type StatoSessione } from '@/lib/sheet-state';
 import {
   PREFISSO_MIO,
   aggiungiOggetto,
+  aggiungiOggettoIndossandolo,
   commutaIndossato,
   consuma,
   consumabili,
@@ -135,5 +136,42 @@ describe('consumare passa da una porta sola', () => {
     s = aggiungiOggetto(s, pozione);
     expect(restituisci(consuma(s, 'mio:1'), 'mio:1').oggettiAggiunti[0].quantita).toBe(2);
     expect(restituisci(consuma(s, 'razioni'), 'razioni').oggetti['razioni']).toBe(7);
+  });
+});
+
+describe('un oggetto magico nasce addosso', () => {
+  // Un oggetto che sposta un numero e resta nello zaino è indistinguibile da un
+  // oggetto che non è stato salvato: i numeri non si muovono, e in scheda non
+  // c'è niente da vedere. È il difetto trovato al primo giro col telefono.
+  const anello = {
+    nome: 'Anello di protezione',
+    quantita: 1,
+    consumabile: false,
+    modifiche: [{ genere: 'voce' as const, bersaglio: 'ca' as const, valore: 1 }],
+  };
+
+  it('lo indossa da solo, se sposta un numero', () => {
+    const dopo = aggiungiOggettoIndossandolo(s, anello);
+    expect(dopo.oggettiAggiunti[0].id).toBe('mio:1');
+    expect(dopo.indossati).toEqual(['mio:1']);
+  });
+
+  it('una corda no: «indossata» su una corda non vuol dire niente', () => {
+    const dopo = aggiungiOggettoIndossandolo(s, {
+      nome: 'Corda',
+      quantita: 1,
+      consumabile: false,
+      modifiche: [],
+    });
+    expect(dopo.oggettiAggiunti).toHaveLength(1);
+    expect(dopo.indossati).toEqual([]);
+  });
+
+  it('indossa il nuovo, non quello che c’era già', () => {
+    // L'id va letto prima di aggiungere: leggerlo dopo vuol dire fidarsi che
+    // sia rimasto l'ultimo dell'elenco.
+    const primo = aggiungiOggettoIndossandolo(s, anello);
+    const secondo = aggiungiOggettoIndossandolo(primo, { ...anello, nome: 'Amuleto' });
+    expect(secondo.indossati).toEqual(['mio:1', 'mio:2']);
   });
 });

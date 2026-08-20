@@ -1,4 +1,4 @@
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 /** Perché queste asserzioni girano sul costruito e non sulla container API.
@@ -214,5 +214,40 @@ describe('la fascia delle difese resta statica', () => {
 
   it('il contenitore della striscia riserva la sua altezza', () => {
     expect(dist('scheda')).toContain('class="striscia-effetti-isola"');
+  });
+});
+
+describe('il modulo dell’oggetto è vestito come le altre modali', () => {
+  /** Il CSS costruito, tutti i fogli in uno. Il trabocchetto che questi test
+   *  guardano non si vede nel markup: `Superficie.astro` scopa i suoi stili con
+   *  un attributo che Astro aggiunge in build, e un'isola Preact che scrive
+   *  `class="superficie"` a mano non lo porta. La classe risultava inerte —
+   *  carta senza padding, senza fondo e senza bordo — e nessun test sul DOM se
+   *  ne poteva accorgere. */
+  const foglio = (): string =>
+    readdirSync('dist/_astro')
+      .filter((f) => f.endsWith('.css'))
+      .map((f) => readFileSync(`dist/_astro/${f}`, 'utf8'))
+      .join('\n');
+
+  it('la carta di un oggetto aggiunto si veste da sola', () => {
+    expect(foglio()).toMatch(/\.consumabile-card\.mio\{[^}]*padding:/);
+    expect(foglio()).toMatch(/\.consumabile-card\.mio\{[^}]*background:/);
+  });
+
+  it('la × della testa è un tratto, e un tratto vuole uno stroke', () => {
+    // Con `stroke: none` il path non disegna niente e resta il riquadro vuoto
+    // del bottone: è quel che si vedeva accanto a «Trovato al tavolo».
+    expect(foglio()).toMatch(/#aggiungi-oggetto \.chiudi svg\{[^}]*stroke:/);
+  });
+
+  it('la testa distanzia il titolo dal bottone', () => {
+    expect(foglio()).toMatch(/#aggiungi-oggetto \.testa\{[^}]*justify-content:space-between/);
+  });
+
+  it('dice dove finisce quel che non si consuma', () => {
+    // Il buco peggiore trovato al primo giro: un oggetto non consumabile
+    // aggiunto da qui spariva senza una parola.
+    expect(dist('scheda')).toContain('dove-finisce');
   });
 });

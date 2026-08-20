@@ -209,3 +209,67 @@ describe('il modulo per aggiungerne', () => {
     ]);
   });
 });
+
+describe('quel che il modulo dice prima di salvare', () => {
+  const scrivi = (nome: string, valore: string) => {
+    const campo = document.querySelector<HTMLInputElement>(
+      `[data-modulo-oggetto] [name="${nome}"]`,
+    )!;
+    campo.value = valore;
+    campo.dispatchEvent(new Event('input', { bubbles: true }));
+  };
+  const scegli = (v: string) => {
+    const sel = document.querySelector<HTMLSelectElement>(
+      '[data-modulo-oggetto] [name="bersaglio"]',
+    )!;
+    sel.value = v;
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+  };
+  const invia = () =>
+    document
+      .querySelector<HTMLFormElement>('[data-modulo-oggetto] form')!
+      .dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+
+  it('scegliendo una caratteristica scrive quanto vale adesso', async () => {
+    // «SAG diventa» è assoluto, ed è la regola giusta. Ma senza il punteggio
+    // attuale accanto, al tavolo si scrive il bonus e non succede niente.
+    scegli('sag');
+    await giro();
+    expect(document.querySelector('[data-modulo-oggetto] .attuale')!.textContent).toBe(
+      `ora ${pg.caratteristiche.sag}`,
+    );
+  });
+
+  it('avverte quando il punteggio dichiarato è più basso del vero', async () => {
+    scegli('sag');
+    scrivi('valore', '2');
+    await giro();
+    const avviso = document.querySelector('[data-modulo-oggetto] .avviso-inutile')!;
+    expect(avviso.textContent).toContain('vince il più alto');
+  });
+
+  it('su una voce finale non dice niente: lì il valore è un addendo', async () => {
+    scegli('ca');
+    scrivi('valore', '1');
+    await giro();
+    expect(document.querySelector('[data-modulo-oggetto] .attuale')).toBeNull();
+    expect(document.querySelector('[data-modulo-oggetto] .avviso-inutile')).toBeNull();
+  });
+
+  it('un oggetto che sposta un numero nasce addosso', async () => {
+    scrivi('nome', 'Anello di protezione');
+    scegli('ca');
+    scrivi('valore', '1');
+    invia();
+    await giro();
+    expect(stato.value.indossati).toEqual(['mio:1']);
+  });
+
+  it('una corda no', async () => {
+    scrivi('nome', 'Corda marcia');
+    invia();
+    await giro();
+    expect(stato.value.oggettiAggiunti).toHaveLength(1);
+    expect(stato.value.indossati).toEqual([]);
+  });
+});

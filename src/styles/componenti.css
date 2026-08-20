@@ -1927,9 +1927,24 @@ dialog.modulo-effetto .comandi button {
 }
 
 /* Il filetto ambra sul fianco: lo stesso segno che sulle carte incantesimo
- * distingue il dominio. Qui dice «questo l'hai raccolto tu». */
+ * distingue il dominio. Qui dice «questo l'hai raccolto tu».
+ *
+ * La carta si veste tutta da qui e non da `Superficie.astro`: quelle regole
+ * sono scoped da Astro, e un'isola Preact non porta l'attributo che le attiva.
+ * Scritta lì, la classe `superficie` era inerte — carta senza margini, senza
+ * fondo e senza bordo, col testo incollato al filetto. */
 .consumabile-card.mio {
+  padding: var(--spazio-3);
+  border: 1px solid var(--filetto);
   border-left: 3px solid var(--ambra);
+  border-radius: var(--raggio-superficie);
+  background: var(--superficie);
+  box-shadow: var(--ombra-1);
+}
+
+.dove-finisce {
+  margin: var(--spazio-1) 0 0;
+  font-size: var(--fs-piccolo);
 }
 
 .aggiungi-oggetto {
@@ -2113,4 +2128,77 @@ details[data-gruppo='zaino'] summary {
 .borsa-isola .monete {
   margin-top: var(--spazio-2);
   margin-bottom: 0;
+}
+
+/* La testa del dialogo dell'oggetto. Le altre modali hanno queste regole nel
+ * loro `<style>` scoped; qui stanno nel foglio comune perché il guscio esiste
+ * in due sedi — stampato da `Consumabili.astro` in scheda, scritto dall'isola
+ * `Borsa` su `/personaggio/`. Senza, la testa restava `display: block` e il
+ * bottone di chiusura si incollava al titolo. */
+dialog#aggiungi-oggetto .testa {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  margin-bottom: var(--spazio-1);
+}
+
+dialog#aggiungi-oggetto .chiudi {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: -0.6rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* Un tratto senza `stroke` non disegna niente: la X era invisibile e restava
+ * solo il riquadro del bottone. */
+dialog#aggiungi-oggetto .chiudi svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: var(--inchiostro);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+/* Il chip di un oggetto indossato. Non il filetto ambra delle carte: su una
+ * pillola il bordo sinistro disegna un arco che sborda dal contorno, e l'ambra
+ * qui dentro è già presa — dice «concentrazione». Un quadrato invece di un
+ * cerchio: un oggetto ha spigoli, e le due forme si distinguono senza leggere. */
+.chip-effetto.oggetto .segno {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: currentColor;
+}
+
+.modulo-oggetto .attuale {
+  font-size: var(--fs-piccolo);
+  white-space: nowrap;
+}
+
+.modulo-oggetto .avviso-inutile {
+  margin: var(--spazio-1) 0 0;
+  font-size: var(--fs-piccolo);
+  color: var(--ambra);
+}
+
+/* La riga «cosa modifica / di quanto», nei due moduli che ce l'hanno. Un
+ * `input[type=number]` ha una larghezza propria e non si stringe: a 390 di
+ * schermo usciva dal dialogo di undici pixel, e il punteggio attuale finiva
+ * del tutto fuori dalla finestra. Il campo cede, l'etichetta no. */
+.modulo-oggetto .numeri .riga,
+.modulo-effetto .numeri .riga {
+  flex-wrap: wrap;
+}
+
+.modulo-oggetto .numeri .riga input[type='number'],
+.modulo-effetto .numeri .riga input[type='number'] {
+  flex: 1 1 4rem;
+  min-width: 0;
 }

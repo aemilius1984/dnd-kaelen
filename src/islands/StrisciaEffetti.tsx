@@ -9,6 +9,7 @@ import {
   spentoDa,
 } from '@/lib/effetti';
 import { caratteristicheModificabili, vociFinali, type Modifica } from '@/lib/modifiche';
+import { commutaIndossato } from '@/lib/oggetti';
 import { attaccoIncantesimi, cdIncantesimi, classeArmatura, iniziativa, segno } from '@/lib/derive';
 import { assicuraInizializzato, datiIniziali, muta, stato } from '@/lib/storage';
 
@@ -95,6 +96,31 @@ export default function StrisciaEffetti() {
       {innesti.map((i) => createPortal(<Numero innesto={i} adesso={adesso} />, i.nodo))}
 
       <div class="striscia-effetti">
+        {/* Gli oggetti indossati stanno nella stessa striscia degli effetti,
+            perché sono la stessa domanda: perché quel numero non è quello
+            stampato. Il chip li distingue senza una parola — nessun cerchio di
+            concentrazione, e la × sfila l'oggetto invece di buttarlo via. */}
+        {(s.oggettiAggiunti ?? [])
+          .filter((o) => (s.indossati ?? []).includes(o.id) && o.modifiche.length > 0)
+          .map((o) => (
+            <span key={o.id} class="chip-effetto oggetto">
+              {/* Un quadrato dove la concentrazione ha un cerchio: due forme si
+                  distinguono senza leggere una parola. */}
+              <i class="segno" aria-hidden="true" />
+              <span class="nome">{o.nome}</span>
+              <span class="durata tenue">addosso</span>
+              <button
+                type="button"
+                class="spegni"
+                data-sfila={o.id}
+                aria-label={`Togli ${o.nome}`}
+                onClick={() => muta((x) => commutaIndossato(x, o.id))}
+              >
+                ×
+              </button>
+            </span>
+          ))}
+
         {(s.effetti ?? []).map((e) => (
           <span key={e.id} class={`chip-effetto${e.concentrazione ? ' concentrazione' : ''}`}>
             {/* Il cerchio pieno distingue la concentrazione a colpo d'occhio,

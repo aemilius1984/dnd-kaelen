@@ -3,7 +3,7 @@ import { kaelenAdesso } from '@/lib/adesso';
 import { classeArmatura } from '@/lib/derive';
 import { caratteristicheModificabili, type Modifica } from '@/lib/modifiche';
 import {
-  aggiungiOggetto,
+  aggiungiOggettoIndossandolo,
   commutaIndossato,
   impostaQuantitaAggiunta,
   rimuoviOggetto,
@@ -238,7 +238,8 @@ export default function Borsa() {
           più per lo stesso risultato. */}
       <dialog class="modulo-oggetto-guscio" ref={dialogo} aria-label="Aggiungi un oggetto">
         <ModuloOggetto
-          onSalva={(dati) => muta((x) => aggiungiOggetto(x, dati))}
+          onSalva={(dati) => muta((x) => aggiungiOggettoIndossandolo(x, dati))}
+          caratteristiche={adesso.pg.caratteristiche}
           onChiudi={() => dialogo.current?.close()}
         />
       </dialog>

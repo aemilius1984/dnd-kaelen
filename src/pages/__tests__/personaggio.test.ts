@@ -35,3 +35,9 @@ describe('la pagina del personaggio è l’archivio completo delle capacità', (
     }
   });
 });
+
+it('la capacità di trasporto ha lo spazio prima del numero', () => {
+  // Astro mangia lo spazio a fine riga prima di una graffa, e prettier manda a
+  // capo lì: si leggeva «trasporto480 lb».
+  expect(dist('personaggio')).toMatch(/Capacità di trasporto \d+ lb/);
+});
