@@ -171,15 +171,24 @@ equipaggiamento:
       nomeEn: Chain Mail,
       quantita: 1,
       consumabile: false,
+      gruppo: addosso,
     }
-  - { id: scudo, nome: Scudo, nomeEn: Shield, quantita: 1, consumabile: false }
-  - { id: maglio, nome: Maglio da guerra, nomeEn: Warhammer, quantita: 1, consumabile: false }
+  - { id: scudo, nome: Scudo, nomeEn: Shield, quantita: 1, consumabile: false, gruppo: addosso }
+  - {
+      id: maglio,
+      nome: Maglio da guerra,
+      nomeEn: Warhammer,
+      quantita: 1,
+      consumabile: false,
+      gruppo: addosso,
+    }
   - {
       id: simbolo-sacro,
       nome: 'Simbolo sacro: disco di pietra lavica',
       nomeEn: 'Holy Symbol: Lava-Stone Disk',
       quantita: 1,
       consumabile: false,
+      gruppo: addosso,
       note: 'Focus da incantatore, indossato sul petto.',
     }
   - {

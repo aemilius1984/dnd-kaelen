@@ -123,6 +123,12 @@ export const personaggioSchema = z.object({
       nomeEn: z.string(),
       quantita: z.number().int(),
       consumabile: z.boolean(),
+      /** Dove si disegna nella Borsa. Facoltativo, e volutamente **fuori** da
+       *  `campiVersione`: spostare la lampada dallo zaino alla cintura è
+       *  raggruppamento presentazionale, non un dato da cui lo stato dipende, e
+       *  non vale l'azzeramento di una sessione. I consumabili non lo portano —
+       *  il loro gruppo lo dice già `consumabile`. */
+      gruppo: z.enum(['addosso', 'zaino']).optional(),
       note: z.string().optional(),
     }),
   ),

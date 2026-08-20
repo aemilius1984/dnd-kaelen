@@ -1944,7 +1944,8 @@ dialog.modulo-effetto .comandi button {
   cursor: pointer;
 }
 
-dialog#aggiungi-oggetto {
+dialog#aggiungi-oggetto,
+dialog.modulo-oggetto-guscio {
   width: min(28rem, 100%);
   margin: auto;
   padding: var(--spazio-2) var(--spazio-2) calc(var(--spazio-2) + env(safe-area-inset-bottom, 0px));
@@ -1954,11 +1955,13 @@ dialog#aggiungi-oggetto {
   color: var(--inchiostro);
 }
 
-dialog#aggiungi-oggetto[open] {
+dialog#aggiungi-oggetto[open],
+dialog.modulo-oggetto-guscio[open] {
   display: block;
 }
 
-dialog#aggiungi-oggetto::backdrop {
+dialog#aggiungi-oggetto::backdrop,
+dialog.modulo-oggetto-guscio::backdrop {
   background: rgb(0 0 0 / 0.6);
 }
 
@@ -2025,4 +2028,89 @@ dialog#aggiungi-oggetto::backdrop {
   background: var(--superficie);
   color: var(--inchiostro);
   cursor: pointer;
+}
+
+/* ── La Borsa a tre gruppi ─────────────────────────────────────────────── */
+
+/* Il solo posto in cui un modificatore dichiarato due volte si vede a occhio:
+ * sta in cima perché è quel che si guarda per primo, e perché un numero
+ * sbagliato in fondo a un elenco non lo legge nessuno. */
+.sommario-addosso {
+  margin: 0 0 var(--spazio-2);
+  padding: 0.5rem 0.7rem;
+  border-left: 3px solid var(--lampo);
+  border-radius: var(--raggio);
+  background: var(--lampo-fondo);
+  color: var(--lampo-cupo);
+  font-size: var(--fs-piccolo);
+}
+
+[data-gruppo] {
+  margin-bottom: var(--spazio-1);
+  padding: var(--spazio-1) 0.7rem;
+  border: 1px solid var(--filetto);
+  border-radius: var(--raggio-superficie);
+  background: var(--superficie);
+}
+
+[data-gruppo] > .k {
+  display: block;
+  margin-bottom: 0.2rem;
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--inchiostro-tenue);
+}
+
+/* Chiuso di default, e il sommario è il bersaglio del dito: 44px pieni. */
+details[data-gruppo='zaino'] summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+  color: var(--inchiostro-tenue);
+  cursor: pointer;
+}
+
+.oggetti .mod {
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--raggio);
+  background: var(--lampo-fondo);
+  color: var(--lampo-cupo);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+/* Lo stesso filetto ambra delle carte del dominio e dei consumabili aggiunti:
+ * un segno solo per «questo non viene dal manuale». */
+.oggetti li.mio {
+  border-left: 3px solid var(--ambra);
+  padding-left: 0.5rem;
+}
+
+.oggetti li [data-indossa],
+.oggetti li [data-rimuovi] {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 0.5rem;
+  border: 1px solid var(--filetto);
+  border-radius: var(--raggio);
+  background: var(--superficie-incassata);
+  color: var(--inchiostro);
+  font: inherit;
+  font-size: 0.8rem;
+}
+
+.oggetti li [data-indossa][aria-pressed='true'] {
+  border-color: var(--lampo);
+  background: var(--lampo-fondo);
+  color: var(--lampo-cupo);
+}
+
+/* In fondo, e staccate: si toccano a fine sessione, non durante. */
+.borsa-isola .monete {
+  margin-top: var(--spazio-2);
+  margin-bottom: 0;
 }
