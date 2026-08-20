@@ -12,6 +12,8 @@ danno: null
 slotSuperiore: null
 tag: [utilità]
 dominio: false
+effetto:
+  promemoria: 'Senti la direzione finché resti entro 300 m'
 ---
 
 Descrivi o nomini un oggetto che conosci e per 10 minuti ne senti direzione e movimento

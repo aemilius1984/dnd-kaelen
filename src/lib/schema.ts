@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { modificaSchema } from './modifiche';
 
 export const caratteristicaEnum = z.enum(['for', 'des', 'cos', 'int', 'sag', 'car']);
 export type Caratteristica = z.infer<typeof caratteristicaEnum>;
@@ -177,6 +178,25 @@ export const incantesimoSchema = z.object({
    *  peggio non spenderne uno che serviva: ogni valore `true` deve venire
    *  dalla colonna Special della lista del Chierico, non a memoria. */
   rituale: z.boolean().default(false),
+  /** Quel che resta addosso dopo il lancio, se resta qualcosa.
+   *
+   *  Nome, durata e concentrazione non si ripetono qui: vengono
+   *  dall'incantesimo, e ricopiarli sarebbe una seconda verità da tenere
+   *  allineata. Qui c'è solo quel che l'incantesimo *fa*.
+   *
+   *  Lo porta ogni incantesimo che richiede concentrazione — lo slot è di
+   *  Kaelen qualunque sia il bersaglio — più quelli che durano e lasciano uno
+   *  stato che può essere su di lui. Restano fuori le durate Istantanee, gli
+   *  stati che vivono su un bersaglio senza concentrazione da tenere, e Aiuto,
+   *  che alza i PF massimi: un altro campo con altre regole di recupero. */
+  effetto: z
+    .object({
+      /** Quel che non diventa un numero. Guida è +1d4 su una prova: un dado,
+       *  non un addendo. */
+      promemoria: z.string().optional(),
+      modifiche: z.array(modificaSchema).default([]),
+    })
+    .optional(),
 });
 
 export type Incantesimo = z.infer<typeof incantesimoSchema>;

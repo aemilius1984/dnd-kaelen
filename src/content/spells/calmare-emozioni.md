@@ -12,6 +12,8 @@ danno: null
 slotSuperiore: null
 tag: [controllo]
 dominio: false
+effetto:
+  promemoria: 'Fino a 10 creature: niente ostilità, oppure indifferenza'
 ---
 
 Ogni Umanoide in una sfera di 20 ft che fallisce il TS su Carisma diventa immune a

@@ -83,3 +83,62 @@ describe('tag rituale', () => {
     for (const m of magie.values()) expect(typeof m.rituale).toBe('boolean');
   });
 });
+
+describe('cosa resta addosso dopo il lancio', () => {
+  const incantesimi = caricaIncantesimi();
+
+  it('ogni incantesimo con concentrazione dichiara un effetto', () => {
+    // È la ragione per cui la striscia esiste: lo slot di concentrazione è di
+    // Kaelen qualunque sia il bersaglio. Un incantesimo che concentra e non ha
+    // un effetto da accendere è un buco nella regola.
+    const senza = [...incantesimi.entries()]
+      .filter(([, m]) => m.concentrazione && !m.effetto)
+      .map(([slug]) => slug);
+    expect(senza).toEqual([]);
+  });
+
+  it('nessun incantesimo istantaneo lascia qualcosa acceso', () => {
+    const assurdi = [...incantesimi.entries()]
+      .filter(([, m]) => m.durata === 'Istantanea' && m.effetto)
+      .map(([slug]) => slug);
+    expect(assurdi).toEqual([]);
+  });
+
+  it('i tre senza concentrazione che durano sono dichiarati', () => {
+    for (const slug of ['santuario', 'legame-protettivo', 'protezione-dai-veleni']) {
+      expect(incantesimi.get(slug)?.effetto).toBeDefined();
+    }
+  });
+
+  it('Scudo della Fede è l’unico che sposta un numero', () => {
+    const conModifiche = [...incantesimi.entries()]
+      .filter(([, m]) => (m.effetto?.modifiche.length ?? 0) > 0)
+      .map(([slug]) => slug);
+    expect(conModifiche).toEqual(['scudo-della-fede']);
+    expect(incantesimi.get('scudo-della-fede')!.effetto!.modifiche).toEqual([
+      { genere: 'voce', bersaglio: 'ca', valore: 2 },
+    ]);
+  });
+
+  it('Benedizione non sposta nessun numero: dà un dado', () => {
+    // Un dado non è un addendo. Sta nella striscia col suo promemoria e non
+    // tocca niente.
+    const benedizione = incantesimi.get('benedizione')!;
+    expect(benedizione.effetto!.modifiche).toEqual([]);
+    expect(benedizione.effetto!.promemoria).toContain('1d4');
+  });
+
+  it('Aiuto resta fuori: i PF massimi sono un altro giro', () => {
+    expect(incantesimi.get('aiuto')?.effetto).toBeUndefined();
+  });
+
+  it('ogni effetto dichiarato dice almeno una delle due cose', () => {
+    // Un effetto senza promemoria e senza modifiche è un chip che non dice
+    // niente: occupa una riga in cima alla scheda per non ricordare nulla.
+    for (const [slug, m] of incantesimi) {
+      if (!m.effetto) continue;
+      const dice = Boolean(m.effetto.promemoria) || m.effetto.modifiche.length > 0;
+      expect(dice, `${slug} ha un effetto muto`).toBe(true);
+    }
+  });
+});

@@ -13,6 +13,8 @@ slotSuperiore: null
 tag: [controllo]
 dominio: false
 rituale: true
+effetto:
+  promemoria: 'Niente suoni nella sfera: niente incantesimi con componente verbale'
 ---
 
 Nessun suono entra o esce da una sfera di 20 ft di raggio: chi vi si trova interamente

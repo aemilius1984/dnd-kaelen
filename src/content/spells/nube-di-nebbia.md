@@ -12,6 +12,8 @@ danno: null
 slotSuperiore: +20 ft di raggio per ogni slot oltre il 1°
 tag: [controllo]
 dominio: true
+effetto:
+  promemoria: "L'area è pesantemente oscurata, anche per te"
 ---
 
 Una sfera di nebbia con raggio 20 ft, Pesantemente Oscurata. Un vento forte la disperde.

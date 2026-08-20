@@ -13,6 +13,8 @@ slotSuperiore: null
 tag: [utilità]
 dominio: false
 rituale: true
+effetto:
+  promemoria: 'Sai dove sono veleni, creature velenose e malattie'
 ---
 
 Per 10 minuti percepisci veleni, creature velenose e contagi magici entro 30 ft, e ne

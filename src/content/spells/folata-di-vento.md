@@ -12,6 +12,8 @@ danno: null
 slotSuperiore: null
 tag: [controllo]
 dominio: true
+effetto:
+  promemoria: 'Azione bonus per ruotare la linea di vento'
 ---
 
 Spinge di 15 ft chi fallisce il TS. Il tiro si fa quando la linea si crea e quando una

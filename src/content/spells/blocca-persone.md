@@ -12,6 +12,8 @@ danno: null
 slotSuperiore: Un Umanoide in più per ogni slot oltre il 2°
 tag: [controllo]
 dominio: false
+effetto:
+  promemoria: 'Il bersaglio ripete il TS a ogni suo turno'
 ---
 
 Un Umanoide che fallisce è Paralizzato e ripete il TS alla fine di ogni suo turno. Gli
