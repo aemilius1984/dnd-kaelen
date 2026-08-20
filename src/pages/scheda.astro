@@ -8,6 +8,7 @@ import Sprite from '@/components/Sprite.astro';
 import DatiIniziali from '@/components/DatiIniziali.astro';
 import TestaSezione from '@/components/ui/TestaSezione.astro';
 import CapacitaEReazioni from '@/components/CapacitaEReazioni.astro';
+import Consumabili from '@/components/Consumabili.astro';
 import Vitalita from '@/islands/Vitalita';
 import BarraSlot from '@/islands/BarraSlot';
 import Contatori from '@/islands/Contatori';
@@ -15,6 +16,7 @@ import ControlliLancio from '@/islands/ControlliLancio';
 import StrisciaAnnulla from '@/islands/StrisciaAnnulla';
 import PannelloAzioni from '@/islands/PannelloAzioni';
 import StrisciaEffetti from '@/islands/StrisciaEffetti';
+import ConsumabiliIsola from '@/islands/Consumabili';
 import { attaccoIncantesimi, cdIncantesimi, classeArmatura, iniziativa, segno } from '@/lib/derive';
 import { caricaScheda } from '@/lib/carica-scheda';
 import ritrattoSrc from '@/assets/kaelen-home.webp';
@@ -193,6 +195,15 @@ const bonusIniziativa = segno(iniziativa(pg));
       Dopo una reazione non puoi usarne un'altra fino all'inizio del tuo turno successivo.
     </p>
     <CapacitaEReazioni pg={pg} />
+
+    {
+      /* Una fiala di acqua santa è una cosa che spendi con la stessa grammatica
+        di una carica di Incanalare Divinità, e questa sezione si intitola già
+        «cosa puoi spendere». Stesse carte, stesse caselle, nessun linguaggio
+        visivo nuovo. */
+    }
+    <TestaSezione as="h3">Consumabili</TestaSezione>
+    <Consumabili pg={pg} />
   </section>
 
   <nav class="altrove">
@@ -209,4 +220,5 @@ const bonusIniziativa = segno(iniziativa(pg));
   <ControlliLancio client:only="preact" />
   <Contatori client:only="preact" />
   <PannelloAzioni client:only="preact" />
+  <ConsumabiliIsola client:only="preact" />
 </BaseLayout>

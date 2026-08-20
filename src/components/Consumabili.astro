@@ -1,0 +1,53 @@
+---
+import type { Personaggio } from '@/lib/schema';
+import Superficie from '@/components/ui/Superficie.astro';
+import NomeDoppio from '@/components/ui/NomeDoppio.astro';
+
+/** Le carte dei consumabili che vengono dai dati. Il build le conosce, quindi
+ *  le stampa lui: cariche e comando li disegna l'isola `Consumabili` per
+ *  portale, come `CapacitaEReazioni` fa con `Contatori`. Qui c'è solo il posto
+ *  dove andranno.
+ *
+ *  `consumabile` era una bandiera morta — lo schema la validava e nessuna
+ *  interfaccia la leggeva. Questo è il primo posto che la usa. */
+interface Props {
+  pg: Personaggio;
+}
+const { pg } = Astro.props;
+const consumabili = pg.equipaggiamento.filter((e) => e.consumabile);
+---
+
+<div class="consumabili">
+  {
+    consumabili.map((e) => (
+      <Superficie class="consumabile-card">
+        <h4 class="titolo">
+          <NomeDoppio it={e.nome} en={e.nomeEn} />
+        </h4>
+        {e.note && <p class="tenue nota">{e.note}</p>}
+        <div class="cariche" data-cariche={e.id} />
+        <div class="spendi" data-consuma={e.id} />
+      </Superficie>
+    ))
+  }
+  {
+    /* Gli oggetti raccolti al tavolo li disegna l'isola: il build non li può
+      conoscere, e non c'è niente da stampare qui. */
+  }
+  <div data-consumabili-miei></div>
+</div>
+
+<button type="button" class="aggiungi-oggetto" data-apre="aggiungi-oggetto">
+  + aggiungi oggetto
+</button>
+
+<dialog id="aggiungi-oggetto" aria-label="Aggiungi un oggetto">
+  <div class="testa">
+    <span class="kicker">Trovato al tavolo</span>
+    <button type="button" class="chiudi" data-chiude aria-label="Chiudi">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"></path></svg>
+    </button>
+  </div>
+  {/* Il modulo lo disegna l'isola, che è l'unica a saper scrivere nello stato. */}
+  <div data-modulo-oggetto></div>
+</dialog>
