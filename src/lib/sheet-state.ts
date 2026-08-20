@@ -1,6 +1,8 @@
 import type { Personaggio } from './schema';
+import type { Effetto } from './effetti';
+import type { OggettoAggiunto } from './oggetti';
 
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 /** Dove sta Kaelen rispetto alla morte. È un campo suo e non una deduzione dai
  *  PF, perché a 0 PF ci sono tre situazioni diverse — si tira, si è stabili, si
@@ -44,12 +46,36 @@ export interface StatoSessione {
   /** Ispirazione Eroica: la dà il DM e la si spende, non si recupera con un
    *  riposo. Per questo nessuno dei due riposi la tocca. */
   ispirazione: boolean;
+  /** Gli oggetti raccolti al tavolo. L'unica cosa nello stato di cui l'autore è
+   *  il giocatore, e per questo l'unica che sopravvive all'azzeramento. */
+  oggettiAggiunti: OggettoAggiunto[];
+  /** Quel che è acceso adesso. Si azzera a ogni riposo e a ogni cambio di dati:
+   *  gli effetti durano minuti, e fra due build ne passano di più. */
+  effetti: Effetto[];
+  /** Gli id degli oggetti aggiunti che Kaelen porta addosso. Un elenco a parte e
+   *  non una bandiera sull'oggetto: la stessa fiala può stare nello zaino di un
+   *  compagno senza smettere di essere sua. */
+  indossati: string[];
+  /** 0..6. Nella 2024 ogni livello è −2 a ogni prova col d20 e −5 piedi di
+   *  velocità, e il sesto livello è la morte. Non è un effetto e non sta in
+   *  quella lista: il riposo lungo ne toglie uno, il breve non lo tocca. */
+  esaurimento: number;
   aggiornatoIl: string;
 }
 
 const adesso = () => new Date().toISOString();
 
-export function statoIniziale(pg: Personaggio, sheetVersion: string): StatoSessione {
+/** Lo stato di partenza. `precedente` è il salvataggio che si sta buttando via:
+ *  quasi tutto quel che contiene il repo sa ricostruirlo, e ricostruirlo è
+ *  giusto. Gli oggetti raccolti al tavolo e le note no — sparirebbero per sempre
+ *  perché qualcuno ha corretto un refuso in `quantita`. */
+export function statoIniziale(
+  pg: Personaggio,
+  sheetVersion: string,
+  precedente?: StatoSessione,
+): StatoSessione {
+  const oggettiAggiunti = precedente?.oggettiAggiunti ?? [];
+  const sopravvissuti = new Set(oggettiAggiunti.map((o) => o.id));
   return {
     schemaVersion: SCHEMA_VERSION,
     sheetVersion,
@@ -63,13 +89,24 @@ export function statoIniziale(pg: Personaggio, sheetVersion: string): StatoSessi
     preparati: [...pg.preparatiIniziali],
     monete: { ...pg.monete },
     oggetti: Object.fromEntries(pg.equipaggiamento.map((e) => [e.id, e.quantita])),
-    note: '',
+    note: precedente?.note ?? '',
     ispirazione: false,
+    oggettiAggiunti,
+    // Gli effetti no: durano minuti, e non si riaccende da solo quel che il
+    // giocatore ha lasciato acceso due build fa.
+    effetti: [],
+    // Un indossato senza il suo oggetto è un id appeso nel vuoto.
+    indossati: (precedente?.indossati ?? []).filter((id) => sopravvissuti.has(id)),
+    esaurimento: 0,
     aggiornatoIl: adesso(),
   };
 }
 
-function aggiorna(s: StatoSessione, patch: Partial<StatoSessione>): StatoSessione {
+/** L'unico modo di scrivere nello stato: ogni mutazione passa di qui, e da qui
+ *  esce con l'orologio aggiornato. Esportata perché i mutatori degli effetti e
+ *  degli oggetti stanno in moduli loro — questo file è già lungo — e
+ *  reimplementarla lì sarebbe un secondo orologio da tenere allineato. */
+export function aggiorna(s: StatoSessione, patch: Partial<StatoSessione>): StatoSessione {
   return { ...s, ...patch, aggiornatoIl: adesso() };
 }
 
@@ -110,7 +147,23 @@ function migraDa3(v3: StatoSessione, pg: Personaggio): StatoSessione {
     if (Array.isArray(usate)) risorseUsate[r.id] = [...usate];
     else risorseUsate[r.id] = Array.from({ length: Math.max(0, usate ?? 0) }, () => SPESA_MANUALE);
   }
-  return { ...v3, schemaVersion: SCHEMA_VERSION, risorseUsate };
+  // Alla 4, non a SCHEMA_VERSION: dalla 4 si passa dalla 5, e scrivere qui la
+  // costante farebbe saltare un anello ogni volta che ne nasce uno nuovo.
+  return { ...v3, schemaVersion: 4, risorseUsate };
+}
+
+/** Dallo schema 4 al 5: la più facile della catena. Quattro campi che prima non
+ *  esistevano, quindi vuoti — non c'è niente da indovinare e niente da
+ *  azzerare. */
+function migraDa4(v4: StatoSessione): StatoSessione {
+  return {
+    ...v4,
+    schemaVersion: SCHEMA_VERSION,
+    oggettiAggiunti: [],
+    effetti: [],
+    indossati: [],
+    esaurimento: 0,
+  };
 }
 
 export function carica(
@@ -124,7 +177,7 @@ export function carica(
     // I dati del personaggio sono cambiati: i numeri salvati non valgono più,
     // e nessuna migrazione può indovinarli.
     if (salvato?.sheetVersion !== sheetVersion) {
-      return { stato: statoIniziale(pg, sheetVersion), azzerato: true };
+      return { stato: statoIniziale(pg, sheetVersion, salvato), azzerato: true };
     }
     if (salvato.schemaVersion === SCHEMA_VERSION) return { stato: salvato, azzerato: false };
     // La forma dello stato è cambiata, i dati no: si migra ciò che è
@@ -133,6 +186,7 @@ export function carica(
     let stato = salvato;
     if (stato.schemaVersion === 2) stato = migraDa2(stato);
     if (stato.schemaVersion === 3) stato = migraDa3(stato, pg);
+    if (stato.schemaVersion === 4) stato = migraDa4(stato);
     if (stato.schemaVersion !== SCHEMA_VERSION) {
       return { stato: statoIniziale(pg, sheetVersion), azzerato: true };
     }

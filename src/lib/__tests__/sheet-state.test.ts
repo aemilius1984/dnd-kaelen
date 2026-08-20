@@ -496,3 +496,114 @@ describe('la migrazione dallo schema 2', () => {
     expect(carica(v2({ pf: 12 }), pg, 'altra').azzerato).toBe(true);
   });
 });
+
+describe('schema 5: i campi nuovi', () => {
+  it('parte vuoto di effetti, oggetti aggiunti e indossati', () => {
+    expect(s.effetti).toEqual([]);
+    expect(s.oggettiAggiunti).toEqual([]);
+    expect(s.indossati).toEqual([]);
+    expect(s.esaurimento).toBe(0);
+  });
+
+  it('la migrazione dalla 4 aggiunge i quattro campi vuoti senza toccare il resto', () => {
+    const v4 = {
+      ...s,
+      schemaVersion: 4,
+      pf: 9,
+      note: 'il forziere era una trappola',
+    } as unknown as Record<string, unknown>;
+    delete v4.effetti;
+    delete v4.oggettiAggiunti;
+    delete v4.indossati;
+    delete v4.esaurimento;
+
+    const { stato, azzerato } = carica(JSON.stringify(v4), pg, VERSIONE);
+
+    expect(azzerato).toBe(false);
+    expect(stato.schemaVersion).toBe(SCHEMA_VERSION);
+    expect(stato.pf).toBe(9);
+    expect(stato.note).toBe('il forziere era una trappola');
+    expect(stato.effetti).toEqual([]);
+    expect(stato.oggettiAggiunti).toEqual([]);
+    expect(stato.indossati).toEqual([]);
+    expect(stato.esaurimento).toBe(0);
+  });
+
+  it('la catena arriva fino alla 5 anche partendo dalla 2', () => {
+    const v2 = { ...s, schemaVersion: 2, pf: 0, tsMorte: { successi: 3, fallimenti: 0 } };
+    const { stato, azzerato } = carica(JSON.stringify(v2), pg, VERSIONE);
+    expect(azzerato).toBe(false);
+    expect(stato.schemaVersion).toBe(SCHEMA_VERSION);
+    expect(stato.statoVitale).toBe('stabile');
+    expect(stato.esaurimento).toBe(0);
+  });
+});
+
+describe('cosa sopravvive all’azzeramento', () => {
+  const mieiOggetti = [
+    { id: 'mio:1', nome: 'Pozione di guarigione', quantita: 2, consumabile: true, modifiche: [] },
+  ];
+
+  it('gli oggetti aggiunti a mano e le note restano quando i dati cambiano', () => {
+    const salvato = {
+      ...s,
+      pf: 3,
+      note: 'Marrok mente',
+      oggettiAggiunti: mieiOggetti,
+      indossati: ['mio:1'],
+    };
+
+    const { stato, azzerato } = carica(JSON.stringify(salvato), pg, 'versione-diversa');
+
+    // Azzerata sì: i numeri che il repo sa ricostruire tornano al massimo.
+    expect(azzerato).toBe(true);
+    expect(stato.pf).toBe(pg.pfMax);
+    // Ma di questi due l'autore è il giocatore, e nessuna build li riscrive.
+    expect(stato.oggettiAggiunti).toEqual(mieiOggetti);
+    expect(stato.note).toBe('Marrok mente');
+    expect(stato.indossati).toEqual(['mio:1']);
+  });
+
+  it('gli effetti attivi invece si spengono: durano minuti, non build', () => {
+    const salvato = {
+      ...s,
+      effetti: [
+        {
+          id: 'eff:1',
+          nome: 'Benedizione',
+          durata: '1 minuto',
+          concentrazione: true,
+          modifiche: [],
+          accesoIl: '2026-08-20T10:00:00.000Z',
+        },
+      ],
+      esaurimento: 2,
+    };
+
+    const { stato } = carica(JSON.stringify(salvato), pg, 'versione-diversa');
+
+    expect(stato.effetti).toEqual([]);
+    expect(stato.esaurimento).toBe(0);
+  });
+
+  it('un salvataggio illeggibile non porta dentro niente', () => {
+    // Non c'è nulla da salvare da un JSON rotto, e inventarselo sarebbe peggio.
+    const { stato, azzerato } = carica('{ questo non è', pg, VERSIONE);
+    expect(azzerato).toBe(true);
+    expect(stato.oggettiAggiunti).toEqual([]);
+    expect(stato.note).toBe('');
+  });
+
+  it('un salvataggio vecchio senza il campo non fa esplodere niente', () => {
+    const vecchio = { ...s, schemaVersion: 4 } as unknown as Record<string, unknown>;
+    delete vecchio.oggettiAggiunti;
+    const { stato } = carica(JSON.stringify(vecchio), pg, 'versione-diversa');
+    expect(stato.oggettiAggiunti).toEqual([]);
+  });
+
+  it('un indossato che non ha più il suo oggetto non resta appeso', () => {
+    const salvato = { ...s, oggettiAggiunti: [], indossati: ['mio:9'] };
+    const { stato } = carica(JSON.stringify(salvato), pg, 'versione-diversa');
+    expect(stato.indossati).toEqual([]);
+  });
+});
