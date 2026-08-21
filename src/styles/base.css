@@ -83,6 +83,38 @@ body:has(.splash) {
   overflow: hidden;
 }
 
+/* Con una modale aperta la pagina dietro non si muove.
+ *
+ * `showModal()` mette il velo e prende i tocchi, ma **non** ferma lo
+ * scorrimento del documento: il dito sul velo scorre la scheda che non si
+ * vede, e chiudendo il dialogo ci si ritrova altrove senza aver deciso di
+ * andarci. Al tavolo è il modo migliore per perdere il punto in cui si stava
+ * leggendo.
+ *
+ * La regola sta qui e non nei sei posti che chiamano `showModal()` — quattro
+ * isole più lo script di `data-apre` nel layout — perché è una proprietà della
+ * pagina, non di chi apre. `dialog[open]` li prende tutti, quelli di domani
+ * compresi. Il menu è un `<details>` e resta fuori: non è modale, e la sua
+ * tendina si chiude scorrendo.
+ *
+ * Su `:root` e non su `body`: `body { overflow: hidden }` da solo non ferma
+ * iOS Safari, ed è il difetto storico che fa scrivere a mezzo mondo il rimedio
+ * col `position: fixed`. Se un browser non conoscesse `:has()` la regola cade
+ * e si torna al comportamento di oggi: nessun danno nuovo. */
+:root:has(dialog[open]) {
+  overflow: hidden;
+}
+
+/* E dentro il dialogo lo scorrimento non si propaga. Non è la stessa regola
+ * detta due volte: le due coprono due gesti diversi, e si è misurato quale
+ * serve a quale. Sul velo scoperto di un dialogo piccolo — «aggiungi oggetto»
+ * — solo `overflow` ferma la pagina; dentro un foglio a tutto schermo che
+ * finisce dopo quaranta pixel, è questa che impedisce al resto della rotellata
+ * di passare la mano al documento. */
+dialog {
+  overscroll-behavior: contain;
+}
+
 /* La Storia disegna la propria carta da bordo a bordo: il padding del body
  * lascerebbe due strisce di fondo ai lati del foglio. */
 body:has(.storia) {

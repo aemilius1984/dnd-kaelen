@@ -251,3 +251,29 @@ describe('il modulo dell’oggetto è vestito come le altre modali', () => {
     expect(dist('scheda')).toContain('dove-finisce');
   });
 });
+
+describe('con una modale aperta la pagina dietro sta ferma', () => {
+  /** Misurato col browser prima della correzione: aperto il pannello ⚡ a 300
+   *  di scorrimento, il foglio finisce dopo quarantun pixel e il resto del
+   *  gesto passava al documento — `scrollY` arrivava a 4673. Chiudendo la
+   *  modale ci si ritrovava in fondo alla scheda senza aver deciso di andarci.
+   *  Sul velo di un dialogo piccolo il gesto scorreva la pagina da subito.
+   *
+   *  Le due regole coprono i due gesti: `overflow` il dito sul velo,
+   *  `overscroll-behavior` la catena da dentro un elenco che finisce. Sta in un
+   *  test sul CSS costruito perché jsdom non risolve `:has()` e non ha
+   *  scorrimento vero: qui si verifica che la regola sia arrivata al browser. */
+  const foglio = (): string =>
+    readdirSync('dist/_astro')
+      .filter((f) => f.endsWith('.css'))
+      .map((f) => readFileSync(`dist/_astro/${f}`, 'utf8'))
+      .join('\n');
+
+  it('il documento non scorre finché un dialogo è aperto', () => {
+    expect(foglio()).toMatch(/:root:has\(dialog\[open\]\)\{overflow:hidden\}/);
+  });
+
+  it('lo scorrimento non esce dal dialogo che lo contiene', () => {
+    expect(foglio()).toMatch(/dialog\{[^}]*overscroll-behavior:contain/);
+  });
+});
