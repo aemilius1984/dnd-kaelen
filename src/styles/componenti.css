@@ -1984,47 +1984,132 @@ dialog.modulo-effetto::backdrop {
 
 .consumabili {
   display: grid;
-  gap: var(--spazio-2);
+  /* `minmax(0, 1fr)` e non `1fr`: un item di griglia ha `min-width: auto`, e
+   * non si stringe sotto la larghezza minima del proprio contenuto. Con la
+   * riga in mono su una riga sola, quella minima diventa la nota per intero:
+   * le carte crescevano a 431 pixel dentro una colonna da 358, e la pagina
+   * traboccava di lato — misurato, 448 contro 390. L'ellissi non può
+   * intervenire finché qualcuno non impone il limite. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.6rem;
 }
 
-.consumabile-card .titolo {
-  margin: 0;
-  font-size: var(--fs-h3);
-}
-
-.consumabile-card .nota {
-  margin: 0.2rem 0 0;
-  font-size: var(--fs-piccolo);
-}
-
-.consumabile-card .cariche {
-  margin-top: var(--spazio-1);
-}
-
-.consumabile-card .cariche .valore {
-  font-family: var(--font-mono);
-  font-size: var(--fs-h3);
-}
-
-/* Il filetto ambra sul fianco: lo stesso segno che sulle carte incantesimo
- * distingue il dominio. Qui dice «questo l'hai raccolto tu».
- *
- * La carta si veste tutta da qui e non da `Superficie.astro`: quelle regole
- * sono scoped da Astro, e un'isola Preact non porta l'attributo che le attiva.
- * Scritta lì, la classe `superficie` era inerte — carta senza margini, senza
- * fondo e senza bordo, col testo incollato al filetto. */
-.consumabile-card.mio {
-  padding: var(--spazio-3);
-  border: 1px solid var(--filetto);
-  border-left: 3px solid var(--ambra);
+/* La riga di un consumabile è la riga di un incantesimo, e la somiglianza è il
+ * punto: sono lo stesso gesto — scorrere un elenco, trovare un nome, spendere
+ * una cosa — e prima erano due forme diverse, un blocco alto contro una riga.
+ * Le misure vengono da `.apri-incantesimo` e non sono state riscelte: sessanta
+ * pixel di altezza minima, gap di 0,7rem, imbottitura sulla riga e non sulla
+ * carta. L'unica differenza è che qui la riga non risponde al dito: non c'è
+ * niente da aprire, e un bersaglio grande quanto la riga farebbe spendere
+ * l'acqua santa a chi voleva solo scorrere. */
+.consumabile {
+  padding: 0;
   border-radius: var(--raggio-superficie);
   background: var(--superficie);
+  border: 1px solid var(--filetto);
   box-shadow: var(--ombra-1);
 }
 
-.dove-finisce {
-  margin: var(--spazio-1) 0 0;
-  font-size: var(--fs-piccolo);
+.riga-consumabile {
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem var(--spazio-2);
+}
+
+.riga-consumabile .sigillo {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  color: var(--inchiostro-tenue);
+}
+
+.riga-consumabile .chi {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Un filo più piccolo del titolo di un incantesimo, e per una ragione
+ * misurata: a destra le magie hanno un carattere — «1°» — e qui ci sono le
+ * caselle *e* il bottone. `pretty` evita che a capo finisca una parola sola,
+ * nei casi in cui capo si deve andare. */
+.riga-consumabile .titolo {
+  display: block;
+  font-size: 0.95rem;
+  text-wrap: pretty;
+}
+
+/* Dove le magie scrivono «azione · 9 m · conc.»: la stessa mono, lo stesso
+ * corpo, lo stesso colore. Qui ci va la nota — «dal forziere dei Vaerak» — e
+ * quando non c'è la riga resta alta uguale perché l'altezza la tiene il
+ * minimo, non il contenuto. */
+.riga-consumabile .sotto {
+  display: block;
+  margin-top: 1px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--inchiostro-muto);
+  /* Su una riga sola, e se non basta si taglia. È la riga secondaria: il suo
+   * mestiere è stare in un posto fisso, e una nota lunga scritta al tavolo non
+   * deve poter spingere in basso la riga sotto. Il testo intero resta nella
+   * Borsa. Il titolo invece va a capo libero: quello non si tronca mai, è la
+   * cosa che si sta cercando. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.riga-consumabile .cariche {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Il conto oltre le cinque cariche, nel posto in cui le magie mettono il
+ * livello dello slot e con lo stesso peso. */
+.riga-consumabile .cariche .valore {
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  color: var(--lampo);
+}
+
+.riga-consumabile .spendi {
+  flex: none;
+  margin: 0;
+}
+
+.riga-consumabile .spendi button {
+  min-height: 44px;
+  padding: 0 0.7rem;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--inchiostro);
+  background: none;
+  border: 1px solid var(--filetto);
+  border-radius: var(--raggio);
+  cursor: pointer;
+}
+
+/* Finito: al posto del bottone, non un bottone spento. Nella colonna dei
+ * livelli è dove le magie scrivono «a volontà», ed è scritto uguale. */
+.riga-consumabile .spendi .tenue {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* Il filetto ambra: lo stesso segno che sulle carte incantesimo distingue il
+ * dominio, e con la stessa tecnica — un'ombra interna, non un bordo. Un bordo
+ * partecipa alla scatola e spingerebbe dentro di tre pixel sigillo e nome:
+ * nella colonna delle icone quella riga starebbe mezzo passo più in là. */
+.consumabile.mio {
+  overflow: hidden;
+}
+
+.consumabile.mio .riga-consumabile {
+  box-shadow: inset 3px 0 0 var(--ambra);
 }
 
 .aggiungi-oggetto {

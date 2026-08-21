@@ -230,9 +230,19 @@ describe('il modulo dell’oggetto è vestito come le altre modali', () => {
       .map((f) => readFileSync(`dist/_astro/${f}`, 'utf8'))
       .join('\n');
 
-  it('la carta di un oggetto aggiunto si veste da sola', () => {
-    expect(foglio()).toMatch(/\.consumabile-card\.mio\{[^}]*padding:/);
-    expect(foglio()).toMatch(/\.consumabile-card\.mio\{[^}]*background:/);
+  it('la riga di un consumabile si veste da sola', () => {
+    // `Superficie.astro` scopa i suoi stili con un attributo che Astro
+    // aggiunge in build: un'isola Preact che scrive `class="superficie"` a
+    // mano non lo porta, e la classe risulta inerte. Le righe si vestono da
+    // qui, dove valgono per tutt'e due le sorgenti.
+    expect(foglio()).toMatch(/\.consumabile\{[^}]*background:/);
+    expect(foglio()).toMatch(/\.riga-consumabile\{[^}]*min-height:60px/);
+  });
+
+  it('l’oggetto raccolto al tavolo porta il filetto come il dominio', () => {
+    // Un'ombra interna, non un bordo: un bordo sposterebbe di tre pixel
+    // sigillo e nome, e nella colonna delle icone si vedrebbe.
+    expect(foglio()).toMatch(/\.consumabile\.mio \.riga-consumabile\{[^}]*inset 3px 0 0/);
   });
 
   it('la × della testa è un tratto, e un tratto vuole uno stroke', () => {

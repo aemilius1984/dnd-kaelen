@@ -31,9 +31,9 @@ beforeEach(async () => {
     `<script type="application/json" id="dati-iniziali">` +
     JSON.stringify({ pg, sheetVersion: 'v-test', pool: [] }) +
     `</script>` +
-    `<div class="superficie consumabile-card"><div data-cariche="acqua-santa"></div>` +
+    `<div class="consumabile"><div data-cariche="acqua-santa"></div>` +
     `<div class="spendi" data-consuma="acqua-santa"></div></div>` +
-    `<div class="superficie consumabile-card"><div data-cariche="razioni"></div>` +
+    `<div class="consumabile"><div data-cariche="razioni"></div>` +
     `<div class="spendi" data-consuma="razioni"></div></div>` +
     `<div data-consumabili-miei></div>` +
     `<dialog id="aggiungi-oggetto"><div data-modulo-oggetto></div></dialog>`;
@@ -119,7 +119,7 @@ describe('gli oggetti aggiunti a mano', () => {
     }));
     await giro();
 
-    const carta = document.querySelector('[data-consumabili-miei] .consumabile-card')!;
+    const carta = document.querySelector('[data-consumabili-miei] .consumabile')!;
     expect(carta.textContent).toContain('Pozione di guarigione');
     expect(carta.classList.contains('mio')).toBe(true);
   });

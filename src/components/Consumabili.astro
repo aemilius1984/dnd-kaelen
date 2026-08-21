@@ -1,12 +1,20 @@
 ---
 import type { Personaggio } from '@/lib/schema';
 import Superficie from '@/components/ui/Superficie.astro';
-import NomeDoppio from '@/components/ui/NomeDoppio.astro';
 
-/** Le carte dei consumabili che vengono dai dati. Il build le conosce, quindi
+/** Le righe dei consumabili che vengono dai dati. Il build le conosce, quindi
  *  le stampa lui: cariche e comando li disegna l'isola `Consumabili` per
  *  portale, come `CapacitaEReazioni` fa con `Contatori`. Qui c'è solo il posto
  *  dove andranno.
+ *
+ *  La forma è quella delle carte incantesimo, e non per gusto: sono la stessa
+ *  cosa — un elenco di cose che si spendono, in cui si cerca un nome — e due
+ *  forme diverse per la stessa cosa costringono a imparare due volte dove
+ *  guardare. Sigillo a sinistra, nome con l'inglese in linea, la nota in mono
+ *  sotto dove le magie mettono «azione · 9 m · conc.», il conto a destra dove
+ *  loro mettono il livello. La differenza è che qui la riga non si apre: non
+ *  c'è niente da leggere, c'è da spendere, e il bottone è l'unica cosa che
+ *  risponde al dito.
  *
  *  `consumabile` era una bandiera morta — lo schema la validava e nessuna
  *  interfaccia la leggeva. Questo è il primo posto che la usa. */
@@ -20,13 +28,25 @@ const consumabili = pg.equipaggiamento.filter((e) => e.consumabile);
 <div class="consumabili">
   {
     consumabili.map((e) => (
-      <Superficie class="consumabile-card">
-        <h4 class="titolo">
-          <NomeDoppio it={e.nome} en={e.nomeEn} />
-        </h4>
-        {e.note && <p class="tenue nota">{e.note}</p>}
-        <div class="cariche" data-cariche={e.id} />
-        <div class="spendi" data-consuma={e.id} />
+      <Superficie class="consumabile">
+        <div class="riga-consumabile">
+          <svg class="sigillo" viewBox="0 0 24 24" aria-hidden="true">
+            <use href="#sig-consumabile" />
+          </svg>
+          <span class="chi">
+            <span class="titolo">{e.nome}</span>
+            {/* L'inglese e la nota nella stessa riga in mono, separati dal
+                punto mediano: è la grammatica di «azione · 9 m · conc.» sulle
+                carte incantesimo, ed è il posto in cui la modale di un
+                incantesimo mette già i suoi riferimenti. In linea accanto al
+                nome non entrava — a 390 di schermo restano circa duecento
+                pixel per il titolo, e «Fiala di acqua santa (Holy Water)» ne
+                chiede la metà in più. */}
+            <span class="sotto">{[e.nomeEn, e.note].filter(Boolean).join(' · ')}</span>
+          </span>
+          <span class="cariche" data-cariche={e.id} />
+          <span class="spendi" data-consuma={e.id} />
+        </div>
       </Superficie>
     ))
   }

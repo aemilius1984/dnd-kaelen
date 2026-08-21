@@ -91,16 +91,30 @@ export default function Consumabili() {
             {elenco
               .filter((v) => v.mio)
               .map((v) => (
-                // Il filetto ambra sul fianco, lo stesso segno che sulle carte
-                // incantesimo distingue il dominio.
-                <div key={v.id} class="superficie consumabile-card mio">
-                  <h4 class="titolo">{v.nome}</h4>
-                  {v.nota && <p class="tenue nota">{v.nota}</p>}
-                  <div class="cariche" data-cariche={v.id}>
-                    {cariche(v.quantita)}
-                  </div>
-                  <div class="spendi" data-consuma={v.id}>
-                    {comando(v)}
+                // Stessa riga di `Consumabili.astro`, scritta a mano perché
+                // un'isola Preact non può montare un componente `.astro`. Il
+                // filetto ambra sul fianco è lo stesso segno che sulle carte
+                // incantesimo distingue il dominio, e con la stessa tecnica:
+                // un'ombra interna, non un bordo, che sposterebbe di tre pixel
+                // il sigillo e romperebbe la colonna.
+                <div key={v.id} class="consumabile mio">
+                  <div class="riga-consumabile">
+                    <svg class="sigillo" viewBox="0 0 24 24" aria-hidden="true">
+                      <use href="#sig-consumabile" />
+                    </svg>
+                    <span class="chi">
+                      <span class="titolo">{v.nome}</span>
+                      {/* Niente `nomeEn` su quel che si raccoglie al tavolo:
+                          non viene da un manuale e non ha un nome inglese da
+                          cercare. Resta la nota, nella stessa riga in mono. */}
+                      {v.nota && <span class="sotto">{v.nota}</span>}
+                    </span>
+                    <span class="cariche" data-cariche={v.id}>
+                      {cariche(v.quantita)}
+                    </span>
+                    <span class="spendi" data-consuma={v.id}>
+                      {comando(v)}
+                    </span>
                   </div>
                 </div>
               ))}
