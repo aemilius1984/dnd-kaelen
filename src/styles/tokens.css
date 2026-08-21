@@ -16,6 +16,13 @@
   --inchiostro: #241e16;
   --inchiostro-tenue: #554c3d;
   --inchiostro-muto: #655c4d;
+
+  /* La freccia delle due `<select>` del sito, disegnata da noi. Un
+   * `background-image` non eredita `currentColor`, quindi il colore è cotto
+   * dentro il data-URI e il tema lo riscrive: è il prezzo per avere una select
+   * che non dipende da come il browser decide di disegnarne una. Vedi il
+   * commento su `.modulo select` in `componenti.css`. */
+  --freccia-select: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' fill='none' stroke='%23655c4d' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   --filetto: rgba(36, 30, 22, 0.12);
 
   --lampo: #1a5468;
@@ -41,6 +48,7 @@
   --inchiostro: #e8e3d9;
   --inchiostro-tenue: #b3bcc7;
   --inchiostro-muto: #9aa4b2;
+  --freccia-select: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' fill='none' stroke='%239aa4b2' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   --filetto: rgba(232, 227, 217, 0.14);
   --lampo: #9fd8f0;
   --lampo-fondo: #16303c;
@@ -85,4 +93,20 @@
    * componenti perché il ritmo è vocabolario quanto il colore. */
   --espo: cubic-bezier(0.19, 1, 0.22, 1);
   --quint: cubic-bezier(0.23, 1, 0.32, 1);
+
+  /* La tacca e il cappello.
+   *
+   * `--tacca` è quanto lo schermo si tiene per sé in cima: la dynamic island
+   * su iPhone, zero su desktop e su Android senza intaglio. Il valore di
+   * ripiego non è ornamento — senza `viewport-fit=cover` nel meta viewport
+   * (BaseLayout) il browser non popola affatto `env()`, e ogni `calc()` che lo
+   * contenesse diventerebbe non valido invece di valere zero.
+   *
+   * `--cappello` è l'altezza della barra del menu, tacca compresa. Esiste
+   * perché quel numero comanda quattro cose che devono muoversi insieme:
+   * l'altezza della barra, i due cappelli di sezione che si appiccicano sotto
+   * di lei, e lo scarto che ogni pagina le riserva in cima. Erano sei numeri
+   * copiati a mano; adesso è uno. */
+  --tacca: env(safe-area-inset-top, 0px);
+  --cappello: calc(3.25rem + var(--tacca));
 }

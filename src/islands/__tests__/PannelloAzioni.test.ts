@@ -3,31 +3,29 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { h, render } from 'preact';
 import PannelloAzioni from '@/islands/PannelloAzioni';
 import { caricaPersonaggioDaFile } from '@/lib/carica-personaggio';
-import { impostaPfTemporanei } from '@/lib/sheet-state';
+import { applicaDanno, spendiSlot, statoIniziale, usaRisorsa } from '@/lib/sheet-state';
 import { navigazione, raccogliPreparazioneDovuta } from '@/lib/consegna-preparazione';
 import { muta, stato } from '@/lib/storage';
 
-// Due campi numerici del pannello si comportavano male sotto le dita:
-// quello dei PF temporanei era controllato sullo stato salvato e lo
-// riscriveva a ogni battuta, quindi cancellarlo faceva ricomparire lo zero
-// prima ancora di poter digitare; quello dei dadi vita si apriva a 0 con
-// `min="1"` addosso, cioè `:invalid` a ogni apertura del pannello.
+// Il pannello era il doppione di mezza scheda: danno, cura, PF temporanei,
+// tiri contro morte, dadi vita e ispirazione stanno nella Vitalità, e slot e
+// risorse si spendono dove sono scritti. Qui restano i due riposi — che non
+// appartengono a nessuna sezione perché le toccano tutte — e le correzioni a
+// mano, che sono il caso d'angolo.
 
 const pg = caricaPersonaggioDaFile();
 
 let radice: HTMLDivElement;
 
-/** Preact accoda i rendering: si aspetta il giro successivo. */
 const giro = () => new Promise((r) => setTimeout(r, 0));
 
-function digita(campo: HTMLInputElement, testo: string) {
-  campo.value = testo;
-  campo.dispatchEvent(new Event('input', { bubbles: true }));
-}
-
-const campoPfTemporanei = () => radice.querySelector<HTMLInputElement>('label.riga input')!;
-const campoDadiVita = () =>
-  radice.querySelector<HTMLInputElement>('input[aria-label="Totale tirato al tavolo"]')!;
+const bottoni = () => [...radice.querySelectorAll('button')];
+const premi = (etichetta: string) => {
+  const b = bottoni().find((x) => x.textContent?.trim() === etichetta);
+  if (!b) throw new Error(`bottone non trovato: ${etichetta}`);
+  b.click();
+};
+const testo = () => radice.textContent ?? '';
 
 beforeEach(async () => {
   localStorage.clear();
@@ -38,8 +36,8 @@ beforeEach(async () => {
   radice = document.createElement('div');
   document.body.append(radice);
   render(h(PannelloAzioni, {}), radice);
-  // Lo store è un modulo con stato: si riparte sempre da zero PF temporanei.
-  muta((x) => impostaPfTemporanei(x, 0));
+  // Lo store è un modulo con stato: ogni test riparte da una sessione intatta.
+  muta(() => statoIniziale(pg, 'v-test'));
   await giro();
 });
 
@@ -47,107 +45,49 @@ afterEach(() => {
   render(null, radice);
 });
 
-describe('campo dei PF temporanei', () => {
-  it('scrive nello stato quello che si digita', async () => {
-    digita(campoPfTemporanei(), '7');
-    await giro();
-
-    expect(stato.value.pfTemporanei).toBe(7);
-    expect(campoPfTemporanei().value).toBe('7');
+describe('la potatura', () => {
+  it('non ripete quel che ha già una casa altrove', async () => {
+    // Ognuna di queste cose vive in un posto suo — la Vitalità, la modale di
+    // lancio, le card delle capacità — e averla anche qui significava due
+    // posti dove cambiare lo stesso numero.
+    for (const sparito of [
+      'PF temporanei',
+      'Ispirazione',
+      'Danno',
+      'Cura',
+      'TS morte',
+      'Totale tirato al tavolo',
+    ]) {
+      expect(radice.innerHTML).not.toContain(sparito);
+    }
   });
 
-  it('si lascia svuotare senza far ricomparire il numero', async () => {
-    digita(campoPfTemporanei(), '7');
-    await giro();
+  it('le correzioni a mano partono chiuse', () => {
+    // Si aprono quando qualcosa è andato storto, non a ogni turno: aperte
+    // sarebbero di nuovo il modo normale di spendere.
+    const dettagli = radice.querySelector('details')!;
 
-    digita(campoPfTemporanei(), '');
-    await giro();
-
-    // Prima il campo tornava a "0" nello stesso istante e per ridigitare
-    // serviva un seleziona-tutto.
-    expect(campoPfTemporanei().value).toBe('');
-    // Un campo vuoto non è "zero PF temporanei": è una cifra a metà. Lo
-    // stato non si tocca finché non arriva un numero.
-    expect(stato.value.pfTemporanei).toBe(7);
+    expect(dettagli.open).toBe(false);
+    expect(dettagli.textContent).toContain('Correzioni a mano');
   });
 
-  it('riparte dal vuoto con il numero nuovo', async () => {
-    digita(campoPfTemporanei(), '7');
-    await giro();
-    digita(campoPfTemporanei(), '');
-    await giro();
-    digita(campoPfTemporanei(), '5');
+  it('correggere a mano toglie e rimette, senza passare da «Usa»', async () => {
+    premi('−');
     await giro();
 
-    expect(stato.value.pfTemporanei).toBe(5);
-    expect(campoPfTemporanei().value).toBe('5');
-  });
+    // Il primo «−» è quello degli slot di 1°: la spesa è manuale, senza un
+    // incantesimo dietro.
+    expect(stato.value.slotSpesi[1]).toHaveLength(1);
 
-  it('rimette il valore salvato quando si esce da un campo lasciato vuoto', async () => {
-    digita(campoPfTemporanei(), '7');
+    premi('↺');
     await giro();
-    digita(campoPfTemporanei(), '');
-    await giro();
-
-    campoPfTemporanei().dispatchEvent(new FocusEvent('blur', { bubbles: true }));
-    await giro();
-
-    expect(campoPfTemporanei().value).toBe('7');
-    expect(stato.value.pfTemporanei).toBe(7);
-  });
-
-  it('torna a mostrare lo stato quando a cambiarlo è un altro comando', async () => {
-    digita(campoPfTemporanei(), '7');
-    await giro();
-
-    muta((x) => impostaPfTemporanei(x, 2));
-    await giro();
-
-    expect(campoPfTemporanei().value).toBe('2');
+    expect(stato.value.slotSpesi[1]).toHaveLength(0);
   });
 });
 
-describe('campo dei dadi vita', () => {
-  it('si apre su un valore che rispetta il proprio minimo', () => {
-    const campo = campoDadiVita();
-
-    expect(campo.getAttribute('min')).toBe('1');
-    expect(campo.value).toBe('1');
-    expect(Number(campo.value)).toBeGreaterThanOrEqual(Number(campo.getAttribute('min')));
-  });
-
-  it('si lascia svuotare per ridigitare, senza cadere sotto il minimo', async () => {
-    const campo = campoDadiVita();
-    digita(campo, '');
-    await giro();
-
-    // Vuoto è vuoto: non è lo zero che `min="1"` rifiuta.
-    expect(campo.value).toBe('');
-
-    digita(campo, '6');
-    await giro();
-    expect(campo.value).toBe('6');
-  });
-});
-
-describe('il passaggio all’archivio dopo il riposo lungo', () => {
-  // Cambiare i preparati è dovuto alla fine di un Riposo Lungo: il momento in
-  // cui il giocatore deve decidere è quello, non dieci minuti dopo quando se
-  // lo ricorda.
-  //
-  // L'archivio non è più un dialogo su questa pagina: ha una sede sola,
-  // `/preparati/`. Fra le due c'è una navigazione, e la bozza è un signal di
-  // modulo che una navigazione azzera — quindi il pannello lascia detto che la
-  // preparazione è dovuta, e la sessione la apre l'archivio quando arriva.
-  let andati: string[];
-
+describe('i due riposi', () => {
   beforeEach(() => {
-    andati = [];
-    // jsdom non implementa né `confirm` né la navigazione.
-    vi.stubGlobal('confirm', () => true);
-    vi.spyOn(navigazione, 'vai').mockImplementation((u) => {
-      andati.push(u);
-    });
+    vi.spyOn(navigazione, 'vai').mockImplementation(() => {});
     HTMLDialogElement.prototype.close = function () {
       this.open = false;
     };
@@ -155,39 +95,67 @@ describe('il passaggio all’archivio dopo il riposo lungo', () => {
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
 
-  const premi = (etichetta: string) => {
-    const b = [...radice.querySelectorAll('button')].find((x) =>
-      x.textContent?.includes(etichetta),
-    );
-    b!.click();
-  };
-
-  it('il riposo lungo porta all’archivio, e lascia detto perché', async () => {
-    premi('Riposo lungo');
+  it('dicono cosa cambierebbe in questa sessione, non cosa dice il manuale', async () => {
+    muta((x) => spendiSlot(applicaDanno(x, pg, 5), pg, 1, 'comando'));
     await giro();
 
-    expect(andati).toEqual(['/preparati/']);
-    expect(raccogliPreparazioneDovuta(sessionStorage)).toBe(true);
+    expect(testo()).toContain('PF 16 → 21');
+    expect(testo()).toContain('1 slot');
   });
 
-  it('il riposo breve no: i preparati non si toccano', async () => {
-    premi('Concludi riposo breve');
+  it('a sessione intatta non si possono premere, e lo dicono', () => {
+    // Un riposo che non recupera niente è un tocco che sembra fare qualcosa e
+    // non fa nulla: al tavolo si crede di aver riposato.
+    expect(testo()).toContain('Non c’è niente da recuperare.');
+    const breve = bottoni().find((b) => b.textContent?.includes('Concludi riposo breve'))!;
+    expect(breve.disabled).toBe(true);
+  });
+
+  it('chiedono conferma dentro il pannello, e si può cambiare idea', async () => {
+    muta((x) => usaRisorsa(x, pg, 'incanalare', 'scintilla-divina'));
     await giro();
 
-    expect(andati).toEqual([]);
+    premi('Concludi riposo breve');
+    await giro();
+    expect(testo()).toContain('Sì, riposa');
+    // Niente `confirm()`: blocca il thread, non si può provare, e mostra il
+    // testo del browser invece di quello della scheda.
+    expect(stato.value.risorseUsate['incanalare']).toHaveLength(1);
+
+    premi('Annulla');
+    await giro();
+    expect(testo()).not.toContain('Sì, riposa');
+    expect(stato.value.risorseUsate['incanalare']).toHaveLength(1);
+  });
+
+  it('il riposo breve rende una carica, e non porta da nessuna parte', async () => {
+    muta((x) => usaRisorsa(x, pg, 'incanalare', 'scintilla-divina'));
+    await giro();
+    premi('Concludi riposo breve');
+    await giro();
+    premi('Sì, riposa');
+    await giro();
+
+    expect(stato.value.risorseUsate['incanalare']).toHaveLength(0);
+    expect(navigazione.vai).not.toHaveBeenCalled();
     expect(raccogliPreparazioneDovuta(sessionStorage)).toBe(false);
   });
 
-  it('il riposo si compie prima di andarsene', async () => {
-    // Se la navigazione precedesse la mutazione, il riposo si perderebbe per
-    // strada: i punti ferita devono essere già tornati quando si parte.
-    premi('Riposo lungo');
+  it('il riposo lungo compie il riposo prima di andarsene, e lascia detto perché', async () => {
+    muta((x) => applicaDanno(x, pg, 5));
+    await giro();
+    premi('Concludi riposo lungo');
+    await giro();
+    premi('Sì, riposa');
     await giro();
 
+    // Se la navigazione precedesse la mutazione, il riposo si perderebbe per
+    // strada: i punti ferita devono essere già tornati quando si parte.
     expect(stato.value.pf).toBe(pg.pfMax);
+    expect(navigazione.vai).toHaveBeenCalledWith('/preparati/');
+    expect(raccogliPreparazioneDovuta(sessionStorage)).toBe(true);
   });
 });

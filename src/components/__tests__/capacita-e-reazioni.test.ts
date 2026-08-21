@@ -96,3 +96,27 @@ it('lascia respirare la testa della card invece di spingerla fuori schermo', () 
   expect(regola('.contatore')).not.toMatch(/flex:\s*none/);
   expect(regola('.contatore')).toMatch(/min-width:\s*0/);
 });
+
+it('apre una modale per la risorsa che ha più usi, con un posto per comando', async () => {
+  const html = await rendi();
+
+  // Gemella della modale di lancio: un blocco per uso invece di un blocco per
+  // livello di slot. Il testo è statico, i comandi li disegna l'isola —
+  // un'isola non contiene mai contenuto statico.
+  expect(html).toContain('id="cap-incanalare"');
+  for (const u of pg.risorse.find((r) => r.id === 'incanalare')?.usi ?? []) {
+    expect(html).toContain(`data-uso="${u.id}"`);
+  }
+});
+
+it('dà alle reazioni un posto per il comando, senza modale', async () => {
+  const html = await rendi();
+
+  // Si spendono nel turno di qualcun altro e la scelta non esiste: aprire una
+  // modale per un bottone solo sarebbe un passaggio in più nel momento
+  // sbagliato.
+  for (const id of ['ira-tempesta', 'tuono-tempesta']) {
+    expect(html).toContain(`data-spendi="${id}"`);
+  }
+  expect(html).not.toContain('data-spendi="incanalare"');
+});

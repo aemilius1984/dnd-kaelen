@@ -12,6 +12,8 @@ danno: null
 slotSuperiore: null
 tag: [cura]
 dominio: false
+effetto:
+  promemoria: "Resistenza al veleno e vantaggio sui TS contro l'avvelenamento"
 ---
 
 Tocchi una creatura e togli la condizione Avvelenato; per la durata ha anche Vantaggio sui

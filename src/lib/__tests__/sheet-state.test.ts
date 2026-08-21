@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { caricaPersonaggioDaFile } from '@/lib/carica-personaggio';
 import {
   SCHEMA_VERSION,
-  SLOT_MANUALE,
+  SPESA_MANUALE,
   applicaCura,
   applicaDanno,
   carica,
@@ -11,6 +11,7 @@ import {
   impostaPreparati,
   puoSpendereSlot,
   puoUsareRisorsa,
+  recuperaRisorsa,
   recuperaSlot,
   riposoBreve,
   riposoLungo,
@@ -37,7 +38,7 @@ describe('stato iniziale', () => {
     expect(s.pfTemporanei).toBe(0);
     expect(s.dadiVitaSpesi).toBe(0);
     expect(s.slotSpesi).toEqual({ 1: [], 2: [] });
-    expect(s.risorseUsate).toEqual({ incanalare: 0, 'ira-tempesta': 0, 'tuono-tempesta': 0 });
+    expect(s.risorseUsate).toEqual({ incanalare: [], 'ira-tempesta': [], 'tuono-tempesta': [] });
   });
 
   it('parte dai preparati dichiarati nella scheda', () => {
@@ -110,7 +111,7 @@ describe('slot e risorse', () => {
 
   it('non usa una risorsa oltre il massimo', () => {
     for (let i = 0; i < 5; i++) s = usaRisorsa(s, pg, 'incanalare');
-    expect(s.risorseUsate['incanalare']).toBe(2);
+    expect(s.risorseUsate['incanalare']).toHaveLength(2);
   });
 
   it('puoSpendereSlot è vero lontano dal confine e falso al confine, in accordo con spendiSlot', () => {
@@ -126,9 +127,37 @@ describe('slot e risorse', () => {
   it('puoUsareRisorsa è vero lontano dal confine e falso al confine, in accordo con usaRisorsa', () => {
     expect(puoUsareRisorsa(s, pg, 'incanalare')).toBe(true);
     for (let i = 0; i < 2; i++) s = usaRisorsa(s, pg, 'incanalare');
-    expect(s.risorseUsate['incanalare']).toBe(2);
+    expect(s.risorseUsate['incanalare']).toHaveLength(2);
     expect(puoUsareRisorsa(s, pg, 'incanalare')).toBe(false);
     expect(usaRisorsa(s, pg, 'incanalare')).toBe(s);
+  });
+});
+
+describe('la coda delle risorse spese', () => {
+  it('ricorda chi ha speso, in ordine, come già faceva per gli slot', () => {
+    // Un conteggio non dice *cosa* è stato speso, e senza quello «Annulla»
+    // non ha niente da togliere: toglierebbe un'unità anonima all'ultima
+    // risorsa toccata, che non è la stessa cosa che disfare l'ultimo gesto.
+    s = usaRisorsa(s, pg, 'incanalare', 'scintilla-divina');
+    s = usaRisorsa(s, pg, 'incanalare', 'ira-distruttiva');
+
+    expect(s.risorseUsate['incanalare']).toEqual(['scintilla-divina', 'ira-distruttiva']);
+  });
+
+  it('senza un colpevole scrive il segnaposto, non una stringa vuota', () => {
+    // Il pannello azioni consuma senza sapere da cosa: è il caso d'angolo per
+    // cui esiste. La casella si occupa lo stesso, e si vede che è manuale.
+    s = usaRisorsa(s, pg, 'incanalare');
+
+    expect(s.risorseUsate['incanalare']).toEqual([SPESA_MANUALE]);
+  });
+
+  it('recuperare toglie l’ultimo, non uno qualsiasi', () => {
+    s = usaRisorsa(s, pg, 'incanalare', 'scintilla-divina');
+    s = usaRisorsa(s, pg, 'incanalare', 'ira-distruttiva');
+    s = recuperaRisorsa(s, 'incanalare');
+
+    expect(s.risorseUsate['incanalare']).toEqual(['scintilla-divina']);
   });
 });
 
@@ -140,8 +169,8 @@ describe('riposi', () => {
     s = spendiSlot(s, pg, 1, 'comando');
     s = applicaDanno(s, pg, 5);
     s = riposoBreve(s, pg);
-    expect(s.risorseUsate['incanalare']).toBe(1);
-    expect(s.risorseUsate['ira-tempesta']).toBe(1);
+    expect(s.risorseUsate['incanalare']).toHaveLength(1);
+    expect(s.risorseUsate['ira-tempesta']).toHaveLength(1);
     expect(s.slotSpesi[1]).toEqual(['comando']);
     expect(s.pf).toBe(16);
   });
@@ -158,7 +187,7 @@ describe('riposi', () => {
     expect(s.pf).toBe(21);
     expect(s.pfTemporanei).toBe(0);
     expect(s.slotSpesi).toEqual({ 1: [], 2: [] });
-    expect(s.risorseUsate['ira-tempesta']).toBe(0);
+    expect(s.risorseUsate['ira-tempesta']).toHaveLength(0);
     // Erano tre spesi e ne tornava uno solo: `Math.floor(3 / 2)` è la regola
     // dei *livelli*, non dei dadi vita. Il Riposo Lungo li rimette tutti.
     expect(s.dadiVitaSpesi).toBe(0);
@@ -281,12 +310,12 @@ describe('slot che ricordano cosa hanno bruciato', () => {
   });
 
   it('la spesa manuale dal pannello scrive una costante che nessuno slug può essere', () => {
-    expect(spendiSlot(s, pg, 1, SLOT_MANUALE).slotSpesi[1]).toEqual([SLOT_MANUALE]);
+    expect(spendiSlot(s, pg, 1, SPESA_MANUALE).slotSpesi[1]).toEqual([SPESA_MANUALE]);
     // Gli slug vengono dai nomi dei file in content/spells/: un carattere che
     // un nome di file non può contenere non può collidere.
-    expect(SLOT_MANUALE).toContain(':');
+    expect(SPESA_MANUALE).toContain(':');
     for (const slug of [...pg.trucchetti, ...pg.dominio, ...pg.preparatiIniziali]) {
-      expect(slug).not.toBe(SLOT_MANUALE);
+      expect(slug).not.toBe(SPESA_MANUALE);
     }
   });
 
@@ -409,6 +438,31 @@ describe('la macchina a stati della vitalità', () => {
   });
 });
 
+describe('la migrazione dallo schema 3', () => {
+  const v3 = (risorseUsate: Record<string, number>) =>
+    JSON.stringify({ ...statoIniziale(pg, 'v'), schemaVersion: 3, risorseUsate });
+
+  it('conta quanto contava prima, senza sapere chi aveva speso', () => {
+    // Lo stato vecchio sapeva solo «due». Chi le ha spese non è ricostruibile
+    // e non si inventa: entrano due segnaposto, e le caselle restano piene
+    // come il giocatore le ha lasciate.
+    const { stato, azzerato } = carica(v3({ incanalare: 2, 'ira-tempesta': 0 }), pg, 'v');
+
+    expect(azzerato).toBe(false);
+    expect(stato.risorseUsate['incanalare']).toEqual([SPESA_MANUALE, SPESA_MANUALE]);
+    expect(stato.risorseUsate['ira-tempesta']).toEqual([]);
+    expect(stato.schemaVersion).toBe(SCHEMA_VERSION);
+  });
+
+  it('non lascia indietro una risorsa che lo stato vecchio non nominava', () => {
+    // Una risorsa aggiunta ai dati dopo l'ultimo salvataggio non c'è nella
+    // mappa vecchia: senza una casella sua, `Contatori` leggerebbe undefined.
+    const { stato } = carica(v3({ incanalare: 1 }), pg, 'v');
+
+    for (const r of pg.risorse) expect(Array.isArray(stato.risorseUsate[r.id])).toBe(true);
+  });
+});
+
 describe('la migrazione dallo schema 2', () => {
   const v2 = (extra: Record<string, unknown>) =>
     JSON.stringify({ ...statoIniziale(pg, 'v'), schemaVersion: 2, ...extra });
@@ -440,5 +494,116 @@ describe('la migrazione dallo schema 2', () => {
     // La migrazione riguarda la forma dello stato, non i dati del personaggio:
     // se cambia `sheetVersion` i numeri salvati non valgono più.
     expect(carica(v2({ pf: 12 }), pg, 'altra').azzerato).toBe(true);
+  });
+});
+
+describe('schema 5: i campi nuovi', () => {
+  it('parte vuoto di effetti, oggetti aggiunti e indossati', () => {
+    expect(s.effetti).toEqual([]);
+    expect(s.oggettiAggiunti).toEqual([]);
+    expect(s.indossati).toEqual([]);
+    expect(s.esaurimento).toBe(0);
+  });
+
+  it('la migrazione dalla 4 aggiunge i quattro campi vuoti senza toccare il resto', () => {
+    const v4 = {
+      ...s,
+      schemaVersion: 4,
+      pf: 9,
+      note: 'il forziere era una trappola',
+    } as unknown as Record<string, unknown>;
+    delete v4.effetti;
+    delete v4.oggettiAggiunti;
+    delete v4.indossati;
+    delete v4.esaurimento;
+
+    const { stato, azzerato } = carica(JSON.stringify(v4), pg, VERSIONE);
+
+    expect(azzerato).toBe(false);
+    expect(stato.schemaVersion).toBe(SCHEMA_VERSION);
+    expect(stato.pf).toBe(9);
+    expect(stato.note).toBe('il forziere era una trappola');
+    expect(stato.effetti).toEqual([]);
+    expect(stato.oggettiAggiunti).toEqual([]);
+    expect(stato.indossati).toEqual([]);
+    expect(stato.esaurimento).toBe(0);
+  });
+
+  it('la catena arriva fino alla 5 anche partendo dalla 2', () => {
+    const v2 = { ...s, schemaVersion: 2, pf: 0, tsMorte: { successi: 3, fallimenti: 0 } };
+    const { stato, azzerato } = carica(JSON.stringify(v2), pg, VERSIONE);
+    expect(azzerato).toBe(false);
+    expect(stato.schemaVersion).toBe(SCHEMA_VERSION);
+    expect(stato.statoVitale).toBe('stabile');
+    expect(stato.esaurimento).toBe(0);
+  });
+});
+
+describe('cosa sopravvive all’azzeramento', () => {
+  const mieiOggetti = [
+    { id: 'mio:1', nome: 'Pozione di guarigione', quantita: 2, consumabile: true, modifiche: [] },
+  ];
+
+  it('gli oggetti aggiunti a mano e le note restano quando i dati cambiano', () => {
+    const salvato = {
+      ...s,
+      pf: 3,
+      note: 'Marrok mente',
+      oggettiAggiunti: mieiOggetti,
+      indossati: ['mio:1'],
+    };
+
+    const { stato, azzerato } = carica(JSON.stringify(salvato), pg, 'versione-diversa');
+
+    // Azzerata sì: i numeri che il repo sa ricostruire tornano al massimo.
+    expect(azzerato).toBe(true);
+    expect(stato.pf).toBe(pg.pfMax);
+    // Ma di questi due l'autore è il giocatore, e nessuna build li riscrive.
+    expect(stato.oggettiAggiunti).toEqual(mieiOggetti);
+    expect(stato.note).toBe('Marrok mente');
+    expect(stato.indossati).toEqual(['mio:1']);
+  });
+
+  it('gli effetti attivi invece si spengono: durano minuti, non build', () => {
+    const salvato = {
+      ...s,
+      effetti: [
+        {
+          id: 'eff:1',
+          nome: 'Benedizione',
+          durata: '1 minuto',
+          concentrazione: true,
+          modifiche: [],
+          accesoIl: '2026-08-20T10:00:00.000Z',
+        },
+      ],
+      esaurimento: 2,
+    };
+
+    const { stato } = carica(JSON.stringify(salvato), pg, 'versione-diversa');
+
+    expect(stato.effetti).toEqual([]);
+    expect(stato.esaurimento).toBe(0);
+  });
+
+  it('un salvataggio illeggibile non porta dentro niente', () => {
+    // Non c'è nulla da salvare da un JSON rotto, e inventarselo sarebbe peggio.
+    const { stato, azzerato } = carica('{ questo non è', pg, VERSIONE);
+    expect(azzerato).toBe(true);
+    expect(stato.oggettiAggiunti).toEqual([]);
+    expect(stato.note).toBe('');
+  });
+
+  it('un salvataggio vecchio senza il campo non fa esplodere niente', () => {
+    const vecchio = { ...s, schemaVersion: 4 } as unknown as Record<string, unknown>;
+    delete vecchio.oggettiAggiunti;
+    const { stato } = carica(JSON.stringify(vecchio), pg, 'versione-diversa');
+    expect(stato.oggettiAggiunti).toEqual([]);
+  });
+
+  it('un indossato che non ha più il suo oggetto non resta appeso', () => {
+    const salvato = { ...s, oggettiAggiunti: [], indossati: ['mio:9'] };
+    const { stato } = carica(JSON.stringify(salvato), pg, 'versione-diversa');
+    expect(stato.indossati).toEqual([]);
   });
 });

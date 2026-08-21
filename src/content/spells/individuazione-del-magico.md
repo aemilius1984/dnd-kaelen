@@ -13,6 +13,8 @@ slotSuperiore: null
 tag: [utilità]
 dominio: false
 rituale: true
+effetto:
+  promemoria: "Azione per vedere l'aura e la scuola di magia"
 ---
 
 Per 10 minuti percepisci la magia entro 30 ft; un'Azione Magica ti mostra l'aura e la

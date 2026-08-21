@@ -47,7 +47,14 @@
 
 body {
   margin: 0;
-  padding: 0 var(--spazio-2) 1.5rem;
+  /* Gli scarti laterali si sommano a quelli dello schermo. Da ritratto valgono
+   * zero e non cambia niente; da paesaggio su un iPhone la tacca sta su un
+   * fianco, e senza questa somma il testo ci finisce dentro. Due proprietà e
+   * non un `padding-inline`: i due lati non sono mai uguali quando il telefono
+   * è coricato. */
+  padding-block: 0 1.5rem;
+  padding-left: calc(var(--spazio-2) + env(safe-area-inset-left, 0px));
+  padding-right: calc(var(--spazio-2) + env(safe-area-inset-right, 0px));
   background: var(--carta);
   color: var(--inchiostro);
   font-family: var(--font-testo);
@@ -67,16 +74,52 @@ body:has(.apri-azioni) {
 }
 
 /* La splash è a tutto schermo: il padding orizzontale del body la
- * rimpicciolirebbe di 1,5rem su ogni lato. */
+ * rimpicciolirebbe di 1rem su ogni lato. Qui gli scarti dello schermo *non* si
+ * restituiscono: la fotografia vuole arrivare al bordo, tacca compresa, ed è
+ * tutto il punto della segnalazione. Chi ci sta sopra — le porte — se li
+ * riprende per conto proprio. */
 body:has(.splash) {
   padding: 0;
   overflow: hidden;
 }
 
+/* Con una modale aperta la pagina dietro non si muove.
+ *
+ * `showModal()` mette il velo e prende i tocchi, ma **non** ferma lo
+ * scorrimento del documento: il dito sul velo scorre la scheda che non si
+ * vede, e chiudendo il dialogo ci si ritrova altrove senza aver deciso di
+ * andarci. Al tavolo è il modo migliore per perdere il punto in cui si stava
+ * leggendo.
+ *
+ * La regola sta qui e non nei sei posti che chiamano `showModal()` — quattro
+ * isole più lo script di `data-apre` nel layout — perché è una proprietà della
+ * pagina, non di chi apre. `dialog[open]` li prende tutti, quelli di domani
+ * compresi. Il menu è un `<details>` e resta fuori: non è modale, e la sua
+ * tendina si chiude scorrendo.
+ *
+ * Su `:root` e non su `body`: `body { overflow: hidden }` da solo non ferma
+ * iOS Safari, ed è il difetto storico che fa scrivere a mezzo mondo il rimedio
+ * col `position: fixed`. Se un browser non conoscesse `:has()` la regola cade
+ * e si torna al comportamento di oggi: nessun danno nuovo. */
+:root:has(dialog[open]) {
+  overflow: hidden;
+}
+
+/* E dentro il dialogo lo scorrimento non si propaga. Non è la stessa regola
+ * detta due volte: le due coprono due gesti diversi, e si è misurato quale
+ * serve a quale. Sul velo scoperto di un dialogo piccolo — «aggiungi oggetto»
+ * — solo `overflow` ferma la pagina; dentro un foglio a tutto schermo che
+ * finisce dopo quaranta pixel, è questa che impedisce al resto della rotellata
+ * di passare la mano al documento. */
+dialog {
+  overscroll-behavior: contain;
+}
+
 /* La Storia disegna la propria carta da bordo a bordo: il padding del body
  * lascerebbe due strisce di fondo ai lati del foglio. */
 body:has(.storia) {
-  padding-inline: 0;
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
 }
 
 /* Il pulsante ☰ del menu (Menu.astro) è `position: fixed` in alto a
@@ -91,7 +134,7 @@ body:has(.storia) {
  * riservasse anche `main`, la carta smetterebbe di toccare il bordo
  * superiore e lascerebbe una striscia di `--carta` sopra la testata. */
 body:has(.menu):not(:has(.storia)) main {
-  padding-top: 3.75rem;
+  padding-top: calc(var(--cappello) + 0.5rem);
 }
 
 h1,

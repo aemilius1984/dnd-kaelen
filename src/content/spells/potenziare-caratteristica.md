@@ -12,6 +12,8 @@ danno: null
 slotSuperiore: null
 tag: [utilità]
 dominio: false
+effetto:
+  promemoria: 'Vantaggio sulle prove della caratteristica scelta'
 ---
 
 Tocchi una creatura e scegli una caratteristica: per la durata ottiene Vantaggio alle prove

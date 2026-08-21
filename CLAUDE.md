@@ -18,7 +18,12 @@ PWA e utilizzabile offline, stato di sessione in localStorage.
   conoscono il tema: differenze solo nei token. Tempesta è spento ma i suoi
   token restano — vedi `BACKLOG.md`.
 - Tutti i contenuti sono in italiano; sintesi proprie, mai testo dei manuali.
-- Il middleware di Basic auth è fail-closed: senza segreti risponde 401.
+- Il middleware di Basic auth è fail-closed: senza segreti risponde 401. Copre
+  anche `/api/`: gli endpoint delle sessioni non hanno un'autenticazione
+  propria.
+- La nuvola è facoltativa. Senza rete, senza binding o con D1 muta il sito
+  resta quello di oggi e nessun comando tocca lo stato locale. Il gate non
+  parla con Cloudflare: gli endpoint si provano con un `D1Database` finto.
 - Verifica visiva sempre a 390×844.
 - Prima di dichiarare finito qualcosa: `npm run gate`.
 
@@ -32,3 +37,29 @@ PWA e utilizzabile offline, stato di sessione in localStorage.
 - `npm run preview` — build servita in locale, per verificare offline/PWA
 - `npm test` — Vitest
 - `npm run gate` — check + test + build
+
+## La nuvola delle sessioni
+
+Salvataggio e ripristino della sessione passano da Cloudflare D1, tramite le
+Pages Functions in `functions/api/`. Il binding si chiama **`DB` in tutti e due
+gli ambienti** (Production su `kaelen`, Preview su `kaelen-preview`) e si
+imposta dalla dashboard, Settings → Bindings: entra in vigore al deploy
+successivo, non subito.
+
+Le migrazioni **non le applica nessun hook**: se il codice arriva in produzione
+prima della migrazione, l'endpoint trova la tabella che non c'è.
+
+```
+npx wrangler d1 migrations apply kaelen --local    # database di sviluppo
+npx wrangler d1 migrations apply kaelen --remote    # prima del deploy
+```
+
+Per provarla in locale servono le Functions, che `astro dev` non esegue:
+
+```
+npm run build && npx wrangler pages dev ./dist
+```
+
+`wrangler.jsonc` serve solo al locale e **non ha `pages_build_output_dir`**:
+quella chiave renderebbe il file la fonte di verità del progetto, e un deploy
+porterebbe in produzione una configurazione scritta per lo sviluppo.

@@ -12,6 +12,8 @@ danno: null
 slotSuperiore: Una creatura in più per ogni slot oltre il 1°
 tag: [utilità]
 dominio: false
+effetto:
+  promemoria: '+1d4 ai tiri per colpire e ai tiri salvezza'
 ---
 
 Fino a tre creature aggiungono 1d4 ai tiri per colpire e ai tiri salvezza. È la scelta

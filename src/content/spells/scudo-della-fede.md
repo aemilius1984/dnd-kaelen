@@ -12,6 +12,9 @@ danno: null
 slotSuperiore: null
 tag: [utilità]
 dominio: false
+effetto:
+  modifiche:
+    - { genere: voce, bersaglio: ca, valore: 2 }
 ---
 
 Una creatura scelta entro gittata ottiene +2 alla CA per tutta la durata. Lanciala prima

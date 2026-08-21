@@ -35,6 +35,36 @@ describe('store del browser', () => {
     expect(JSON.parse(localStorage.getItem(CHIAVE)!).pf).toBe(17);
   });
 
+  it('riprendere una sessione dalla nuvola passa dalla stessa carica()', async () => {
+    const { assicuraInizializzato, ripristina, stato, CHIAVE } = await import('@/lib/storage');
+    assicuraInizializzato();
+
+    const salvata = JSON.stringify({ ...stato.value, pf: 9, note: 'il molo' });
+    const azzerato = ripristina(salvata);
+
+    expect(azzerato).toBe(false);
+    expect(stato.value.pf).toBe(9);
+    // Anche in locale: chi riprende e chiude la scheda deve ritrovare quella,
+    // non quella di prima.
+    expect(JSON.parse(localStorage.getItem(CHIAVE)!).pf).toBe(9);
+  });
+
+  it('una sessione scritta per un’altra scheda azzera, e lo dice', async () => {
+    // La regola di `sheetVersion` non ha eccezioni: senza questo passaggio si
+    // scriverebbero addosso allo stato dei numeri che non valgono più, e il
+    // giocatore lo scoprirebbe leggendo PF che non corrispondono a niente.
+    const { assicuraInizializzato, ripristina, avvisoAzzeramento, stato } =
+      await import('@/lib/storage');
+    assicuraInizializzato();
+
+    const daAltraScheda = JSON.stringify({ ...stato.value, sheetVersion: 'v-vecchia', pf: 3 });
+    const azzerato = ripristina(daAltraScheda);
+
+    expect(azzerato).toBe(true);
+    expect(avvisoAzzeramento.value).toBe(true);
+    expect(stato.value.pf).toBe(pg.pfMax);
+  });
+
   it("segnala l'azzeramento quando cambia la versione della scheda", async () => {
     const primo = await import('@/lib/storage');
     primo.assicuraInizializzato();

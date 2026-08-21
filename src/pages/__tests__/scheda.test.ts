@@ -1,4 +1,4 @@
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 /** Perché queste asserzioni girano sul costruito e non sulla container API.
@@ -54,6 +54,21 @@ describe('le sezioni non stanno più dentro un riquadro', () => {
 
     expect(html).not.toContain('quel che si consuma');
     expect(html).toContain('class="barra-slot-isola"');
+  });
+
+  it('attacco e CD degli incantesimi restano davanti mentre si scorre', () => {
+    // Stavano in una riga sotto la testata, cioè sparivano al primo scroll
+    // proprio mentre si sceglie l'incantesimo da lanciare. Adesso viaggiano
+    // dentro il cappello appiccicato.
+    const html = dist('scheda');
+    const isola = html.slice(html.indexOf('class="barra-slot-isola"'));
+
+    // I due numeri portano l'innesto `data-adesso` — dipendono dalla Saggezza —
+    // ma restano stampati dal build: è quello che questo test guarda.
+    expect(isola.slice(0, 400)).toMatch(/Attacco <span[^>]*>\+\d+<\/span> · CD <span[^>]*>\d+</);
+    // Dentro il cappello ma fuori dall'isola: `BarraSlot` è `client:only`, e
+    // due numeri che il build conosce già non aspettano il JavaScript.
+    expect(isola.indexOf('Attacco')).toBeLessThan(isola.indexOf('astro-island'));
   });
 });
 
@@ -178,5 +193,124 @@ describe('l’archivio', () => {
     expect(html).toContain('href="/preparati/"');
     expect(html).toContain('verso-archivio');
     expect(html).not.toContain('apri come pagina');
+  });
+});
+
+describe('la fascia delle difese resta statica', () => {
+  it('i numeri li stampa il build, non l’isola', () => {
+    const html = dist('scheda');
+    // Senza JavaScript la CA si legge lo stesso, ed è giusta: è il caso normale.
+    expect(html).toMatch(/data-adesso="ca"[^>]*>\d+</);
+    expect(html).toMatch(/data-adesso="iniz"[^>]*>[+−-]\d+</);
+  });
+
+  it('la CD ha due innesti: la fascia e la barra appiccicata', () => {
+    // Lasciarne uno fuori significherebbe un numero stantio nel punto della
+    // pagina che si guarda mentre si sceglie cosa lanciare.
+    const html = dist('scheda');
+    expect([...html.matchAll(/data-adesso="cd"/g)]).toHaveLength(2);
+    expect(html).toContain('data-adesso="attacco-inc"');
+  });
+
+  it('il contenitore della striscia riserva la sua altezza', () => {
+    expect(dist('scheda')).toContain('class="striscia-effetti-isola"');
+  });
+});
+
+describe('il modulo dell’oggetto è vestito come le altre modali', () => {
+  /** Il CSS costruito, tutti i fogli in uno. Il trabocchetto che questi test
+   *  guardano non si vede nel markup: `Superficie.astro` scopa i suoi stili con
+   *  un attributo che Astro aggiunge in build, e un'isola Preact che scrive
+   *  `class="superficie"` a mano non lo porta. La classe risultava inerte —
+   *  carta senza padding, senza fondo e senza bordo — e nessun test sul DOM se
+   *  ne poteva accorgere. */
+  const foglio = (): string =>
+    readdirSync('dist/_astro')
+      .filter((f) => f.endsWith('.css'))
+      .map((f) => readFileSync(`dist/_astro/${f}`, 'utf8'))
+      .join('\n');
+
+  it('la riga di un consumabile si veste da sola', () => {
+    // `Superficie.astro` scopa i suoi stili con un attributo che Astro
+    // aggiunge in build: un'isola Preact che scrive `class="superficie"` a
+    // mano non lo porta, e la classe risulta inerte. Le righe si vestono da
+    // qui, dove valgono per tutt'e due le sorgenti.
+    expect(foglio()).toMatch(/\.consumabile\{[^}]*background:/);
+    expect(foglio()).toMatch(/\.riga-consumabile\{[^}]*min-height:60px/);
+  });
+
+  it('l’oggetto raccolto al tavolo porta il filetto come il dominio', () => {
+    // Un'ombra interna, non un bordo: un bordo sposterebbe di tre pixel
+    // sigillo e nome, e nella colonna delle icone si vedrebbe.
+    expect(foglio()).toMatch(/\.consumabile\.mio \.riga-consumabile\{[^}]*inset 3px 0 0/);
+  });
+
+  it('la × della testa è un tratto, e un tratto vuole uno stroke', () => {
+    // Con `stroke: none` il path non disegna niente e resta il riquadro vuoto
+    // del bottone: è quel che si vedeva accanto a «Trovato al tavolo».
+    expect(foglio()).toMatch(/#aggiungi-oggetto \.chiudi svg\{[^}]*stroke:/);
+  });
+
+  it('la testa distanzia il titolo dal bottone', () => {
+    expect(foglio()).toMatch(/#aggiungi-oggetto \.testa\{[^}]*justify-content:space-between/);
+  });
+
+  it('dice dove finisce quel che non si consuma', () => {
+    // Il buco peggiore trovato al primo giro: un oggetto non consumabile
+    // aggiunto da qui spariva senza una parola.
+    expect(dist('scheda')).toContain('dove-finisce');
+  });
+});
+
+describe('con una modale aperta la pagina dietro sta ferma', () => {
+  /** Misurato col browser prima della correzione: aperto il pannello ⚡ a 300
+   *  di scorrimento, il foglio finisce dopo quarantun pixel e il resto del
+   *  gesto passava al documento — `scrollY` arrivava a 4673. Chiudendo la
+   *  modale ci si ritrovava in fondo alla scheda senza aver deciso di andarci.
+   *  Sul velo di un dialogo piccolo il gesto scorreva la pagina da subito.
+   *
+   *  Le due regole coprono i due gesti: `overflow` il dito sul velo,
+   *  `overscroll-behavior` la catena da dentro un elenco che finisce. Sta in un
+   *  test sul CSS costruito perché jsdom non risolve `:has()` e non ha
+   *  scorrimento vero: qui si verifica che la regola sia arrivata al browser. */
+  const foglio = (): string =>
+    readdirSync('dist/_astro')
+      .filter((f) => f.endsWith('.css'))
+      .map((f) => readFileSync(`dist/_astro/${f}`, 'utf8'))
+      .join('\n');
+
+  it('il documento non scorre finché un dialogo è aperto', () => {
+    expect(foglio()).toMatch(/:root:has\(dialog\[open\]\)\{overflow:hidden\}/);
+  });
+
+  it('lo scorrimento non esce dal dialogo che lo contiene', () => {
+    expect(foglio()).toMatch(/dialog\{[^}]*overscroll-behavior:contain/);
+  });
+});
+
+describe('le due select del sito non le disegna il browser', () => {
+  const foglio = (): string =>
+    readdirSync('dist/_astro')
+      .filter((f) => f.endsWith('.css'))
+      .map((f) => readFileSync(`dist/_astro/${f}`, 'utf8'))
+      .join('\n');
+
+  it('l’altezza è dichiarata, non lasciata decidere', () => {
+    // Con `appearance: auto` Chrome portava la select a 44 come il campo
+    // numero accanto e Safari le lasciava la sua: nella stessa riga si vedeva
+    // un gradino. Una select nativa non è una scatola come le altre, e
+    // `min-height` non basta a costringerla.
+    expect(foglio()).toMatch(/\.modulo select\{[^}]*appearance:none/);
+    expect(foglio()).toMatch(/\.modulo select\{[^}]*height:44px/);
+  });
+
+  it('la freccia ce la mettiamo noi, in tutt’e due i temi', () => {
+    // Tolto l'aspetto nativo sparisce anche la freccia. Un `background-image`
+    // non eredita `currentColor`, quindi il colore è cotto nel data-URI e il
+    // tema riscrive il token: senza la seconda dichiarazione, in tempesta
+    // resterebbe una freccia scura su fondo scuro.
+    const css = foglio();
+    expect(css).toMatch(/--freccia-select:url\("data:image\/svg\+xml/);
+    expect([...css.matchAll(/--freccia-select:/g)].length).toBe(2);
   });
 });

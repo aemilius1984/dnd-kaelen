@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { modificaSchema } from './modifiche';
 
 export const caratteristicaEnum = z.enum(['for', 'des', 'cos', 'int', 'sag', 'car']);
 export type Caratteristica = z.infer<typeof caratteristicaEnum>;
@@ -90,6 +91,23 @@ export const personaggioSchema = z.object({
       max: z.number().int().positive(),
       recupero: z.enum(['breve', 'lungo']),
       descrizione: z.string(),
+      /* Le cose che quella risorsa compra. Incanalare Divinità ne ha tre, e
+       * stavano fra le capacità con il titolo prefissato dal nome della
+       * risorsa: il legame era una stringa, e chi rinominava la risorsa lo
+       * spezzava senza che niente se ne accorgesse. Opzionale perché la
+       * maggior parte delle risorse è carburante di una cosa sola. */
+      usi: z
+        .array(
+          z.object({
+            /* Serve alla coda di `risorseUsate`: la casella consumata porta il
+             * sigillo di *questo* uso, non un pallino qualunque. */
+            id: z.string(),
+            nome: z.string(),
+            nomeEn: z.string(),
+            paragrafi: z.array(z.string()),
+          }),
+        )
+        .optional(),
     }),
   ),
   slot: z.array(z.object({ livello: z.number().int(), max: z.number().int() })),
@@ -105,6 +123,12 @@ export const personaggioSchema = z.object({
       nomeEn: z.string(),
       quantita: z.number().int(),
       consumabile: z.boolean(),
+      /** Dove si disegna nella Borsa. Facoltativo, e volutamente **fuori** da
+       *  `campiVersione`: spostare la lampada dallo zaino alla cintura è
+       *  raggruppamento presentazionale, non un dato da cui lo stato dipende, e
+       *  non vale l'azzeramento di una sessione. I consumabili non lo portano —
+       *  il loro gruppo lo dice già `consumabile`. */
+      gruppo: z.enum(['addosso', 'zaino']).optional(),
       note: z.string().optional(),
     }),
   ),
@@ -160,6 +184,25 @@ export const incantesimoSchema = z.object({
    *  peggio non spenderne uno che serviva: ogni valore `true` deve venire
    *  dalla colonna Special della lista del Chierico, non a memoria. */
   rituale: z.boolean().default(false),
+  /** Quel che resta addosso dopo il lancio, se resta qualcosa.
+   *
+   *  Nome, durata e concentrazione non si ripetono qui: vengono
+   *  dall'incantesimo, e ricopiarli sarebbe una seconda verità da tenere
+   *  allineata. Qui c'è solo quel che l'incantesimo *fa*.
+   *
+   *  Lo porta ogni incantesimo che richiede concentrazione — lo slot è di
+   *  Kaelen qualunque sia il bersaglio — più quelli che durano e lasciano uno
+   *  stato che può essere su di lui. Restano fuori le durate Istantanee, gli
+   *  stati che vivono su un bersaglio senza concentrazione da tenere, e Aiuto,
+   *  che alza i PF massimi: un altro campo con altre regole di recupero. */
+  effetto: z
+    .object({
+      /** Quel che non diventa un numero. Guida è +1d4 su una prova: un dado,
+       *  non un addendo. */
+      promemoria: z.string().optional(),
+      modifiche: z.array(modificaSchema).default([]),
+    })
+    .optional(),
 });
 
 export type Incantesimo = z.infer<typeof incantesimoSchema>;

@@ -12,6 +12,8 @@ danno: null
 slotSuperiore: null
 tag: [utilità]
 dominio: false
+effetto:
+  promemoria: 'Sai dove sono, non chi sono: niente attraverso 30 cm di legno'
 ---
 
 Per 10 minuti percepisci la posizione di Aberrazioni, Celestiali, Elementali, Folletti,

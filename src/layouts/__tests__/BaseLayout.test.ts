@@ -20,6 +20,40 @@ describe('BaseLayout', () => {
     expect(html).not.toContain('serviceWorker');
   });
 
+  it('dichiara la zona sicura, senza la quale ogni env() del sito vale zero', async () => {
+    const container = await AstroContainer.create();
+    const html = await container.renderToString(BaseLayout, {
+      props: { titolo: 'Prova', attiva: null },
+    });
+
+    // Gli `env(safe-area-inset-*)` sparsi per il progetto erano codice morto:
+    // su iOS il browser non li popola finché il viewport non dichiara di
+    // volersi prendere anche gli angoli. Senza questo valore, la tacca non
+    // esiste e la home non arriva mai sotto la dynamic island.
+    expect(html).toMatch(/name="viewport"[^>]*viewport-fit=cover/);
+  });
+
+  it('senza la prop, la barra del browser resta color pergamena', async () => {
+    const container = await AstroContainer.create();
+    const html = await container.renderToString(BaseLayout, {
+      props: { titolo: 'Prova', attiva: null },
+    });
+
+    // Cinque rotte su sei non passano niente: il ripiego è l'unica cosa che le
+    // tiene ferme, e se si sposta si spostano tutte insieme senza avvisare.
+    expect(html).toMatch(/name="theme-color" content="#efe7d6"/);
+  });
+
+  it('con la prop, la barra del browser prende il colore della rotta', async () => {
+    const container = await AstroContainer.create();
+    const html = await container.renderToString(BaseLayout, {
+      props: { titolo: 'Prova', attiva: null, coloreTema: '#24282c' },
+    });
+
+    expect(html).toMatch(/name="theme-color" content="#24282c"/);
+    expect(html).not.toContain('#efe7d6');
+  });
+
   it('scrive il tema in build, senza script che lo scelga a runtime', async () => {
     const container = await AstroContainer.create();
     const html = await container.renderToString(BaseLayout, {

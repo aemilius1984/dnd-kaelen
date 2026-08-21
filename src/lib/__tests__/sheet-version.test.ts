@@ -82,3 +82,19 @@ describe('campiVersione', () => {
     ).not.toBe(base);
   });
 });
+
+it('il gruppo di un oggetto non azzera la sessione', () => {
+  // Spostare la lampada dallo zaino alla cintura è presentazione, non un dato
+  // da cui `StatoSessione` dipenda. `campiVersione` prende una proiezione
+  // dell'equipaggiamento proprio per questo.
+  const pg = caricaPersonaggioDaFile();
+  const spostato = {
+    ...pg,
+    equipaggiamento: pg.equipaggiamento.map((e) =>
+      e.id === 'lampada' ? { ...e, gruppo: 'addosso' as const } : e,
+    ),
+  };
+  expect(hashDati(JSON.stringify(campiVersione(spostato, [])))).toBe(
+    hashDati(JSON.stringify(campiVersione(pg, []))),
+  );
+});

@@ -1,5 +1,8 @@
 import { createPortal } from 'preact/compat';
 import { useEffect, useState } from 'preact/hooks';
+import { dichiara } from '@/lib/annulla';
+import { accendiEffetto, nuovoIdEffetto, spentoDa } from '@/lib/effetti';
+import type { Modifica } from '@/lib/modifiche';
 import { recuperaSlot, spendiSlot } from '@/lib/sheet-state';
 import { cartaSpenta, livelliLanciabili } from '@/lib/lancio';
 import { assicuraInizializzato, datiIniziali, muta, stato } from '@/lib/storage';
@@ -10,20 +13,12 @@ type Bersaglio = {
   nome: string;
   livello: number;
   rituale: boolean;
+  /** Assente quando l'incantesimo non lascia niente addosso. */
+  durata?: string;
+  concentrazione: boolean;
+  promemoria?: string;
+  modifiche?: Modifica[];
 };
-
-/** Quanto dura la finestra in cui si può disfare un lancio. Un numero solo:
- *  il timer che *decide* sta qui, e la barra che lo racconta lo riceve come
- *  proprietà personalizzata invece di dichiararlo una seconda volta in CSS —
- *  due numeri scritti a mano si sarebbero scollati al primo ripensamento, e
- *  il difetto sarebbe stato una barra che finisce prima o dopo il diritto di
- *  annullare. */
-const DURATA_ANNULLA = 5000;
-
-/** Cosa è appena stato speso. Il nome serve perché la modale si chiude e la
- *  striscia resta l'unica cosa in vista: senza, direbbe «Slot di 1° speso» a
- *  chi ha appena lanciato uno fra sei incantesimi di 1°. */
-type Speso = { livello: number; nome: string };
 
 export default function ControlliLancio() {
   // `client:only="preact"`: nessun pre-render lato server, come le altre isole.
@@ -31,11 +26,8 @@ export default function ControlliLancio() {
   const { pg } = datiIniziali();
   const s = stato.value;
   const [bersagli, setBersagli] = useState<Bersaglio[]>([]);
-  const [annullabile, setAnnullabile] = useState<Speso | null>(null);
-  // Conta i lanci, e serve solo da chiave: un secondo lancio dentro la
-  // finestra rimonta la striscia, così la barra riparte da piena invece di
-  // continuare la corsa del lancio precedente.
-  const [lanci, setLanci] = useState(0);
+  // L'ultimo lancio per cui c'è qualcosa da proporre.
+  const [daAccendere, setDaAccendere] = useState<string | null>(null);
 
   // I contenitori sono markup statico generato in build: li troviamo una
   // volta sola e ci disegniamo dentro, così le regole degli incantesimi
@@ -47,6 +39,14 @@ export default function ControlliLancio() {
       nome: nodo.dataset.nome ?? '',
       livello: Number(nodo.dataset.livello ?? '0'),
       rituale: nodo.dataset.rituale !== undefined,
+      durata: nodo.dataset.durata,
+      concentrazione: nodo.dataset.concentrazione !== undefined,
+      promemoria: nodo.dataset.promemoria,
+      // Assente se l'incantesimo non lascia niente: è la sola bandiera che
+      // serve, e senza di lei non si propone nulla.
+      modifiche: nodo.dataset.modifiche
+        ? (JSON.parse(nodo.dataset.modifiche) as Modifica[])
+        : undefined,
     }));
     setBersagli(trovati);
   }, []);
@@ -82,15 +82,6 @@ export default function ControlliLancio() {
     }
   }, [bersagli, s.slotSpesi, pg]);
 
-  // La dipendenza è `lanci`, non `annullabile`: due lanci di seguito dello
-  // stesso livello e dello stesso incantesimo danno un oggetto uguale, e senza
-  // il contatore il timer del primo continuerebbe a scorrere sotto il secondo.
-  useEffect(() => {
-    if (annullabile === null) return;
-    const t = setTimeout(() => setAnnullabile(null), DURATA_ANNULLA);
-    return () => clearTimeout(t);
-  }, [lanci]);
-
   function lancia(b: Bersaglio, livello: number) {
     // Lo slug viaggia con la spesa: la casella consumata deve poter mostrare
     // il sigillo di *questo* incantesimo, non un pallino qualunque.
@@ -101,16 +92,36 @@ export default function ControlliLancio() {
     // layer, quindi nessuno `z-index` l'avrebbe scavalcata — e il lancio non
     // dava alcun segno di essere avvenuto.
     b.nodo.closest('dialog')?.close();
-    // Un secondo lancio entro la finestra sostituisce quello annullabile: si
-    // può annullare solo l'ultima azione, non un intero storico di lanci.
-    setAnnullabile({ livello, nome: b.nome });
-    setLanci((n) => n + 1);
+    // Dichiarata, non disegnata: la striscia è una sola per pagina e la monta
+    // `StrisciaAnnulla`. Un secondo lancio entro la finestra sostituisce
+    // questa voce — si annulla l'ultima azione, non uno storico di lanci.
+    dichiara({
+      detto: b.nome,
+      costo: `Slot di ${livello}° speso`,
+      disfa: () => muta((x) => recuperaSlot(x, livello)),
+    });
+    // Proposto, mai automatico: si lancia Benedizione su un compagno e
+    // l'effetto non è su Kaelen. Lanciare e accendere sono due gesti, e il
+    // secondo è una scelta.
+    setDaAccendere(b.modifiche === undefined ? null : b.slug);
   }
 
-  function annulla() {
-    if (annullabile === null) return;
-    muta((x) => recuperaSlot(x, annullabile.livello));
-    setAnnullabile(null);
+  function tieniAcceso(b: Bersaglio) {
+    muta((x) =>
+      accendiEffetto(x, {
+        id: nuovoIdEffetto(),
+        nome: b.nome,
+        // Lo slug: rilanciare rinnova la durata invece di accendere un secondo
+        // Scudo della Fede.
+        origine: b.slug,
+        durata: b.durata ?? 'finché non finisce',
+        concentrazione: b.concentrazione,
+        promemoria: b.promemoria,
+        modifiche: b.modifiche ?? [],
+        accesoIl: new Date().toISOString(),
+      }),
+    );
+    setDaAccendere(null);
   }
 
   return (
@@ -137,43 +148,16 @@ export default function ControlliLancio() {
             {b.rituale && (
               <span class="via-rituale tenue">Oppure come rituale: senza slot, +10 minuti.</span>
             )}
+            {daAccendere === b.slug && b.modifiche !== undefined && (
+              <button type="button" class="tieni-acceso" onClick={() => tieniAcceso(b)}>
+                Tienilo acceso
+                {spentoDa(s, b) && <span class="tenue"> — spegne «{spentoDa(s, b)!.nome}»</span>}
+              </button>
+            )}
           </>,
           b.nodo,
         );
       })}
-
-      {annullabile !== null && (
-        <>
-          {/* Il velo esiste solo per far risaltare la striscia: scurisce il
-              foglio, la barra del menu e il pulsante ⚡, che altrimenti le
-              rubano l'occhio. Non intercetta i tocchi — `pointer-events: none`
-              — perché dura cinque secondi e bloccare la scheda per cinque
-              secondi dopo *ogni* lancio sarebbe peggio del problema che
-              risolve. Sembra modale, non lo è: al massimo tocchi quel che
-              volevi toccare. */}
-          <div class="velo-annulla" aria-hidden="true" />
-          <div
-            key={lanci}
-            class="striscia-annulla"
-            role="status"
-            style={{ '--durata-annulla': `${DURATA_ANNULLA}ms` }}
-          >
-            <span class="detto">
-              <strong>{annullabile.nome}</strong>
-              <span class="costo">Slot di {annullabile.livello}° speso</span>
-            </span>
-            <button type="button" onClick={annulla}>
-              Annulla
-            </button>
-            {/* La barra non è decorazione: è il tempo che resta per disfare. Si
-                svuota, e quando è vuota la striscia sparisce e lo slot è
-                speso. */}
-            <span class="tempo" aria-hidden="true">
-              <i />
-            </span>
-          </div>
-        </>
-      )}
     </>
   );
 }

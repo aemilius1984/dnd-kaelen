@@ -111,6 +111,33 @@ risorse:
       L'energia che Stronmaus ti presta, due cariche che tornano con un Riposo
       Breve. È il carburante comune di Scintilla Divina, Scacciare Non Morti e
       Ira Distruttiva: spenderla per una la toglie alle altre.
+    usi:
+      - id: scintilla-divina
+        nome: Scintilla Divina
+        nomeEn: Divine Spark
+        paragrafi:
+          - Azione Magica, creatura visibile entro 30 ft. Puoi guarirla di 1d8 + 3 PF.
+          - >-
+            In alternativa la creatura effettua un TS Costituzione, subendo 1d8 + 3 danni
+            radianti o necrotici al fallimento e metà al successo. Non consuma slot.
+      - id: scacciare-non-morti
+        nome: Scacciare Non Morti
+        nomeEn: Turn Undead
+        paragrafi:
+          - Azione Magica. I non morti scelti entro 30 ft effettuano un TS Saggezza.
+          - >-
+            Chi fallisce è Spaventato e Incapacitato per 1 minuto e cerca di allontanarsi.
+            L'effetto termina se subisce danni o se Kaelen diventa Incapacitato o muore.
+      - id: ira-distruttiva
+        nome: Ira Distruttiva
+        nomeEn: Destructive Wrath
+        paragrafi:
+          - >-
+            Quando dovresti tirare danni da fulmine o tuono, spendi un uso per usare il
+            risultato massimo dei dadi. Non richiede un'azione.
+          - >-
+            L'impiego più efficace al 3° livello è Frantumare, 24 danni a chi fallisce il
+            TS e 12 a chi riesce.
   - id: ira-tempesta
     nome: Ira della Tempesta
     nomeEn: Wrath of the Storm
@@ -144,15 +171,24 @@ equipaggiamento:
       nomeEn: Chain Mail,
       quantita: 1,
       consumabile: false,
+      gruppo: addosso,
     }
-  - { id: scudo, nome: Scudo, nomeEn: Shield, quantita: 1, consumabile: false }
-  - { id: maglio, nome: Maglio da guerra, nomeEn: Warhammer, quantita: 1, consumabile: false }
+  - { id: scudo, nome: Scudo, nomeEn: Shield, quantita: 1, consumabile: false, gruppo: addosso }
+  - {
+      id: maglio,
+      nome: Maglio da guerra,
+      nomeEn: Warhammer,
+      quantita: 1,
+      consumabile: false,
+      gruppo: addosso,
+    }
   - {
       id: simbolo-sacro,
       nome: 'Simbolo sacro: disco di pietra lavica',
       nomeEn: 'Holy Symbol: Lava-Stone Disk',
       quantita: 1,
       consumabile: false,
+      gruppo: addosso,
       note: 'Focus da incantatore, indossato sul petto.',
     }
   - {
@@ -193,18 +229,6 @@ capacita:
     paragrafi:
       - Kaelen è addestrato nelle armature pesanti e negli scudi ed è competente nelle armi marziali.
       - Le competenze simili del Dominio della Tempesta non si sommano e non forniscono altri bonus.
-  - titolo: 'Incanalare Divinità: Scintilla Divina'
-    paragrafi:
-      - Azione Magica, creatura visibile entro 30 ft. Puoi guarirla di 1d8 + 3 PF.
-      - In alternativa la creatura effettua un TS Costituzione, subendo 1d8 + 3 danni radianti o necrotici al fallimento e metà al successo. Non consuma slot.
-  - titolo: 'Incanalare Divinità: Scacciare Non Morti'
-    paragrafi:
-      - Azione Magica. I non morti scelti entro 30 ft effettuano un TS Saggezza.
-      - Chi fallisce è Spaventato e Incapacitato per 1 minuto e cerca di allontanarsi. L'effetto termina se subisce danni o se Kaelen diventa Incapacitato o muore.
-  - titolo: 'Incanalare Divinità: Ira Distruttiva'
-    paragrafi:
-      - Quando dovresti tirare danni da fulmine o tuono, spendi un uso per usare il risultato massimo dei dadi. Non richiede un'azione.
-      - L'impiego più efficace al 3° livello è Frantumare, 24 danni a chi fallisce il TS e 12 a chi riesce.
   - titolo: Ascendenza Gigante e Corporatura Possente
     paragrafi:
       - Tuono della Tempesta deriva dall'ascendenza dei Giganti della Tempesta ed è la reazione descritta sotto.

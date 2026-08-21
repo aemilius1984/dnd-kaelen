@@ -20,3 +20,5 @@ Insieme riforgiarono il vecchio medaglione di Talos. Marrok ne spezzò il bordo;
 Marrok dice che passerà. Kaelen non gli crede del tutto.
 
 Il vecchio non volle accompagnarlo. Aveva già tentato da solo la propria impresa ed era diventato troppo debole per ripeterla; soprattutto, sapeva che due uomini mossi dalla stessa vergogna avrebbero commesso lo stesso errore. Thuunvar non si poteva recuperare con un'altra irruzione rabbiosa. Servivano compagni capaci di fermare Kaelen quando il sangue gli chiedeva di caricare e di sostenerlo quando la colpa gli ordinava di fuggire.
+
+Kaelen apprese da uno dei cacciatori del Sacello che il suo assalto aveva costretto i sacerdoti a spostare Thuunvar. Il maglio era stato estratto dalla cripta e affidato a un convoglio diretto verso la Sembia, attraverso il Cormyr. Kaelen partì verso est.

@@ -263,8 +263,26 @@ it('la barra degli slot si appiccica al contenitore, non alla radice dell’isol
   // — che è anche l'unico che il build scrive, e che quindi può riservare
   // l'altezza prima dell'idratazione.
   expect(corpo('.barra-slot-isola')).toMatch(/position:\s*sticky/);
-  expect(corpo('.barra-slot-isola')).toMatch(/min-height:\s*\d+px/);
-  expect(() => corpo('.barra-slot')).toThrow();
+  // 49px: 48 di area premibile del riassunto più il filetto di sotto. Non è
+  // ricavato a mente, è letto in Chrome a 390x844 — e riletto dopo che
+  // attacco e CD sono entrati nella riga, che l'altezza non l'ha cambiata.
+  expect(corpo('.barra-slot-isola')).toMatch(/min-height:\s*49px/);
+  // La barra dell'isola una regola adesso ce l'ha (`display: contents`, che
+  // le fa attraversare la griglia del cappello), ma non è lei ad appiccicarsi.
+  expect(corpo('.barra-slot')).not.toMatch(/position:\s*sticky/);
+});
+
+it('la riga del cappello tiene i due numeri e il conto senza accavallarli', () => {
+  // Misurato in Chrome a 390x844: «Attacco +5 · CD 13» arriva a 135px, il
+  // riassunto parte da 151. Sedici pixel di margine non sono molti, ed è per
+  // questo che i due numeri non vanno a capo — spezzarli raddoppierebbe
+  // l'altezza del cappello proprio a metà scorrimento.
+  expect(corpo('.barra-slot-isola')).toMatch(/grid-template-columns:\s*auto 1fr/);
+  expect(corpo('.attacco-inc')).toMatch(/white-space:\s*nowrap/);
+  // Le file aperte scavalcano la colonna di destra e si prendono i 358px
+  // pieni: dentro ci vanno le caselle grandi, che a metà larghezza non
+  // starebbero.
+  expect(corpo('.barra-slot .file')).toMatch(/grid-area:\s*2 \/ 1 \/ auto \/ -1/);
 });
 
 it('il cappello dell’archivio si appiccica come la barra degli slot', () => {
@@ -290,7 +308,7 @@ it('le file della barra degli slot partono tutte dalla stessa colonna', () => {
 });
 
 it('i due numeri del conto sono della stessa misura', () => {
-  // «6 slot su 6» sono la stessa cosa detta due volte: a due corpi diversi
+  // «6/6» sono la stessa cosa detta due volte: a due corpi diversi
   // litigano. A distinguerli bastano colore e peso.
   expect(corpo('.barra-slot .conto strong')).not.toMatch(/font-size:/);
 });
@@ -299,4 +317,49 @@ it('la barra si legge come un foglio sopra la pagina', () => {
   // Sovrapposizione: sotto ci scorre il contenuto, e senza ombra il confine
   // fra i due è solo un filetto da un pixel.
   expect(corpo('.barra-slot-isola')).toMatch(/box-shadow:/);
+});
+
+/** Un foglio senza commenti: la guardia contro il numero magico cerca cifre,
+ *  e un commento che *racconta* il vecchio numero la farebbe fallire per la
+ *  sola colpa di spiegarsi. */
+function senzaCommenti(percorso: string): string {
+  return readFileSync(percorso, 'utf8').replace(/\/\*[\s\S]*?\*\//g, ' ');
+}
+
+it('il cappello è un token solo, non tre numeri copiati', () => {
+  // `3.25rem` era scritto a mano in tre punti e `3.75rem` in altri tre: la
+  // barra del menu, i due cappelli di sezione che si appiccicano sotto di lei,
+  // e gli scarti che le pagine le riservano. Sei numeri che devono muoversi
+  // insieme e nessuno che li tenga. Adesso l'altezza della barra include la
+  // tacca, quindi muoverli insieme non è più eleganza: è la differenza fra un
+  // menu leggibile e un menu sotto l'orologio.
+  const tokens = senzaCommenti('src/styles/tokens.css');
+  expect(tokens).toMatch(/--tacca:\s*env\(safe-area-inset-top,\s*0px\)/);
+  expect(tokens).toMatch(/--cappello:\s*calc\(3\.25rem \+ var\(--tacca\)\)/);
+
+  const menu = senzaCommenti('src/components/Menu.astro');
+  const barra = menu.slice(menu.indexOf('.barra {'), menu.indexOf('}', menu.indexOf('.barra {')));
+  expect(barra).toMatch(/height:\s*var\(--cappello\)/);
+  // Senza questo, il contenuto della barra resta centrato sull'altezza intera
+  // e finisce metà sotto la tacca.
+  expect(barra).toMatch(/padding-top:\s*var\(--tacca\)/);
+
+  for (const foglio of [
+    'src/styles/componenti.css',
+    'src/styles/base.css',
+    'src/styles/storia.css',
+    'src/components/Menu.astro',
+  ]) {
+    expect(senzaCommenti(foglio)).not.toMatch(/3\.25rem|3\.75rem/);
+  }
+});
+
+it('i cappelli di sezione si fermano sotto la barra anche quando si ritira', () => {
+  // Lo stato ritirato era `top: 0`, che con la tacca accesa vuol dire «sotto
+  // l'orologio». Sono due regole in due punti lontani del foglio e correggerne
+  // una sola lascia una rotta rotta a metà: questa guardia le tiene appaiate.
+  for (const cappello of ['.barra-slot-isola', '.barra-preparati-isola']) {
+    expect(corpo(cappello)).toMatch(/top:\s*var\(--cappello\)/);
+    expect(corpo(`body:has(.barra[data-nascosta]) ${cappello}`)).toMatch(/top:\s*var\(--tacca\)/);
+  }
 });

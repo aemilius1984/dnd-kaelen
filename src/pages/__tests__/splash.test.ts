@@ -78,3 +78,38 @@ describe('il lampo è ambiente, non introduzione', () => {
     expect(salto[0]).not.toContain('.lampo');
   });
 });
+
+describe('la home occupa lo schermo intero, le porte no', () => {
+  /** Il corpo della regola `selettore`, commenti compresi. */
+  function regola(selettore: string): string {
+    const apertura = PAGINA.indexOf(`${selettore} {`);
+    if (apertura === -1) throw new Error(`regola non trovata: ${selettore}`);
+    return PAGINA.slice(apertura, PAGINA.indexOf('}', apertura));
+  }
+
+  it('la fotografia si misura sull’altezza grande, con il ripiego prima', () => {
+    // L’ordine è la sostanza: su iOS `100vh` è già l’altezza grande, e sta
+    // prima proprio per reggere dove `lvh` non arriva. Invertirle, o potare
+    // la riga «doppia», rimette la fascia di fondo sotto la barra dell’URL.
+    const splash = regola('.splash');
+    expect(splash.indexOf('height: 100vh')).toBeLessThan(splash.indexOf('height: 100lvh'));
+    expect(splash).toContain('inset: 0 0 auto 0');
+  });
+
+  it('le porte stanno sopra la barra dell’URL, non sotto', () => {
+    // `absolute` le ancorava al fondo della fotografia, che su iOS Safari
+    // finisce dietro la barra: i due comandi diventavano intoccabili.
+    expect(regola('.porte')).toContain('position: fixed');
+  });
+
+  it('ogni env() della home porta il suo ripiego', () => {
+    // Un `calc()` con dentro un `env()` non popolato non vale zero: è non
+    // valido, e la dichiarazione intera sparisce.
+    // Senza commenti: la prosa qui sotto nomina `env()` a vuoto, e la
+    // guardia cerca cifre, non discorsi.
+    const vive = PAGINA.replace(/\/\*[\s\S]*?\*\//g, ' ');
+    for (const uso of vive.match(/env\([^)]*\)/g) ?? []) {
+      expect(uso).toMatch(/,\s*\S/);
+    }
+  });
+});

@@ -12,6 +12,8 @@ danno: null
 slotSuperiore: null
 tag: [utilità]
 dominio: false
+effetto:
+  promemoria: 'Il legato prende +1 CA e +1 ai TS; tu prendi la sua stessa ferita'
 ---
 
 La creatura toccata guadagna +1 a CA e tiri salvezza e Resistenza a tutti i danni finché

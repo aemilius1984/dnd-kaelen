@@ -5,7 +5,6 @@ import DatiIniziali from '@/components/DatiIniziali.astro';
 import Statistiche from '@/components/Statistiche.astro';
 import Capacita from '@/components/Capacita.astro';
 import TestaSezione from '@/components/ui/TestaSezione.astro';
-import NomeDoppio from '@/components/ui/NomeDoppio.astro';
 import Borsa from '@/islands/Borsa';
 import ritrattoSrc from '@/assets/kaelen-home.webp';
 import { capacitaTrasporto, percezionePassiva } from '@/lib/derive';
@@ -58,8 +57,14 @@ const interpretazione = [
     <TestaSezione kicker="i numeri">Caratteristiche e abilità</TestaSezione>
     <Statistiche pg={pg} />
     <p class="tenue">
-      Percezione passiva {percezionePassiva(pg)} · Velocità {pg.velocita} ft · Capacità di trasporto
-      {capacitaTrasporto(pg)} lb
+      {
+        /* Lo spazio dentro l'espressione e non fuori: Astro mangia quello a
+        fine riga prima di una parentesi graffa, e prettier manda a capo qui.
+        Il risultato era «trasporto480 lb». */
+      }
+      Percezione passiva {percezionePassiva(pg)} · Velocità {pg.velocita} ft · Capacità di trasporto{
+        ` ${capacitaTrasporto(pg)} lb`
+      }
     </p>
   </section>
 
@@ -70,9 +75,6 @@ const interpretazione = [
 
   <section>
     <TestaSezione kicker="cosa porta addosso">Borsa</TestaSezione>
-    <p class="armatura-indossata">
-      <NomeDoppio it={pg.armatura.nome} en={pg.armatura.nomeEn} />
-    </p>
     <div class="borsa-isola">
       <Borsa client:only="preact" />
     </div>

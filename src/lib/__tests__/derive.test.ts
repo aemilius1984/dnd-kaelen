@@ -105,9 +105,9 @@ describe('numeri scritti nella prosa', () => {
 
   it('il dado di Scintilla Divina nelle capacità corrisponde al modificatore di Saggezza calcolato', () => {
     const dado = `1d8 + ${modificatore(pg.caratteristiche.sag)}`;
-    const scintillaDivina = pg.capacita.find(
-      (c) => c.titolo === 'Incanalare Divinità: Scintilla Divina',
-    );
+    const scintillaDivina = pg.risorse
+      .find((r) => r.id === 'incanalare')
+      ?.usi?.find((u) => u.nome === 'Scintilla Divina');
     expect(scintillaDivina).toBeDefined();
     for (const paragrafo of scintillaDivina?.paragrafi ?? []) {
       expect(paragrafo).toContain(dado);

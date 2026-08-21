@@ -12,6 +12,8 @@ danno: null
 slotSuperiore: Una creatura in più per ogni slot oltre il 1°
 tag: [controllo]
 dominio: false
+effetto:
+  promemoria: '−1d4 ai tiri per colpire o ai TS del bersaglio'
 ---
 
 Fino a tre nemici che falliscono un TS su Carisma sottraggono 1d4 ai tiri per colpire e

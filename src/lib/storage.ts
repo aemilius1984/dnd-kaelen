@@ -47,6 +47,30 @@ export function muta(fn: (s: StatoSessione) => StatoSessione): void {
   }
 }
 
+/** Rimpiazza la sessione con una salvata altrove, passando dalla stessa
+ *  `carica()` del primo caricamento.
+ *
+ *  Non `stato.value = quel che è arrivato`: la regola di `sheetVersion` non ha
+ *  eccezioni, e una sessione scritta per una scheda diversa deve azzerare qui
+ *  esattamente come azzererebbe all'apertura della pagina. Torna `true` se
+ *  l'azzeramento c'è stato, così il pannello può dirlo invece di lasciarlo
+ *  scoprire.
+ *
+ *  Prende il JSON grezzo e non un oggetto perché è la forma in cui la riga
+ *  arriva dalla nuvola, ed è la stessa che `carica()` si aspetta. */
+export function ripristina(json: string): boolean {
+  const { pg, sheetVersion } = datiIniziali();
+  const { stato: ripreso, azzerato } = carica(json, pg, sheetVersion);
+  stato.value = ripreso;
+  avvisoAzzeramento.value = azzerato;
+  try {
+    localStorage.setItem(CHIAVE, JSON.stringify(ripreso));
+  } catch {
+    // quota piena o storage negato: lo stato resta in memoria per la sessione
+  }
+  return azzerato;
+}
+
 /** Azzera la sessione senza bisogno del blocco #dati-iniziali, così il
  *  comando può vivere nel menu di ogni pagina — anche quelle che non
  *  incorporano i dati del personaggio. Le preferenze (tema, splash) sono

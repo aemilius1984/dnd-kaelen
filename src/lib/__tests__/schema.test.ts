@@ -56,6 +56,22 @@ describe('scheda di Kaelen', () => {
   // Le due righe del maglio sono lo stesso oggetto impugnato in due modi: è la
   // proprietà Versatile a spiegare perché esistono, quindi il nome ufficiale
   // resta uno solo. `REGOLAMENTO_IT_EN.md` lo dice esplicitamente.
+  it('gli usi di una risorsa stanno nella risorsa, non fra le capacità', () => {
+    // Stavano in `capacita` come tre voci col titolo prefissato «Incanalare
+    // Divinità: », e il componente le ripescava con uno `startsWith`. Il
+    // legame fra le tre voci e la risorsa che consumano viveva in una
+    // stringa: rinominare la risorsa nei dati lo spezzava in silenzio.
+    const incanalare = pg.risorse.find((r) => r.id === 'incanalare');
+
+    expect(incanalare?.usi?.map((u) => u.nome)).toEqual([
+      'Scintilla Divina',
+      'Scacciare Non Morti',
+      'Ira Distruttiva',
+    ]);
+    for (const u of incanalare?.usi ?? []) expect(u.paragrafi.length).toBeGreaterThan(0);
+    expect(pg.capacita.filter((c) => c.titolo.includes('Incanalare Divinità:'))).toEqual([]);
+  });
+
   it('non inventa qualificatori assenti dal nome ufficiale dell’arma', () => {
     const maglio = pg.attacchi.filter((a) => a.id.startsWith('maglio-'));
 

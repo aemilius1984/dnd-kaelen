@@ -12,6 +12,8 @@ danno: null
 slotSuperiore: null
 tag: [utilità]
 dominio: false
+effetto:
+  promemoria: 'Svantaggio ai loro attacchi contro di te; niente charme né paura'
 ---
 
 La creatura toccata impone Svantaggio agli attacchi di Aberrazioni, Celestiali, Elementali,
