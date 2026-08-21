@@ -287,3 +287,30 @@ describe('con una modale aperta la pagina dietro sta ferma', () => {
     expect(foglio()).toMatch(/dialog\{[^}]*overscroll-behavior:contain/);
   });
 });
+
+describe('le due select del sito non le disegna il browser', () => {
+  const foglio = (): string =>
+    readdirSync('dist/_astro')
+      .filter((f) => f.endsWith('.css'))
+      .map((f) => readFileSync(`dist/_astro/${f}`, 'utf8'))
+      .join('\n');
+
+  it('l’altezza è dichiarata, non lasciata decidere', () => {
+    // Con `appearance: auto` Chrome portava la select a 44 come il campo
+    // numero accanto e Safari le lasciava la sua: nella stessa riga si vedeva
+    // un gradino. Una select nativa non è una scatola come le altre, e
+    // `min-height` non basta a costringerla.
+    expect(foglio()).toMatch(/\.modulo select\{[^}]*appearance:none/);
+    expect(foglio()).toMatch(/\.modulo select\{[^}]*height:44px/);
+  });
+
+  it('la freccia ce la mettiamo noi, in tutt’e due i temi', () => {
+    // Tolto l'aspetto nativo sparisce anche la freccia. Un `background-image`
+    // non eredita `currentColor`, quindi il colore è cotto nel data-URI e il
+    // tema riscrive il token: senza la seconda dichiarazione, in tempesta
+    // resterebbe una freccia scura su fondo scuro.
+    const css = foglio();
+    expect(css).toMatch(/--freccia-select:url\("data:image\/svg\+xml/);
+    expect([...css.matchAll(/--freccia-select:/g)].length).toBe(2);
+  });
+});

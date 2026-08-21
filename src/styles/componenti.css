@@ -1823,6 +1823,23 @@ dialog.modulo-effetto::backdrop {
   font: inherit;
 }
 
+/* La select non prende l'aspetto nativo. Con `appearance: auto` l'altezza la
+ * decide il browser: Chrome la porta a quarantaquattro come tutto il resto,
+ * Safari le lascia la sua, e accanto a un campo numero della stessa riga si
+ * vedeva un gradino. `min-height` non basta a impedirlo — una select nativa
+ * non è una scatola come le altre — quindi l'altezza è dichiarata, non
+ * suggerita, e la freccia la disegniamo noi. Sono due in tutto il sito e
+ * stanno tutt'e due qui dentro: non c'è nient'altro che perde la freccia. */
+.modulo select {
+  appearance: none;
+  height: 44px;
+  padding-right: 1.9rem;
+  background-image: var(--freccia-select);
+  background-repeat: no-repeat;
+  background-position: right 0.6rem center;
+  background-size: 12px 8px;
+}
+
 /* Le domande sì/no. Erano disegnate in due modi diversi nello stesso modulo —
  * una casella col testo accanto, e una riga muta che nessuno capiva di poter
  * premere perché `display: flex` su un `<summary>` porta via il triangolo.
