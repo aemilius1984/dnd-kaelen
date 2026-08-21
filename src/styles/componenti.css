@@ -1791,7 +1791,14 @@ dialog.modulo-effetto::backdrop {
   background: rgb(0 0 0 / 0.6);
 }
 
-dialog.modulo-effetto label {
+/* ── I due moduli, che sono lo stesso modulo ───────────────────────────── */
+
+/* «Aggiungi un oggetto» e «Accendi un effetto» hanno la stessa forma: qualche
+ * campo, due domande sì/no, due bottoni. Erano due blocchi di CSS gemelli con
+ * un commento che diceva di non scollarsi mai, e nel frattempo si erano già
+ * scollati. Adesso è un blocco solo su `.modulo`, e chi ne scrive un terzo
+ * mette la classe e ha finito. */
+.modulo label {
   display: grid;
   gap: 0.2rem;
   margin-bottom: var(--spazio-2);
@@ -1799,15 +1806,14 @@ dialog.modulo-effetto label {
   color: var(--inchiostro-tenue);
 }
 
-dialog.modulo-effetto label.riga,
-dialog.modulo-effetto .riga {
+.modulo .riga {
   display: flex;
   align-items: center;
   gap: var(--spazio-1);
 }
 
-dialog.modulo-effetto input,
-dialog.modulo-effetto select {
+.modulo input,
+.modulo select {
   min-height: 44px;
   padding: 0 0.5rem;
   border: 1px solid var(--filetto);
@@ -1817,42 +1823,116 @@ dialog.modulo-effetto select {
   font: inherit;
 }
 
-dialog.modulo-effetto input[type='checkbox'] {
-  min-height: 0;
-  width: 22px;
-  height: 22px;
-}
-
-.avviso-concentrazione {
-  margin: 0 0 var(--spazio-2);
-  font-size: var(--fs-piccolo);
-  color: var(--ambra);
-}
-
-dialog.modulo-effetto .numeri summary {
-  min-height: 44px;
+/* Le domande sì/no. Erano disegnate in due modi diversi nello stesso modulo —
+ * una casella col testo accanto, e una riga muta che nessuno capiva di poter
+ * premere perché `display: flex` su un `<summary>` porta via il triangolo.
+ * Adesso hanno una forma sola: etichetta a sinistra, interruttore a destra,
+ * quarantaquattro pixel di riga da toccare ovunque, un filetto a separarle.
+ * Sono domande, non note a margine: il colore è quello del testo pieno. */
+.modulo .domanda {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: var(--spazio-2);
+  min-height: 44px;
+  margin: 0;
+  padding: 0.2rem 0;
+  border-top: 1px solid var(--filetto);
   font-size: var(--fs-piccolo);
-  color: var(--inchiostro-muto);
+  color: var(--inchiostro);
   cursor: pointer;
 }
 
-dialog.modulo-effetto .comandi {
+/* L'ultima della fila chiude la serie, così le domande sono una fascia e non
+ * due righe che galleggiano. */
+.modulo .domanda:last-of-type {
+  border-bottom: 1px solid var(--filetto);
+  margin-bottom: var(--spazio-2);
+}
+
+.modulo .interruttore {
+  flex: none;
+  min-height: 0;
+  width: 52px;
+  height: 30px;
+  padding: 0;
+  border-radius: 999px;
+  background: var(--superficie-incassata);
+  appearance: none;
+  position: relative;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.modulo .interruttore::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--inchiostro-muto);
+  transition:
+    transform 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.modulo .interruttore:checked {
+  border-color: var(--lampo);
+  background: var(--lampo);
+}
+
+.modulo .interruttore:checked::after {
+  transform: translateX(22px);
+  background: var(--carta);
+}
+
+.modulo .avvertenza {
+  margin: var(--spazio-1) 0 0;
+  font-size: var(--fs-piccolo);
+}
+
+.modulo .comandi {
   display: flex;
   justify-content: flex-end;
   gap: var(--spazio-1);
   margin-top: var(--spazio-2);
 }
 
-dialog.modulo-effetto .comandi button {
+.modulo .comandi button {
   min-height: 44px;
-  padding: 0 var(--spazio-2);
+  padding: 0 var(--spazio-3);
   border: 1px solid var(--filetto);
   border-radius: var(--raggio);
   background: var(--superficie);
   color: var(--inchiostro);
+  font: inherit;
   cursor: pointer;
+}
+
+/* I due bottoni non pesano uguale: uno aggiunge, l'altro butta via quel che
+ * hai appena scritto. Con la stessa forma, di fretta, si preme quello
+ * sbagliato una volta su due. */
+.modulo .comandi button[type='submit'] {
+  border-color: var(--lampo);
+  background: var(--lampo);
+  color: var(--carta);
+  font-weight: 600;
+}
+
+.modulo .comandi button[type='button'] {
+  border-color: transparent;
+  background: none;
+  color: var(--inchiostro-tenue);
+}
+
+.avviso-concentrazione {
+  margin: 0 0 var(--spazio-2);
+  font-size: var(--fs-piccolo);
+  color: var(--ambra);
 }
 
 /* Sta sotto i comandi e staccato da un filetto: è l'unica cosa in questa
@@ -1978,71 +2058,6 @@ dialog.modulo-oggetto-guscio[open] {
 dialog#aggiungi-oggetto::backdrop,
 dialog.modulo-oggetto-guscio::backdrop {
   background: rgb(0 0 0 / 0.6);
-}
-
-/* Il modulo divide lo stile con quello degli effetti: sono la stessa cosa —
- * qualche campo e due bottoni — e due fogli separati si scollerebbero. */
-.modulo-oggetto label {
-  display: grid;
-  gap: 0.2rem;
-  margin-bottom: var(--spazio-2);
-  font-size: var(--fs-piccolo);
-  color: var(--inchiostro-tenue);
-}
-
-.modulo-oggetto label.riga,
-.modulo-oggetto .riga {
-  display: flex;
-  align-items: center;
-  gap: var(--spazio-1);
-}
-
-.modulo-oggetto input,
-.modulo-oggetto select {
-  min-height: 44px;
-  padding: 0 0.5rem;
-  border: 1px solid var(--filetto);
-  border-radius: var(--raggio);
-  background: var(--superficie);
-  color: var(--inchiostro);
-  font: inherit;
-}
-
-.modulo-oggetto input[type='checkbox'] {
-  min-height: 0;
-  width: 22px;
-  height: 22px;
-}
-
-.modulo-oggetto .numeri summary {
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  font-size: var(--fs-piccolo);
-  color: var(--inchiostro-muto);
-  cursor: pointer;
-}
-
-.modulo-oggetto .avvertenza {
-  margin: var(--spazio-1) 0 0;
-  font-size: var(--fs-piccolo);
-}
-
-.modulo-oggetto .comandi {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--spazio-1);
-  margin-top: var(--spazio-2);
-}
-
-.modulo-oggetto .comandi button {
-  min-height: 44px;
-  padding: 0 var(--spazio-2);
-  border: 1px solid var(--filetto);
-  border-radius: var(--raggio);
-  background: var(--superficie);
-  color: var(--inchiostro);
-  cursor: pointer;
 }
 
 /* ── La Borsa a tre gruppi ─────────────────────────────────────────────── */
@@ -2177,12 +2192,12 @@ dialog#aggiungi-oggetto .chiudi svg {
   background: currentColor;
 }
 
-.modulo-oggetto .attuale {
+.modulo .attuale {
   font-size: var(--fs-piccolo);
   white-space: nowrap;
 }
 
-.modulo-oggetto .avviso-inutile {
+.modulo .avviso-inutile {
   margin: var(--spazio-1) 0 0;
   font-size: var(--fs-piccolo);
   color: var(--ambra);
@@ -2192,13 +2207,11 @@ dialog#aggiungi-oggetto .chiudi svg {
  * `input[type=number]` ha una larghezza propria e non si stringe: a 390 di
  * schermo usciva dal dialogo di undici pixel, e il punteggio attuale finiva
  * del tutto fuori dalla finestra. Il campo cede, l'etichetta no. */
-.modulo-oggetto .numeri .riga,
-.modulo-effetto .numeri .riga {
+.modulo .numeri {
   flex-wrap: wrap;
 }
 
-.modulo-oggetto .numeri .riga input[type='number'],
-.modulo-effetto .numeri .riga input[type='number'] {
+.modulo .numeri input[type='number'] {
   flex: 1 1 4rem;
   min-width: 0;
 }

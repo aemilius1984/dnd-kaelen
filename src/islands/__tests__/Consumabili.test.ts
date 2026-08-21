@@ -11,6 +11,16 @@ const pg = caricaPersonaggioDaFile();
 let radice: HTMLDivElement;
 const giro = () => new Promise((r) => setTimeout(r, 50));
 
+/** Accende «È un oggetto magico?». I campi del modificatore esistono solo da
+ *  acceso: è l'ultima delle due domande sì/no. */
+const magico = async () => {
+  const domande = [
+    ...document.querySelectorAll<HTMLInputElement>('[data-modulo-oggetto] .domanda input'),
+  ];
+  domande.at(-1)!.click();
+  await giro();
+};
+
 const cariche = (id: string) => document.querySelector<HTMLElement>(`[data-cariche="${id}"]`)!;
 const usa = (id: string) =>
   document.querySelector<HTMLButtonElement>(`[data-consuma="${id}"] button`);
@@ -149,13 +159,21 @@ describe('il modulo per aggiungerne', () => {
     campo.dispatchEvent(new Event('input', { bubbles: true }));
   };
 
-  it('quattro campi visibili e i modificatori dietro una riga chiusa', () => {
+  it('quattro campi visibili, e i modificatori solo se l’oggetto è magico', () => {
     for (const nome of ['nome', 'quantita', 'consumabile', 'nota']) {
       expect(document.querySelector(`[data-modulo-oggetto] [name="${nome}"]`)).not.toBeNull();
     }
-    const dettagli = document.querySelector<HTMLDetailsElement>('[data-modulo-oggetto] details')!;
-    expect(dettagli.open).toBe(false);
-    expect(dettagli.querySelector('summary')!.textContent).toContain('magico');
+    // Le due domande sì/no hanno la stessa forma: due interruttori, non una
+    // casella e una riga di `<summary>` che nessuno capiva di poter premere.
+    const domande = [...document.querySelectorAll('[data-modulo-oggetto] .domanda')];
+    expect(domande.map((d) => d.textContent)).toEqual([
+      'Si consuma usandolo',
+      'È un oggetto magico?',
+    ]);
+    expect(domande.every((d) => d.querySelector('input.interruttore'))).toBe(true);
+    // A interruttore spento i campi non esistono: `FormData` non li trova, e un
+    // oggetto dichiarato magico e poi ripensato non porta con sé una modifica.
+    expect(document.querySelector('[data-modulo-oggetto] [name="bersaglio"]')).toBeNull();
   });
 
   it('salva l’oggetto con un id suo', async () => {
@@ -192,6 +210,7 @@ describe('il modulo per aggiungerne', () => {
   it('un oggetto magico porta la sua modifica', async () => {
     scrivi('nome', 'Scudo +1');
     scrivi('quantita', '1');
+    await magico();
     const bersaglio = document.querySelector<HTMLSelectElement>(
       '[data-modulo-oggetto] [name="bersaglio"]',
     )!;
@@ -218,12 +237,14 @@ describe('quel che il modulo dice prima di salvare', () => {
     campo.value = valore;
     campo.dispatchEvent(new Event('input', { bubbles: true }));
   };
-  const scegli = (v: string) => {
+  const scegli = async (v: string) => {
+    await magico();
     const sel = document.querySelector<HTMLSelectElement>(
       '[data-modulo-oggetto] [name="bersaglio"]',
     )!;
     sel.value = v;
     sel.dispatchEvent(new Event('change', { bubbles: true }));
+    await giro();
   };
   const invia = () =>
     document
@@ -233,7 +254,7 @@ describe('quel che il modulo dice prima di salvare', () => {
   it('scegliendo una caratteristica scrive quanto vale adesso', async () => {
     // «SAG diventa» è assoluto, ed è la regola giusta. Ma senza il punteggio
     // attuale accanto, al tavolo si scrive il bonus e non succede niente.
-    scegli('sag');
+    await scegli('sag');
     await giro();
     expect(document.querySelector('[data-modulo-oggetto] .attuale')!.textContent).toBe(
       `ora ${pg.caratteristiche.sag}`,
@@ -241,7 +262,7 @@ describe('quel che il modulo dice prima di salvare', () => {
   });
 
   it('avverte quando il punteggio dichiarato è più basso del vero', async () => {
-    scegli('sag');
+    await scegli('sag');
     scrivi('valore', '2');
     await giro();
     const avviso = document.querySelector('[data-modulo-oggetto] .avviso-inutile')!;
@@ -249,7 +270,7 @@ describe('quel che il modulo dice prima di salvare', () => {
   });
 
   it('su una voce finale non dice niente: lì il valore è un addendo', async () => {
-    scegli('ca');
+    await scegli('ca');
     scrivi('valore', '1');
     await giro();
     expect(document.querySelector('[data-modulo-oggetto] .attuale')).toBeNull();
@@ -258,7 +279,7 @@ describe('quel che il modulo dice prima di salvare', () => {
 
   it('un oggetto che sposta un numero nasce addosso', async () => {
     scrivi('nome', 'Anello di protezione');
-    scegli('ca');
+    await scegli('ca');
     scrivi('valore', '1');
     invia();
     await giro();
@@ -271,5 +292,40 @@ describe('quel che il modulo dice prima di salvare', () => {
     await giro();
     expect(stato.value.oggettiAggiunti).toHaveLength(1);
     expect(stato.value.indossati).toEqual([]);
+  });
+});
+
+describe('quel che hai scritto resta scritto', () => {
+  // Preact riapplica un `value` scritto nell'attributo a ogni ridisegno, e il
+  // modulo si ridisegna a ogni interruttore toccato: la quantità tornava a uno
+  // e il modificatore a zero, in silenzio, dopo che li avevi già compilati.
+  it('la quantità sopravvive a un interruttore acceso dopo', async () => {
+    const campo = document.querySelector<HTMLInputElement>(
+      '[data-modulo-oggetto] [name="quantita"]',
+    )!;
+    campo.value = '3';
+    campo.dispatchEvent(new Event('input', { bubbles: true }));
+    await magico();
+    expect(
+      document.querySelector<HTMLInputElement>('[data-modulo-oggetto] [name="quantita"]')!.value,
+    ).toBe('3');
+  });
+
+  it('il valore del modificatore sopravvive alla scelta del bersaglio', async () => {
+    await magico();
+    const valore = document.querySelector<HTMLInputElement>(
+      '[data-modulo-oggetto] [name="valore"]',
+    )!;
+    valore.value = '5';
+    valore.dispatchEvent(new Event('input', { bubbles: true }));
+    const sel = document.querySelector<HTMLSelectElement>(
+      '[data-modulo-oggetto] [name="bersaglio"]',
+    )!;
+    sel.value = 'ca';
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+    await giro();
+    expect(
+      document.querySelector<HTMLInputElement>('[data-modulo-oggetto] [name="valore"]')!.value,
+    ).toBe('5');
   });
 });

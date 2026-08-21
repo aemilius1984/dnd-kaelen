@@ -39,6 +39,10 @@ export default function StrisciaEffetti() {
   const [innesti, setInnesti] = useState<Innesto[]>([]);
   const dialogo = useRef<HTMLDialogElement>(null);
   const [concentra, setConcentra] = useState(false);
+  const [sposta, setSposta] = useState(false);
+  // Vedi il commento gemello in `ModuloOggetto`: un `value="0"` scritto
+  // nell'attributo torna a zero a ogni ridisegno del modulo.
+  const [valore, setValore] = useState(0);
 
   useEffect(() => {
     setInnesti(
@@ -85,6 +89,8 @@ export default function StrisciaEffetti() {
     );
     modulo.reset();
     setConcentra(false);
+    setSposta(false);
+    setValore(0);
     dialogo.current?.close();
   }
 
@@ -173,7 +179,7 @@ export default function StrisciaEffetti() {
       ))}
 
       <dialog class="modulo-effetto" ref={dialogo} aria-label="Aggiungi un effetto">
-        <form onSubmit={accendi}>
+        <form class="modulo" onSubmit={accendi}>
           <label>
             Nome
             <input type="text" name="nome" required autocomplete="off" />
@@ -182,28 +188,38 @@ export default function StrisciaEffetti() {
             Durata
             <input type="text" name="durata" placeholder="1 minuto" autocomplete="off" />
           </label>
-          <label class="riga">
-            <input
-              type="checkbox"
-              name="concentrazione"
-              onChange={(ev) => setConcentra(ev.currentTarget.checked)}
-            />
-            Richiede concentrazione
-          </label>
-          {/* Detto prima di accendere, non dopo: una regola applicata di
-              nascosto è indistinguibile da un errore. */}
-          {spegnere && <p class="avviso-concentrazione">Accendendolo spegni «{spegnere.nome}».</p>}
           <label>
             Promemoria
             <input type="text" name="promemoria" placeholder="+1d4 ai TS" autocomplete="off" />
           </label>
 
-          {/* Chiuso di default, come il `<details class="correzioni">` del
-              pannello ⚡: il caso d'angolo si vede che lo è, e chi segna
-              «avvelenato» non si trova davanti un pannello da artefatto. */}
-          <details class="numeri">
-            <summary>Sposta un numero?</summary>
-            <div class="riga">
+          {/* Le due domande sì/no con la stessa forma, come nel modulo
+              dell'oggetto: etichetta a sinistra, interruttore a destra. */}
+          <label class="domanda">
+            Richiede concentrazione
+            <input
+              type="checkbox"
+              class="interruttore"
+              name="concentrazione"
+              onChange={(ev) => setConcentra(ev.currentTarget.checked)}
+            />
+          </label>
+          <label class="domanda">
+            Sposta un numero?
+            <input
+              type="checkbox"
+              class="interruttore"
+              checked={sposta}
+              onChange={(ev) => setSposta(ev.currentTarget.checked)}
+            />
+          </label>
+
+          {/* Detto prima di accendere, non dopo: una regola applicata di
+              nascosto è indistinguibile da un errore. */}
+          {spegnere && <p class="avviso-concentrazione">Accendendolo spegni «{spegnere.nome}».</p>}
+
+          {sposta && (
+            <div class="riga numeri">
               <select name="bersaglio" aria-label="Cosa modifica">
                 <option value="">niente</option>
                 {caratteristicheModificabili.map((c) => (
@@ -213,13 +229,19 @@ export default function StrisciaEffetti() {
                 ))}
                 {vociFinali.map((v) => (
                   <option key={v} value={v}>
-                    {v} ±
+                    {v.toUpperCase()} ±
                   </option>
                 ))}
               </select>
-              <input type="number" name="valore" aria-label="Di quanto" value="0" />
+              <input
+                type="number"
+                name="valore"
+                aria-label="Di quanto"
+                value={valore}
+                onInput={(ev) => setValore(Number(ev.currentTarget.value))}
+              />
             </div>
-          </details>
+          )}
 
           <div class="comandi">
             <button type="button" onClick={() => dialogo.current?.close()}>

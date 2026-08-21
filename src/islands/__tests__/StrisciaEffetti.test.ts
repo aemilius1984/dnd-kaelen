@@ -307,3 +307,30 @@ describe('un oggetto magico addosso si vede, e non solo nel numero', () => {
     expect(valore('ca')).toBe(`${CA}`);
   });
 });
+
+describe('le domande del modulo hanno una forma sola', () => {
+  // «Richiede concentrazione» era una casella col testo accanto e «Sposta un
+  // numero?» una riga di `<summary>`: due controlli diversi per due domande
+  // identiche, e la seconda senza triangolo perché `display: flex` porta via il
+  // marker. Chi apriva il modulo non capiva di poterla premere.
+  const domande = () => [...document.querySelectorAll<HTMLElement>('.modulo-effetto .domanda')];
+
+  it('due domande sì/no, due interruttori', () => {
+    expect(domande().map((d) => d.textContent)).toEqual([
+      'Richiede concentrazione',
+      'Sposta un numero?',
+    ]);
+    expect(domande().every((d) => d.querySelector('input.interruttore'))).toBe(true);
+  });
+
+  it('a interruttore spento i campi del numero non esistono', () => {
+    expect(document.querySelector('.modulo-effetto [name="bersaglio"]')).toBeNull();
+  });
+
+  it('acceso, compaiono', async () => {
+    domande().at(-1)!.querySelector<HTMLInputElement>('input')!.click();
+    await giro();
+    expect(document.querySelector('.modulo-effetto [name="bersaglio"]')).not.toBeNull();
+    expect(document.querySelector('.modulo-effetto [name="valore"]')).not.toBeNull();
+  });
+});

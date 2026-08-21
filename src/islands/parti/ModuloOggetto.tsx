@@ -32,6 +32,12 @@ export default function ModuloOggetto({
   const [magico, setMagico] = useState(false);
   const [bersaglio, setBersaglio] = useState('');
   const [valore, setValore] = useState(0);
+  // Controllato, e non un `value="1"` lasciato lì: Preact riapplica quel
+  // valore a **ogni** ridisegno, e il modulo si ridisegna a ogni interruttore
+  // toccato. Chi scriveva «3» e poi accendeva «si consuma» si ritrovava «1»
+  // senza che niente glielo dicesse. Vale per i due campi che nascono con un
+  // numero dentro; nome e nota non ce l'hanno e restano dove sono.
+  const [quantita, setQuantita] = useState('1');
 
   // «FOR diventa 21» è assoluto, ed è la regola del manuale per la Cintura di
   // Forza del Gigante: vince il più alto fra il punteggio dichiarato e quello
@@ -72,72 +78,98 @@ export default function ModuloOggetto({
     });
     modulo.reset();
     setMagico(false);
+    setBersaglio('');
+    setValore(0);
+    setQuantita('1');
     onChiudi();
   }
 
   return (
-    <form class="modulo-oggetto" onSubmit={salva}>
+    <form class="modulo modulo-oggetto" onSubmit={salva}>
       <label>
         Nome
         <input type="text" name="nome" required autocomplete="off" />
       </label>
       <label>
         Quantità
-        <input type="number" name="quantita" min="0" value="1" />
-      </label>
-      <label class="riga">
-        <input type="checkbox" name="consumabile" />
-        Si consuma usandolo
+        <input
+          type="number"
+          name="quantita"
+          min="0"
+          value={quantita}
+          onInput={(e) => setQuantita(e.currentTarget.value)}
+        />
       </label>
       <label>
         Nota
         <input type="text" name="nota" placeholder="dal forziere dei Vaerak" autocomplete="off" />
       </label>
 
-      <details class="numeri" onToggle={(e) => setMagico(e.currentTarget.open)}>
-        <summary>È un oggetto magico?</summary>
-        <div class="riga">
-          <select
-            name="bersaglio"
-            aria-label="Cosa modifica"
-            onChange={(e) => setBersaglio(e.currentTarget.value)}
-          >
-            <option value="">niente</option>
-            {caratteristicheModificabili.map((c) => (
-              <option key={c} value={c}>
-                {c.toUpperCase()} diventa
-              </option>
-            ))}
-            {vociFinali.map((v) => (
-              <option key={v} value={v}>
-                {v} ±
-              </option>
-            ))}
-          </select>
-          <input
-            type="number"
-            name="valore"
-            aria-label="Di quanto"
-            value="0"
-            onInput={(e) => setValore(Number(e.currentTarget.value))}
-          />
-          {attuale !== null && <span class="tenue attuale">ora {attuale}</span>}
-        </div>
-        {inutile && (
-          <p class="avviso-inutile">
-            {bersaglio.toUpperCase()} vale già {attuale}: vince il più alto, quindi così non cambia
-            niente.
-          </p>
-        )}
-        {/* Il vincolo detto dove si sbaglia. `pg.armatura` porta già cotta di
-            maglia e scudo: uno scudo +1 dichiarato come «CA 2» conterebbe due
-            volte, e il totale sarebbe plausibile. */}
-        {magico && (
+      {/* Le due domande sì/no una sotto l'altra e con la stessa forma. Erano
+          una casella col testo accanto e una riga di `<summary>` che non
+          sembrava premibile: due controlli diversi per la stessa domanda, nello
+          stesso modulo. */}
+      <label class="domanda">
+        Si consuma usandolo
+        <input type="checkbox" class="interruttore" name="consumabile" />
+      </label>
+      <label class="domanda">
+        È un oggetto magico?
+        <input
+          type="checkbox"
+          class="interruttore"
+          checked={magico}
+          onChange={(e) => setMagico(e.currentTarget.checked)}
+        />
+      </label>
+
+      {/* Niente `<details>`: la piega era una seconda cosa da capire oltre alla
+          domanda. Acceso l'interruttore, i campi ci sono; spento, non esistono
+          — e `FormData` non li trova, che è anche il modo in cui un oggetto
+          dichiarato magico e poi ripensato non porta con sé una modifica. */}
+      {magico && (
+        <>
+          <div class="riga numeri">
+            <select
+              name="bersaglio"
+              aria-label="Cosa modifica"
+              onChange={(e) => setBersaglio(e.currentTarget.value)}
+            >
+              <option value="">niente</option>
+              {caratteristicheModificabili.map((c) => (
+                <option key={c} value={c}>
+                  {c.toUpperCase()} diventa
+                </option>
+              ))}
+              {vociFinali.map((v) => (
+                <option key={v} value={v}>
+                  {v.toUpperCase()} ±
+                </option>
+              ))}
+            </select>
+            <input
+              type="number"
+              name="valore"
+              aria-label="Di quanto"
+              value={valore}
+              onInput={(e) => setValore(Number(e.currentTarget.value))}
+            />
+            {attuale !== null && <span class="tenue attuale">ora {attuale}</span>}
+          </div>
+          {inutile && (
+            <p class="avviso-inutile">
+              {bersaglio.toUpperCase()} vale già {attuale}: vince il più alto, quindi così non
+              cambia niente.
+            </p>
+          )}
+          {/* Il vincolo detto dove si sbaglia. `pg.armatura` porta già cotta di
+              maglia e scudo: uno scudo +1 dichiarato come «CA 2» conterebbe due
+              volte, e il totale sarebbe plausibile. */}
           <p class="tenue avvertenza">
             Solo il di più: uno scudo +1 è «ca +1», non «ca +2». Quel che porti già è contato.
           </p>
-        )}
-      </details>
+        </>
+      )}
 
       <div class="comandi">
         <button type="button" onClick={onChiudi}>
