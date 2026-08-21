@@ -49,9 +49,15 @@ successivo, non subito.
 Le migrazioni **non le applica nessun hook**: se il codice arriva in produzione
 prima della migrazione, l'endpoint trova la tabella che non c'è.
 
+Si passa sempre il **binding**, `DB`, mai il nome del database: `wrangler` risolve
+l'argomento contro `wrangler.jsonc`, dove c'è una voce sola. `kaelen-preview` lì
+dentro non compare come nome, e chiederlo per nome dà «Couldn't find a D1 DB» —
+al Preview ci si arriva con `--preview`, che usa `preview_database_id`.
+
 ```
-npx wrangler d1 migrations apply kaelen --local    # database di sviluppo
-npx wrangler d1 migrations apply kaelen --remote    # prima del deploy
+npx wrangler d1 migrations apply DB --local              # sviluppo, SQLite locale
+npx wrangler d1 migrations apply DB --remote            # Production, prima del deploy
+npx wrangler d1 migrations apply DB --remote --preview  # Preview
 ```
 
 Per provarla in locale servono le Functions, che `astro dev` non esegue:

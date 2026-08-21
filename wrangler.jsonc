@@ -28,9 +28,14 @@
       "binding": "DB",
       "database_name": "kaelen",
       "database_id": "a90cff0d-ef6e-4bb0-9ece-b14cb955b5f4",
-      // In locale `wrangler` non tocca il database remoto: crea e usa un
-      // SQLite sotto `.wrangler/`. Il valore serve solo a farglielo fare.
-      "preview_database_id": "DB",
+      // L'id vero di `kaelen-preview`, non un segnaposto. In locale
+      // `wrangler` non tocca comunque il database remoto: crea e usa un
+      // SQLite sotto `.wrangler/`, e questo valore gli serve solo per
+      // accettare il binding. Scriverci l'id vero costa niente e rende
+      // raggiungibile il Preview con `--remote --preview`, che è l'unico
+      // modo di applicargli una migrazione: `d1 migrations apply` risolve
+      // il nome contro questo file, e `kaelen-preview` qui non c'è.
+      "preview_database_id": "c269bb09-519a-49aa-b6c1-10509d990bf8",
     },
   ],
 }
